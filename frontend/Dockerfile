@@ -1,7 +1,7 @@
 FROM node:18-bookworm-slim
 
-# Security: update packages and non-root user
-RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+# Security: update packages and install curl for healthcheck
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*
 RUN groupadd -r konggest && useradd -r -g konggest konggest
 
 WORKDIR /app
