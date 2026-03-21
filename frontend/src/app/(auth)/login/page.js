@@ -58,7 +58,9 @@ export default function LoginPage() {
       <div className={styles.card}>
         {/* Logo */}
         <div className={styles.logoSection}>
-          <div className={styles.logoIcon}>K</div>
+          <div className={styles.logoIcon}>
+            <img src="/logo.png" alt="Logo" width={48} height={48} />
+          </div>
           <h1 className={styles.logoText}>Konggest</h1>
           <p className={styles.subtitle}>
             {isRegister ? 'Créez votre espace RH' : 'Connectez-vous à votre espace'}

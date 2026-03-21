@@ -73,7 +73,7 @@
 .logoIcon {
   width: 56px;
   height: 56px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: transparent;
   border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
@@ -82,7 +82,7 @@
   font-size: 1.5rem;
   color: white;
   margin-bottom: 16px;
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
+  box-shadow: none;
 }
 
 .logoText {
@@ -178,4 +178,70 @@
 
 .toggleBtn:hover {
   color: var(--accent-light);
+}
+
+/* ─── Mobile responsive ─── */
+@media (max-width: 768px) {
+  .container {
+    padding: 16px;
+    align-items: flex-start;
+    padding-top: 10vh;
+  }
+
+  .card {
+    padding: 28px 20px;
+    max-width: 100%;
+  }
+
+  .logoIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .logoText {
+    font-size: 1.4rem;
+  }
+
+  .bgOrb1 {
+    width: 250px;
+    height: 250px;
+  }
+
+  .bgOrb2 {
+    width: 200px;
+    height: 200px;
+  }
+
+  .row {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .submitBtn {
+    font-size: 0.9rem;
+    padding: 14px;
+  }
+
+  .inputGroup input {
+    font-size: 16px; /* prevents iOS zoom */
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 12px;
+    padding-top: 6vh;
+  }
+
+  .card {
+    padding: 24px 16px;
+  }
+
+  .logoText {
+    font-size: 1.25rem;
+  }
+
+  .subtitle {
+    font-size: 0.82rem;
+  }
 }

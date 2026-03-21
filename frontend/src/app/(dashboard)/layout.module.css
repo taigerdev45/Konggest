@@ -1,4 +1,4 @@
-/* Dashboard Layout Styles */
+/* Dashboard Layout Styles — Responsive */
 
 .layout {
   min-height: 100vh;
@@ -12,9 +12,26 @@
   transition: margin-left var(--transition-base);
 }
 
+/* Tablet */
+@media (max-width: 1024px) {
+  .main {
+    margin-left: var(--sidebar-collapsed);
+    padding: 24px 20px;
+  }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
   .main {
     margin-left: 0;
-    padding: 16px;
+    padding: 16px 14px;
+    margin-top: var(--header-height);
+  }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+  .main {
+    padding: 12px 10px;
   }
 }

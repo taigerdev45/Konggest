@@ -1,5 +1,6 @@
 /* ============================================
    Sidebar Styles — Premium Dark Theme
+   Responsive: desktop, tablet, mobile
    ============================================ */
 
 .sidebar {
@@ -13,7 +14,7 @@
   display: flex;
   flex-direction: column;
   z-index: 100;
-  transition: width var(--transition-base);
+  transition: width var(--transition-base), transform var(--transition-base);
   overflow: hidden;
 }
 
@@ -21,7 +22,58 @@
   width: var(--sidebar-collapsed);
 }
 
-/* Logo */
+/* ─── Mobile sidebar ─── */
+.sidebar.mobile {
+  width: 280px;
+  transform: translateX(-100%);
+  z-index: 200;
+  box-shadow: none;
+}
+
+.sidebar.mobile.mobileOpen {
+  transform: translateX(0);
+  box-shadow: var(--shadow-xl);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 199;
+  animation: fadeIn 0.2s ease;
+}
+
+.mobileToggle {
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 95;
+  width: 40px;
+  height: 40px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mobileToggle:hover {
+  background: var(--primary-glow);
+  border-color: var(--primary);
+  color: var(--primary-light);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ─── Logo ─── */
 .logo {
   display: flex;
   align-items: center;
@@ -34,7 +86,7 @@
 .logoIcon {
   width: 38px;
   height: 38px;
-  background: linear-gradient(135deg, var(--primary), var(--accent));
+  background: transparent;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -43,6 +95,12 @@
   font-size: 1.1rem;
   color: white;
   flex-shrink: 0;
+}
+
+.logoIcon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .logoText {
@@ -74,7 +132,7 @@
   transform: rotate(180deg);
 }
 
-/* Navigation */
+/* ─── Navigation ─── */
 .nav {
   flex: 1;
   padding: 16px 10px;
@@ -113,6 +171,8 @@
   transition: all var(--transition-fast);
   position: relative;
   white-space: nowrap;
+  /* Mobile touch targets */
+  min-height: 44px;
 }
 
 .navItem:hover {
@@ -139,7 +199,7 @@
   border-radius: 3px 0 0 3px;
 }
 
-/* User Section */
+/* ─── User Section ─── */
 .userSection {
   display: flex;
   align-items: center;
@@ -194,9 +254,20 @@
   display: flex;
   font-size: 1.1rem;
   transition: all var(--transition-fast);
+  min-width: 36px;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
 }
 
 .logoutBtn:hover {
   color: var(--danger);
   background: var(--danger-bg);
+}
+
+/* ─── Tablet (1024px) ─── */
+@media (max-width: 1024px) {
+  .sidebar:not(.mobile) {
+    width: var(--sidebar-collapsed);
+  }
 }
