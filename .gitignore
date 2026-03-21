@@ -38,4 +38,5 @@ Thumbs.db
 
 # Logs
 *.log
+suivi_travail.txt
 logs/
