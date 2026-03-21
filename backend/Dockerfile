@@ -1,14 +1,14 @@
-FROM python:3.11-slim
+FROM python:3.11-slim-bookworm
 
-# Security: non-root user
-RUN groupadd -r konggest && useradd -r -g konggest konggest
-
-# System dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+# System dependencies & security updates
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
+
+# Security: non-root user
+RUN groupadd -r konggest && useradd -r -g konggest konggest
 
 WORKDIR /app
 

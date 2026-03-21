@@ -1,7 +1,8 @@
-FROM node:18-alpine
+FROM node:18-bookworm-slim
 
-# Security: non-root user
-RUN addgroup -S konggest && adduser -S konggest -G konggest
+# Security: update packages and non-root user
+RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
+RUN groupadd -r konggest && useradd -r -g konggest konggest
 
 WORKDIR /app
 

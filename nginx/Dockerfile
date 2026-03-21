@@ -1,4 +1,4 @@
-FROM nginx:1.25-alpine
+FROM nginx:1.27-alpine
 
 # Run as non-root
 RUN addgroup -S konggest && adduser -S konggest -G konggest

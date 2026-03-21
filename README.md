@@ -1,11 +1,11 @@
-#  Konggest — Application SaaS de Gestion du Personnel
+# Konggest — Application SaaS de Gestion du Personnel
 
 Application SaaS complète de gestion des ressources humaines, adaptée à tous les secteurs d'activité. Tous les services sont conteneurisés, les communications chiffrées HTTPS, et le système durci contre les attaques connues.
 
-##  Stack Technologique
+## Stack Technologique
 
 | Composant | Technologie |
-|-----------|-------------|
+| :--- | :--- |
 | Frontend | Next.js 14 + React 18 |
 | Backend | Django 5 + Django REST Framework |
 | Base de données | PostgreSQL 15 (Supabase) |
@@ -13,9 +13,10 @@ Application SaaS complète de gestion des ressources humaines, adaptée à tous 
 | Reverse Proxy | Nginx (HTTPS/TLS 1.3) |
 | Conteneurs | Docker + Docker Compose |
 
-##  Démarrage Rapide
+## Démarrage Rapide
 
 ### Prérequis
+
 - Docker Desktop installé
 
 ### Lancer l'application
@@ -32,26 +33,27 @@ docker-compose up --build
 ```
 
 ### Accès
+
 - **Frontend** : `https://localhost`
 - **API Backend** : `https://localhost/api/`
 - **Django Admin** : `https://localhost/admin/`
 
-##  Modules
+## Modules
 
 | Module | Description |
-|--------|-------------|
-|  Dashboard | KPIs, graphiques, vue d'ensemble |
-|  Employés | CRUD, profils, organigramme |
-|  Congés | Demandes, approbations, soldes |
-|  Paie | Fiches de paie, cotisations |
-|  Documents | Upload/download, templates |
-|  Pointage | Check-in/out, heures sup |
-|  Recrutement | Offres, pipeline, entretiens |
-|  Performance | Évaluations, objectifs |
-|  Notifications | Alertes temps réel |
-|  Administration | Multi-tenant, RBAC |
+| :--- | :--- |
+| Dashboard | KPIs, graphiques, vue d'ensemble |
+| Employés | CRUD, profils, organigramme |
+| Congés | Demandes, approbations, soldes |
+| Paie | Fiches de paie, cotisations |
+| Documents | Upload/download, templates |
+| Pointage | Check-in/out, heures sup |
+| Recrutement | Offres, pipeline, entretiens |
+| Performance | Évaluations, objectifs |
+| Notifications | Alertes temps réel |
+| Administration | Multi-tenant, RBAC |
 
-##  Sécurité
+## Sécurité
 
 - **HTTPS/TLS 1.3** via Nginx
 - **Rate limiting** par endpoint
@@ -64,9 +66,9 @@ docker-compose up --build
 - **Audit logging** complet
 - Conteneurs **non-root**
 
-##  Structure
+## Structure
 
-```
+```text
 konggest/
 ├── docker-compose.yml     # Orchestration
 ├── nginx/                 # Reverse proxy + WAF
@@ -78,7 +80,7 @@ konggest/
 └── .env                   # Variables d'environnement
 ```
 
-##  Développement
+## Développement
 
 ```bash
 # Backend uniquement
