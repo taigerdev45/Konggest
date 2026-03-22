@@ -4,7 +4,7 @@ services:
     runtime: python
     region: frankfurt
     plan: free
-    buildCommand: "pip install -r requirements.txt"
+    buildCommand: "bash ./build.sh"
     startCommand: "gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --preload"
     rootDir: backend
     envVars:
