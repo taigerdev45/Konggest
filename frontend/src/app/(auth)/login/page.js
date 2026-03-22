@@ -42,7 +42,7 @@ export default function LoginPage() {
       }
       router.push('/dashboard');
     } catch (err) {
-      setError(err.error || err.detail || 'Une erreur est survenue.');
+      setError(err.message || err.error || err.detail || 'Une erreur est survenue.');
     } finally {
       setLoading(false);
     }

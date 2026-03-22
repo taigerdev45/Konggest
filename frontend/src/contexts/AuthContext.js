@@ -1,11 +1,11 @@
 'use client';
 
 /**
- * Konggest — Auth Context
- * Manages authentication state, login, register, logout.
+ * Konggest — Supabase Auth Context
+ * Pure BaaS authentication using Supabase.
  */
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import api from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 const AuthContext = createContext(null);
 
@@ -13,43 +13,66 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Check for existing session
-    const { access } = api.getTokens();
-    if (access) {
-      fetchProfile();
-    } else {
+  const fetchSessionAndProfile = async (sessionUser) => {
+    if (!sessionUser) {
+      setUser(null);
       setLoading(false);
+      return;
     }
-  }, []);
+    // Fetch profile and organization data securely via RLS
+    const { data: profile, error } = await supabase
+      .from('accounts_userprofile')
+      .select('*, organization:accounts_organization(id, name, slug)')
+      .eq('id', sessionUser.id)
+      .single();
 
-  const fetchProfile = async () => {
-    try {
-      const data = await api.get('/auth/profile/');
-      setUser(data);
-    } catch {
-      api.clearTokens();
-    } finally {
-      setLoading(false);
+    if (error) {
+      console.error('Error fetching Supabase profile:', error);
+      // Still set user to avoid infinite loading loops
+      setUser({ ...sessionUser, profile: null });
+    } else {
+      setUser({ ...sessionUser, profile });
     }
+    setLoading(false);
   };
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      fetchSessionAndProfile(session?.user);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      fetchSessionAndProfile(session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const login = useCallback(async (email, password) => {
-    const data = await api.post('/auth/login/', { email, password });
-    api.setTokens(data.tokens.access, data.tokens.refresh);
-    setUser(data.user);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
     return data;
   }, []);
 
   const register = useCallback(async (formData) => {
-    const data = await api.post('/auth/register/', formData);
-    api.setTokens(data.tokens.access, data.tokens.refresh);
-    setUser(data.user);
+    const { email, password, first_name, last_name, organization_name } = formData;
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: {
+          full_name: `${first_name} ${last_name}`.trim(),
+          role: 'admin',
+          organization_name: organization_name,
+        }
+      }
+    });
+    if (error) throw error;
     return data;
   }, []);
 
-  const logout = useCallback(() => {
-    api.clearTokens();
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
     if (typeof window !== 'undefined') {
       window.location.href = '/login';
@@ -57,7 +80,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, fetchProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
