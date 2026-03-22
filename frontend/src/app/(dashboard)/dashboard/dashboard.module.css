@@ -1,4 +1,4 @@
-/* Dashboard Page Styles — Fully Responsive */
+/* Dashboard Page Styles */
 
 .dashboard {
   display: flex;
@@ -62,6 +62,12 @@
   gap: 20px;
 }
 
+@media (max-width: 1024px) {
+  .contentGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Activity */
 .activityList {
   display: flex;
@@ -107,9 +113,6 @@
   font-size: 0.78rem;
   color: var(--text-muted);
   margin-top: 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .activityTime {
@@ -149,65 +152,8 @@
   color: var(--text-secondary);
 }
 
-/* ─── Tablet (1024px) ─── */
-@media (max-width: 1024px) {
-  .contentGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .quickStats {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-/* ─── Mobile (768px) ─── */
 @media (max-width: 768px) {
-  .dashboard {
-    gap: 16px;
-  }
-
-  .welcome h1 {
-    font-size: 1.3rem;
-  }
-
-  .welcome p {
-    font-size: 0.82rem;
-  }
-
-  .dateBox {
-    align-items: flex-start;
-  }
-
-  .change {
-    font-size: 0.72rem;
-    padding: 2px 6px;
-  }
-
   .quickStats {
     grid-template-columns: 1fr;
-  }
-
-  .quickStat {
-    padding: 16px 18px;
-  }
-
-  .activityItem {
-    gap: 8px;
-    padding: 10px 0;
-  }
-}
-
-/* ─── Small mobile (480px) ─── */
-@media (max-width: 480px) {
-  .welcome h1 {
-    font-size: 1.15rem;
-  }
-
-  .quickIcon {
-    font-size: 1.4rem;
-  }
-
-  .quickValue {
-    font-size: 1.1rem;
   }
 }
