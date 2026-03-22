@@ -29,10 +29,6 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
     'DJANGO_CORS_ALLOWED_ORIGINS', 'https://konggest.vercel.app'
 ).split(',')
 
-# ─── Database SSL (Render external DB) ───
-DATABASES['default']['OPTIONS'] = {
-    'sslmode': 'require',
-}
 
 # ─── Redis (Render Redis) ───
 REDIS_URL = os.environ.get('REDIS_URL', '')

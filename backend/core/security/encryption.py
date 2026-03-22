@@ -10,8 +10,9 @@ from django.conf import settings
 
 def get_encryption_key():
     """Get the AES-256 encryption key from settings."""
-    key_hex = settings.ENCRYPTION_KEY
-    return bytes.fromhex(key_hex)
+    import hashlib
+    key_str = settings.ENCRYPTION_KEY
+    return hashlib.sha256(key_str.encode('utf-8')).digest()
 
 
 def encrypt_value(plaintext: str) -> str:
