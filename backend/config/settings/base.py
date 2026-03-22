@@ -140,6 +140,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ─── Django REST Framework ───
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'core.security.supabase_auth.SupabaseJWTAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
@@ -152,6 +153,7 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '20/minute',
         'user': '60/minute',
+        'auth': '5/minute',
     },
     'DEFAULT_PAGINATION_CLASS': 'core.pagination.StandardPagination',
     'DEFAULT_FILTER_BACKENDS': [
@@ -211,6 +213,7 @@ SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
 SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
 SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
+SUPABASE_JWT_SECRET = os.environ.get('SUPABASE_JWT_SECRET', SUPABASE_ANON_KEY)
 
 # ─── Encryption ───
 ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY', '0' * 32)
