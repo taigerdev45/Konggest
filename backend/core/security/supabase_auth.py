@@ -34,12 +34,10 @@ class SupabaseJWTAuthentication(authentication.BaseAuthentication):
                 algorithms=["HS256"], 
                 audience="authenticated"
             )
-        except jwt.ExpiredSignatureError:
-            raise exceptions.AuthenticationFailed('Token expiré.')
-        except jwt.DecodeError:
-            raise exceptions.AuthenticationFailed('Token invalide.')
-        except Exception as e:
-            raise exceptions.AuthenticationFailed(f"Erreur d'authentification: {str(e)}")
+        except (jwt.ExpiredSignatureError, jwt.DecodeError, Exception):
+            # If it's not a valid Supabase token, we return None to let other
+            # authentication classes (like JWTAuthentication) try to authenticate.
+            return None
 
         user_id = payload.get('sub')
         email = payload.get('email')
