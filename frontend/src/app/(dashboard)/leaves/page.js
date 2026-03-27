@@ -14,6 +14,7 @@ export default function LeavesPage() {
   const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [rejectionModal, setRejectionModal] = useState({ show: false, id: null, reason: '' });
 
   const [formData, setFormData] = useState({
     leave_type: '',
@@ -86,14 +87,19 @@ export default function LeavesPage() {
     }
   };
 
-  const handleAction = async (id, action) => {
+  const handleAction = async (id, action, data = {}) => {
     try {
-      await api.post(`/leaves/requests/${id}/${action}/`);
+      await api.post(`/leaves/requests/${id}/${action}/`, data);
+      setRejectionModal({ show: false, id: null, reason: '' });
       fetchData();
     } catch (err) {
       console.error(`Error ${action}ing leave:`, err);
       alert(`Erreur lors de l'action ${action}.`);
     }
+  };
+
+  const openRejectionModal = (id) => {
+    setRejectionModal({ show: true, id, reason: '' });
   };
 
   const STATUS = {
@@ -180,10 +186,10 @@ export default function LeavesPage() {
                   <td>
                     {l.status === 'pending' && isManager && (
                       <div className="flex gap-xs">
-                        <button className="btn btn-xs btn-primary" onClick={() => handleAction(l.id, 'approve')} title="Approuver">
+                        <button className="btn btn-xs btn-primary" onClick={() => { if(confirm('Approuver cette demande ?')) handleAction(l.id, 'approve') }} title="Approuver">
                           <HiOutlineCheck />
                         </button>
-                        <button className="btn btn-xs btn-danger" onClick={() => handleAction(l.id, 'reject')} title="Refuser">
+                        <button className="btn btn-xs btn-danger" onClick={() => openRejectionModal(l.id)} title="Refuser">
                           <HiOutlineX />
                         </button>
                       </div>
@@ -239,6 +245,48 @@ export default function LeavesPage() {
                 </button>
               </div>
             </form>
+          </div>
+          <style jsx>{`
+            .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+            .modal-content { width: 90%; padding: 24px; }
+            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+            .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+            .form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 500; }
+          `}</style>
+        </div>
+      )}
+
+      {/* Rejection Modal */}
+      {rejectionModal.show && (
+        <div className="modal-overlay">
+          <div className="modal-content card animate-in" style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h2>Refuser la demande</h2>
+              <button className="btn-close" onClick={() => setRejectionModal({ show: false, id: null, reason: '' })}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="form-group mb-md">
+                <label>Motif du refus *</label>
+                <textarea 
+                  value={rejectionModal.reason} 
+                  onChange={(e) => setRejectionModal(prev => ({ ...prev, reason: e.target.value }))} 
+                  rows="3" 
+                  placeholder="Expliquez pourquoi la demande est refusée..."
+                  required
+                ></textarea>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setRejectionModal({ show: false, id: null, reason: '' })}>Annuler</button>
+                <button 
+                  type="button" 
+                  className="btn btn-danger" 
+                  disabled={!rejectionModal.reason} 
+                  onClick={() => handleAction(rejectionModal.id, 'reject', { reason: rejectionModal.reason })}
+                >
+                  Confirmer le refus
+                </button>
+              </div>
+            </div>
           </div>
           <style jsx>{`
             .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
