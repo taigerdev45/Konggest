@@ -1,9 +1,10 @@
 """Konggest — Employees URLs"""
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import EmployeeViewSet
+from .views import EmployeeViewSet, PositionViewSet
 
 router = DefaultRouter()
+router.register('positions', PositionViewSet, basename='positions')
 router.register('', EmployeeViewSet, basename='employees')
 
 urlpatterns = [

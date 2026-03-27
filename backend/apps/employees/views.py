@@ -79,5 +79,21 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         serializer.save(organization_id=self.request.tenant_id)
 
 
+class PositionViewSet(viewsets.ModelViewSet):
+    """CRUD for positions."""
+    serializer_class = PositionSerializer
+    permission_classes = [IsHRManager]
+
+    def get_queryset(self):
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        qs = Position.objects.all()
+        if tenant_id:
+            qs = qs.filter(organization_id=tenant_id)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(organization_id=self.request.tenant_id)
+
+
 # Import Count for stats action
 from django.db import models
