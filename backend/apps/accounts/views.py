@@ -35,6 +35,17 @@ class StaffDashboardView(APIView):
         return Response(stats)
 
 
+class OrganizationViewSet(viewsets.ModelViewSet):
+    """Admin view for managing all organizations."""
+    serializer_class = OrganizationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        if not self.request.user.is_staff:
+            return Organization.objects.none()
+        return Organization.objects.all()
+
+
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """View and list audit logs for current organization."""
     permission_classes = [IsAuthenticated, IsManager]
