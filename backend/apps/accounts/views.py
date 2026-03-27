@@ -173,7 +173,19 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
 
     def get_object(self):
-        return self.request.user.profile
+        try:
+            return self.request.user.profile
+        except UserProfile.DoesNotExist:
+            # Auto-create a default profile if it doesn't exist
+            org, _ = Organization.objects.get_or_create(
+                slug='default',
+                defaults={'name': 'Mon Organisation'}
+            )
+            return UserProfile.objects.create(
+                user=self.request.user,
+                organization=org,
+                role='admin',
+            )
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
