@@ -4,31 +4,17 @@
  * Konggest — Dashboard Page
  * KPI stats, charts, and quick overview.
  */
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   HiOutlineUsers, HiOutlineCalendar,
   HiOutlineCurrencyDollar, HiOutlineBriefcase,
   HiOutlineClipboardCheck, HiOutlineTrendingUp,
 } from 'react-icons/hi';
+import api from '@/lib/api';
 import styles from './dashboard.module.css';
 
-// Mock data for demo
-const STATS = [
-  { label: 'Employés actifs', value: '147', change: '+3', icon: HiOutlineUsers, color: 'purple' },
-  { label: 'En congé', value: '12', change: '+2', icon: HiOutlineCalendar, color: 'cyan' },
-  { label: 'Masse salariale', value: '€452K', change: '+1.5%', icon: HiOutlineCurrencyDollar, color: 'green' },
-  { label: 'Postes ouverts', value: '8', change: '+1', icon: HiOutlineBriefcase, color: 'orange' },
-];
-
-const RECENT_LEAVES = [
-  { name: 'Sophie Martin', type: 'Congé payé', days: '3j', status: 'pending', date: '22/03' },
-  { name: 'Pierre Durand', type: 'Maladie', days: '1j', status: 'approved', date: '21/03' },
-  { name: 'Marie Lefèvre', type: 'Congé payé', days: '5j', status: 'approved', date: '20/03' },
-  { name: 'Lucas Bernard', type: 'Sans solde', days: '2j', status: 'rejected', date: '19/03' },
-  { name: 'Emma Petit', type: 'Congé payé', days: '4j', status: 'pending', date: '19/03' },
-];
-
-const RECENT_ACTIVITY = [
+const RECENT_ACTIVITY_MOCK = [
   { action: 'Nouvel employé ajouté', detail: 'Thomas Moreau — Dev Frontend', time: 'Il y a 2h' },
   { action: 'Congé approuvé', detail: 'Pierre Durand — 1 jour maladie', time: 'Il y a 3h' },
   { action: 'Fiche de paie générée', detail: 'Mars 2026 — 147 employés', time: 'Il y a 5h' },
@@ -44,6 +30,46 @@ const STATUS_MAP = {
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    total: 0,
+    active: 0,
+    on_leave: 0,
+    mass_salary: 0,
+    open_positions: 0,
+  });
+  const [recentLeaves, setRecentLeaves] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const [statsData, leavesData] = await Promise.all([
+          api.get('/employees/stats/'),
+          api.get('/leaves/requests/'),
+        ]);
+        
+        setStats({
+          ...statsData,
+          mass_salary: '€452K',
+          open_positions: 8,
+        });
+        setRecentLeaves(leavesData.slice(0, 5));
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDashboardData();
+  }, []);
+
+  const STATS_CARDS = [
+    { label: 'Employés actifs', value: stats.active.toString(), change: '+3', icon: HiOutlineUsers, color: 'purple' },
+    { label: 'En congé', value: stats.on_leave.toString(), change: '+2', icon: HiOutlineCalendar, color: 'cyan' },
+    { label: 'Masse salariale', value: stats.mass_salary, change: '+1.5%', icon: HiOutlineCurrencyDollar, color: 'green' },
+    { label: 'Postes ouverts', value: stats.open_positions.toString(), change: '+1', icon: HiOutlineBriefcase, color: 'orange' },
+  ];
+
   const greeting = getGreeting();
 
   return (
@@ -51,7 +77,7 @@ export default function DashboardPage() {
       {/* Welcome */}
       <div className={styles.welcome}>
         <div>
-          <h1>{greeting}, {user?.full_name || 'Admin'} 👋</h1>
+          <h1>{greeting}, {user?.profile?.full_name || user?.email || 'Admin'} 👋</h1>
           <p>Voici un aperçu de votre organisation aujourd&apos;hui</p>
         </div>
         <div className={styles.dateBox}>
@@ -62,21 +88,27 @@ export default function DashboardPage() {
 
       {/* KPI Stats */}
       <div className="grid grid-4">
-        {STATS.map((stat, i) => {
-          const Icon = stat.icon;
-          return (
-            <div key={i} className={`stat-card ${stat.color} animate-in delay-${i + 1}`}>
-              <div className={`stat-icon ${stat.color}`}>
-                <Icon />
+        {loading ? (
+          [...Array(4)].map((_, i) => (
+            <div key={i} className="stat-card skeleton" style={{ height: 120 }} />
+          ))
+        ) : (
+          STATS_CARDS.map((stat, i) => {
+            const Icon = stat.icon;
+            return (
+              <div key={i} className={`stat-card ${stat.color} animate-in delay-${i + 1}`}>
+                <div className={`stat-icon ${stat.color}`}>
+                  <Icon />
+                </div>
+                <div className="stat-info">
+                  <h3>{stat.value}</h3>
+                  <p>{stat.label}</p>
+                </div>
+                <span className={styles.change}>{stat.change}</span>
               </div>
-              <div className="stat-info">
-                <h3>{stat.value}</h3>
-                <p>{stat.label}</p>
-              </div>
-              <span className={styles.change}>{stat.change}</span>
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
       {/* Content Grid */}
@@ -93,23 +125,25 @@ export default function DashboardPage() {
                 <tr>
                   <th>Employé</th>
                   <th>Type</th>
-                  <th>Durée</th>
                   <th>Statut</th>
                 </tr>
               </thead>
               <tbody>
-                {RECENT_LEAVES.map((leave, i) => (
-                  <tr key={i}>
-                    <td style={{ fontWeight: 500 }}>{leave.name}</td>
-                    <td>{leave.type}</td>
-                    <td>{leave.days}</td>
-                    <td>
-                      <span className={`badge ${STATUS_MAP[leave.status].class}`}>
-                        {STATUS_MAP[leave.status].label}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {recentLeaves.length > 0 ? (
+                  recentLeaves.map((leave, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 500 }}>{leave.employee_name || 'Employé'}</td>
+                      <td>{leave.leave_type_name || 'Congé'}</td>
+                      <td>
+                        <span className={`badge ${STATUS_MAP[leave.status]?.class || 'badge-neutral'}`}>
+                          {STATUS_MAP[leave.status]?.label || leave.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="3" style={{ textAlign: 'center', padding: 20 }}>Aucun congé récent</td></tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -122,7 +156,7 @@ export default function DashboardPage() {
             <HiOutlineClipboardCheck style={{ color: 'var(--text-muted)' }} />
           </div>
           <div className={styles.activityList}>
-            {RECENT_ACTIVITY.map((act, i) => (
+            {RECENT_ACTIVITY_MOCK.map((act, i) => (
               <div key={i} className={styles.activityItem}>
                 <div className={styles.activityDot} />
                 <div className={styles.activityContent}>
