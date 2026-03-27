@@ -43,6 +43,16 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         invalidate_cache(self.request.tenant_id, 'employees')
 
     @action(detail=False, methods=['get'])
+    def me(self, request):
+        """Get the current user's employee profile."""
+        try:
+            employee = Employee.objects.get(user=request.user)
+            serializer = EmployeeDetailSerializer(employee)
+            return Response(serializer.data)
+        except Employee.DoesNotExist:
+            return Response({'error': 'No employee profile found for this user.'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['get'])
     def stats(self, request):
         """Get employee statistics for dashboard."""
         qs = self.get_queryset()
