@@ -2,7 +2,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Organization, UserProfile
+from .models import Organization, UserProfile, AuditLog
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
@@ -11,6 +11,15 @@ class OrganizationSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'slug', 'sector', 'logo', 'plan', 'address',
                   'phone', 'email', 'website', 'is_active', 'created_at']
         read_only_fields = ['id', 'slug', 'created_at']
+
+
+class AuditLogSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    class Meta:
+        model = AuditLog
+        fields = ['id', 'user', 'user_name', 'action', 'resource_type', 'resource_id',
+                  'details', 'ip_address', 'user_agent', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class UserProfileSerializer(serializers.ModelSerializer):

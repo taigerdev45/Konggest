@@ -13,7 +13,7 @@ import {
   HiOutlineCurrencyDollar, HiOutlineDocumentText, HiOutlineClock,
   HiOutlineBriefcase, HiOutlineChartBar, HiOutlineBell,
   HiOutlineCog, HiOutlineLogout, HiOutlineChevronLeft, HiOutlineMenu,
-  HiOutlineX,
+  HiOutlineX, HiOutlineShieldCheck
 } from 'react-icons/hi';
 import styles from './Sidebar.module.css';
 
@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { path: '/time-tracking', icon: HiOutlineClock, label: 'Pointage', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/recruitment', icon: HiOutlineBriefcase, label: 'Recrutement', roles: ['admin', 'hr'] },
   { path: '/performance', icon: HiOutlineChartBar, label: 'Performance', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/audit-logs', icon: HiOutlineShieldCheck, label: 'Audit Logs', roles: ['admin', 'hr'] },
 ];
 
 const BOTTOM_ITEMS = [

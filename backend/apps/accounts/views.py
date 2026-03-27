@@ -1,12 +1,24 @@
 """Konggest — Accounts Views"""
-from rest_framework import status, generics
+from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer
+from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AuditLogSerializer
 from .models import LoginAttempt, AuditLog
+from core.permissions import IsManager
+
+
+class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
+    """View and list audit logs for current organization."""
+    permission_classes = [IsAuthenticated, IsManager]
+    serializer_class = AuditLogSerializer
+
+    def get_queryset(self):
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        qs = AuditLog.objects.select_related('user').all()
+        return qs.filter(organization_id=tenant_id) if tenant_id else qs
 
 
 class RegisterView(generics.CreateAPIView):
