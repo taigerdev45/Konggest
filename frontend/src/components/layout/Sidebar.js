@@ -18,19 +18,20 @@ import {
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
-  { path: '/dashboard', icon: HiOutlineViewGrid, label: 'Dashboard' },
-  { path: '/employees', icon: HiOutlineUsers, label: 'Employés' },
-  { path: '/leaves', icon: HiOutlineCalendar, label: 'Congés' },
-  { path: '/payroll', icon: HiOutlineCurrencyDollar, label: 'Paie' },
-  { path: '/documents', icon: HiOutlineDocumentText, label: 'Documents' },
-  { path: '/time-tracking', icon: HiOutlineClock, label: 'Pointage' },
-  { path: '/recruitment', icon: HiOutlineBriefcase, label: 'Recrutement' },
-  { path: '/performance', icon: HiOutlineChartBar, label: 'Performance' },
+  { path: '/dashboard', icon: HiOutlineViewGrid, label: 'Dashboard', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/employees', icon: HiOutlineUsers, label: 'Employés', roles: ['admin', 'hr', 'manager'] },
+  { path: '/leaves', icon: HiOutlineCalendar, label: 'Congés', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/payroll', icon: HiOutlineCurrencyDollar, label: 'Paie', roles: ['admin', 'hr', 'employee'] },
+  { path: '/documents', icon: HiOutlineDocumentText, label: 'Documents', roles: ['admin', 'hr', 'employee'] },
+  { path: '/time-tracking', icon: HiOutlineClock, label: 'Pointage', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/recruitment', icon: HiOutlineBriefcase, label: 'Recrutement', roles: ['admin', 'hr'] },
+  { path: '/performance', icon: HiOutlineChartBar, label: 'Performance', roles: ['admin', 'hr', 'manager', 'employee'] },
 ];
 
 const BOTTOM_ITEMS = [
-  { path: '/notifications', icon: HiOutlineBell, label: 'Notifications' },
-  { path: '/settings', icon: HiOutlineCog, label: 'Paramètres' },
+  { path: '/notifications', icon: HiOutlineBell, label: 'Notifications', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/settings', icon: HiOutlineCog, label: 'Paramètres', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/staff', icon: HiOutlineChartBar, label: 'Espace Staff', roles: ['admin'] },
 ];
 
 export default function Sidebar() {
@@ -40,7 +41,12 @@ export default function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const initials = user ? `${(user.full_name || user.email || '')[0] || 'K'}` : 'K';
+  const userRole = user?.profile?.role || 'employee';
+
+  const filteredNavItems = NAV_ITEMS.filter(item => item.roles.includes(userRole));
+  const filteredBottomItems = BOTTOM_ITEMS.filter(item => item.roles.includes(userRole));
+
+  const initials = user?.profile?.full_name ? user.profile.full_name[0] : (user?.email ? user.email[0] : 'K');
 
   // Detect mobile viewport
   useEffect(() => {
@@ -117,7 +123,7 @@ export default function Sidebar() {
         <nav className={styles.nav}>
           <div className={styles.navSection}>
             {(!collapsed || isMobile) && <span className={styles.sectionLabel}>MENU PRINCIPAL</span>}
-            {NAV_ITEMS.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.path);
               return (
@@ -137,7 +143,7 @@ export default function Sidebar() {
 
           <div className={styles.navSection}>
             {(!collapsed || isMobile) && <span className={styles.sectionLabel}>SYSTÈME</span>}
-            {BOTTOM_ITEMS.map((item) => {
+            {filteredBottomItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.path);
               return (
@@ -160,8 +166,8 @@ export default function Sidebar() {
           <div className={styles.userAvatar}>{initials}</div>
           {(!collapsed || isMobile) && (
             <div className={styles.userInfo}>
-              <span className={styles.userName}>{user?.full_name || 'Utilisateur'}</span>
-              <span className={styles.userRole}>{user?.role || 'Admin'}</span>
+              <span className={styles.userName}>{user?.profile?.full_name || 'Utilisateur'}</span>
+              <span className={styles.userRole}>{userRole.toUpperCase()}</span>
             </div>
           )}
           <button className={styles.logoutBtn} onClick={logout} title="Déconnexion">
