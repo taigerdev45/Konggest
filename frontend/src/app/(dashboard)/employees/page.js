@@ -316,7 +316,9 @@ export default function EmployeesPage() {
                           `${emp.first_name[0]}${emp.last_name[0]}`
                         )}
                       </div>
-                      <span style={{ fontWeight: 500 }}>{emp.first_name} {emp.last_name}</span>
+                      <Link href={`/employees/${emp.id}`} style={{ fontWeight: 500, color: 'inherit', textDecoration: 'none' }} className="hover-link">
+                        {emp.first_name} {emp.last_name}
+                      </Link>
                     </div>
                   </td>
                   <td style={{ color: 'var(--text-secondary)' }}>{emp.email}</td>
