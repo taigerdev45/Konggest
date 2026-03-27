@@ -2,13 +2,14 @@
 from django.contrib import admin
 from django.urls import path, include
 from django.http import JsonResponse
-
+from django.views.generic import RedirectView
 
 def health_check(request):
     return JsonResponse({'status': 'ok', 'service': 'konggest-backend'})
 
 
 urlpatterns = [
+    path('favicon.ico', RedirectView.as_view(url='/static/favicon.ico', permanent=True)),
     path('admin/', admin.site.urls),
     path('api/health/', health_check, name='health-check'),
     path('api/auth/', include('apps.accounts.urls')),
