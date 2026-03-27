@@ -31,7 +31,7 @@ class ApiClient {
       const response = await fetch(url, {
         ...options,
         headers,
-        credentials: 'omit', // Standard cross-origin JWT bearer approach
+        credentials: 'omit',
       });
 
       if (!response.ok) {
@@ -39,12 +39,18 @@ class ApiClient {
         try {
           errorData = await response.json();
         } catch {
-          // If response is not JSON
+          // Fallback if not JSON
         }
         throw { status: response.status, ...errorData };
       }
 
       if (response.status === 204) return null;
+      
+      // Handle different response types (e.g., for CSV/PDF downloads)
+      if (options.responseType === 'blob') {
+        return await response.blob();
+      }
+      
       return await response.json();
     } catch (error) {
       if (error.status) throw error;

@@ -16,6 +16,9 @@ export default function PayrollPage() {
     total_deductions: 0,
     to_generate: 0,
   });
+  const [showGenModal, setShowGenModal] = useState(false);
+  const [genData, setGenData] = useState({ period: '' });
+  const [submitting, setSubmitting] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -45,6 +48,23 @@ export default function PayrollPage() {
     }
   };
 
+  const handleGenerate = async (e) => {
+    e.preventDefault();
+    if (!genData.period) return alert('Veuillez sélectionner une période.');
+    setSubmitting(true);
+    try {
+      const res = await api.post('/payroll/payslips/generate/', genData);
+      alert(res.status || 'Génération terminée.');
+      setShowGenModal(false);
+      fetchData();
+    } catch (err) {
+      console.error('Generation failed:', err);
+      alert(err.error || 'Erreur lors de la génération.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -67,7 +87,7 @@ export default function PayrollPage() {
             <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
           </button>
           {isHR && (
-            <button className="btn btn-primary">
+            <button className="btn btn-primary" onClick={() => setShowGenModal(true)}>
               <HiOutlinePlus /> Générer les fiches
             </button>
           )}
@@ -153,6 +173,51 @@ export default function PayrollPage() {
           </tbody>
         </table>
       </div>
+
+      {/* Generation Modal */}
+      {showGenModal && (
+        <div className="modal-overlay">
+          <div className="modal-content card animate-in" style={{ maxWidth: 400 }}>
+            <div className="modal-header">
+              <h2>Générer les fiches de paie</h2>
+              <button className="btn-close" onClick={() => setShowGenModal(false)}>&times;</button>
+            </div>
+            <form onSubmit={handleGenerate} className="modal-body">
+              <div className="form-group mb-lg">
+                <label>Période de paie *</label>
+                <select 
+                  value={genData.period} 
+                  onChange={(e) => setGenData({ period: e.target.value })}
+                  required
+                >
+                  <option value="">Sélectionner une période...</option>
+                  {periods.map(p => (
+                    <option key={p.id} value={p.id} disabled={p.is_closed}>
+                      {p.name} {p.is_closed ? '(Clôturée)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 8 }}>
+                  Cela générera des brouillons de fiches de paie pour tous les employés actifs de cette période.
+                </p>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowGenModal(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting || !genData.period}>
+                  {submitting ? 'Génération...' : 'Lancer la génération'}
+                </button>
+              </div>
+            </form>
+          </div>
+          <style jsx>{`
+            .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+            .modal-content { width: 90%; padding: 24px; }
+            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+            .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
+            .form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 500; }
+          `}</style>
+        </div>
+      )}
     </div>
   );
 }

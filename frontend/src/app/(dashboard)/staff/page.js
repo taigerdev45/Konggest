@@ -159,7 +159,7 @@ export default function StaffDashboardPage() {
                     </td>
                     <td style={{ fontSize: '0.85rem' }}>{new Date(org.created_at).toLocaleDateString('fr-FR')}</td>
                     <td>
-                      <button className="btn btn-xs btn-ghost">Gérer</button>
+                      <button className="btn btn-xs btn-ghost" onClick={() => alert(`Gestion de l'organisation : ${org.name}`)}>Gérer</button>
                     </td>
                   </tr>
                 ))}

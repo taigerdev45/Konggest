@@ -64,7 +64,12 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
     def approve(self, request, pk=None):
         leave = self.get_object()
         leave.status = 'approved'
-        leave.approved_by = request.user.employee
+        # Get employee profile if exists, otherwise it's a staff/admin without profile
+        from apps.employees.models import Employee
+        try:
+            leave.approved_by = Employee.objects.get(user=request.user)
+        except Employee.DoesNotExist:
+            leave.approved_by = None
         leave.approved_at = timezone.now()
         leave.save()
         return Response({'status': 'approved'})
@@ -74,7 +79,12 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
         leave = self.get_object()
         leave.status = 'rejected'
         leave.rejection_reason = request.data.get('reason', '')
-        leave.approved_by = request.user.employee
+        # Get employee profile if exists
+        from apps.employees.models import Employee
+        try:
+            leave.approved_by = Employee.objects.get(user=request.user)
+        except Employee.DoesNotExist:
+            leave.approved_by = None
         leave.approved_at = timezone.now()
         leave.save()
         return Response({'status': 'rejected'})

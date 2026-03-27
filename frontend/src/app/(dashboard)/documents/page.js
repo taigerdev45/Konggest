@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export default function DocumentsPage() {
   const { user } = useAuth();
-  const [documents, setNotifications] = useState([]);
+  const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -24,7 +24,7 @@ export default function DocumentsPage() {
     setLoading(true);
     try {
       const data = await api.get('/documents/');
-      setNotifications(data);
+      setDocuments(data);
     } catch (err) {
       console.error('Error fetching documents:', err);
     } finally {
@@ -81,6 +81,17 @@ export default function DocumentsPage() {
       alert('Erreur lors de l\'upload du document.');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Voulez-vous vraiment supprimer ce document ?')) return;
+    try {
+      await api.delete(`/documents/${id}/`);
+      fetchDocuments();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      alert('Erreur lors de la suppression.');
     }
   };
 
@@ -165,7 +176,7 @@ export default function DocumentsPage() {
                         <HiOutlineDownload />
                       </a>
                       {isHR && (
-                        <button className="btn btn-xs btn-ghost text-danger" title="Supprimer">
+                        <button className="btn btn-xs btn-ghost text-danger" title="Supprimer" onClick={() => handleDelete(doc.id)}>
                           <HiOutlineTrash />
                         </button>
                       )}

@@ -20,6 +20,7 @@ import styles from './Sidebar.module.css';
 const NAV_ITEMS = [
   { path: '/dashboard', icon: HiOutlineViewGrid, label: 'Dashboard', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/employees', icon: HiOutlineUsers, label: 'Employés', roles: ['admin', 'hr', 'manager'] },
+  { path: '/users', icon: HiOutlineUsers, label: 'Utilisateurs', roles: ['admin', 'hr'] },
   { path: '/leaves', icon: HiOutlineCalendar, label: 'Congés', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/payroll', icon: HiOutlineCurrencyDollar, label: 'Paie', roles: ['admin', 'hr', 'employee'] },
   { path: '/documents', icon: HiOutlineDocumentText, label: 'Documents', roles: ['admin', 'hr', 'employee'] },

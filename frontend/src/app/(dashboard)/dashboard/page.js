@@ -114,7 +114,7 @@ export default function DashboardPage() {
       {/* Content Grid */}
       <div className={styles.contentGrid}>
         {/* Recent Leaves */}
-        <div className="card">
+        <div className="card animate-in delay-3">
           <div className="flex items-center justify-between mb-md">
             <h3>Demandes de congés récentes</h3>
             <a href="/leaves" className="btn btn-ghost btn-sm">Voir tout →</a>
@@ -131,7 +131,7 @@ export default function DashboardPage() {
               <tbody>
                 {recentLeaves.length > 0 ? (
                   recentLeaves.map((leave, i) => (
-                    <tr key={i}>
+                    <tr key={i} className={`animate-in delay-${Math.min(i + 1, 4)}`}>
                       <td style={{ fontWeight: 500 }}>{leave.employee_name || 'Employé'}</td>
                       <td>{leave.leave_type_name || 'Congé'}</td>
                       <td>
@@ -150,14 +150,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Recent Activity */}
-        <div className="card">
+        <div className="card animate-in delay-4">
           <div className="flex items-center justify-between mb-md">
             <h3>Activité récente</h3>
             <HiOutlineClipboardCheck style={{ color: 'var(--text-muted)' }} />
           </div>
           <div className={styles.activityList}>
             {RECENT_ACTIVITY_MOCK.map((act, i) => (
-              <div key={i} className={styles.activityItem}>
+              <div key={i} className={`${styles.activityItem} animate-in`} style={{ animationDelay: `${0.1 * i}s` }}>
                 <div className={styles.activityDot} />
                 <div className={styles.activityContent}>
                   <span className={styles.activityAction}>{act.action}</span>

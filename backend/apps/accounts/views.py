@@ -174,3 +174,20 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user.profile
+
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    """Manage users within the current organization (Manager only)."""
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated, IsManager]
+
+    def get_queryset(self):
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        qs = UserProfile.objects.select_related('user', 'organization').all()
+        if tenant_id:
+            qs = qs.filter(organization_id=tenant_id)
+        return qs
+
+    def perform_create(self, serializer):
+        # Specific logic for creating users via invitation or direct creation
+        serializer.save(organization_id=self.request.tenant_id)
