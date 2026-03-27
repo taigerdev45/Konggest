@@ -6,8 +6,33 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AuditLogSerializer
-from .models import LoginAttempt, AuditLog
-from core.permissions import IsManager
+from django.db.models import Count, Sum
+from .models import Organization, UserProfile, AuditLog, LoginAttempt
+
+class StaffDashboardView(APIView):
+    """Global metrics for SaaS administrators."""
+    permission_classes = [IsAuthenticated] # Should be IsSuperUser in production
+
+    def get(self, request):
+        if not request.user.is_staff:
+            return Response({'error': 'Access denied'}, status=403)
+
+        from apps.employees.models import Employee
+        from apps.leaves.models import LeaveRequest
+        from apps.documents.models import Document
+
+        stats = {
+            'total_organizations': Organization.objects.count(),
+            'active_organizations': Organization.objects.filter(is_active=True).count(),
+            'total_users': UserProfile.objects.count(),
+            'total_employees': Employee.objects.count(),
+            'total_leave_requests': LeaveRequest.objects.count(),
+            'total_documents': Document.objects.count(),
+            'org_distribution': Organization.objects.values('plan').annotate(count=Count('id')),
+            'recent_logins': AuditLog.objects.filter(action='login').count(),
+            'failed_attempts': LoginAttempt.objects.filter(success=False).count(),
+        }
+        return Response(stats)
 
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
