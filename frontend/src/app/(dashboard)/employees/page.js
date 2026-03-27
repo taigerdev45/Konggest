@@ -6,7 +6,7 @@
  */
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { HiOutlineSearch, HiOutlinePlus, HiOutlineFilter, HiOutlineRefresh } from 'react-icons/hi';
+import { HiOutlineSearch, HiOutlinePlus, HiOutlineFilter, HiOutlineRefresh, HiOutlineDownload } from 'react-icons/hi';
 import api from '@/lib/api';
 
 export default function EmployeesPage() {
@@ -89,6 +89,22 @@ export default function EmployeesPage() {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await api.get('/employees/export_csv/', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'employees_export.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Erreur lors de l\'exportation.');
+    }
+  };
+
   const filtered = employees.filter((emp) => {
     const matchSearch = `${emp.first_name} ${emp.last_name} ${emp.employee_id} ${emp.email}`
       .toLowerCase()
@@ -115,6 +131,9 @@ export default function EmployeesPage() {
         <div className="flex gap-sm">
           <button className="btn btn-ghost" onClick={fetchInitialData} disabled={loading}>
             <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button className="btn btn-secondary" onClick={handleExport}>
+            <HiOutlineDownload /> Export CSV
           </button>
           <button className="btn btn-primary" id="add-employee-btn" onClick={() => setShowModal(true)}>
             <HiOutlinePlus /> Ajouter un employé

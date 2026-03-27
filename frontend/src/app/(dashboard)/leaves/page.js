@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HiOutlineCalendar, HiOutlinePlus, HiOutlineRefresh, HiOutlineCheck, HiOutlineX } from 'react-icons/hi';
+import { HiOutlineCalendar, HiOutlinePlus, HiOutlineRefresh, HiOutlineCheck, HiOutlineX, HiOutlineDownload } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -102,6 +102,22 @@ export default function LeavesPage() {
     setRejectionModal({ show: true, id, reason: '' });
   };
 
+  const handleExport = async () => {
+    try {
+      const response = await api.get('/leaves/requests/export_csv/', { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'leaves_export.csv');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Export failed:', err);
+      alert('Erreur lors de l\'exportation.');
+    }
+  };
+
   const STATUS = {
     pending: { label: 'En attente', cls: 'badge-warning' },
     approved: { label: 'Approuvé', cls: 'badge-success' },
@@ -121,6 +137,9 @@ export default function LeavesPage() {
         <div className="flex gap-sm">
           <button className="btn btn-ghost" onClick={fetchData} disabled={loading}>
             <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
+          </button>
+          <button className="btn btn-secondary" onClick={handleExport}>
+            <HiOutlineDownload /> Export CSV
           </button>
           <button className="btn btn-primary" onClick={() => setShowModal(true)}>
             <HiOutlinePlus /> Nouvelle demande

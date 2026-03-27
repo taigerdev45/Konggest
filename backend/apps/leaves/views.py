@@ -23,11 +23,32 @@ class LeaveTypeViewSet(viewsets.ModelViewSet):
         serializer.save(organization_id=self.request.tenant_id)
 
 
+import csv
+from django.http import HttpResponse
+
 class LeaveRequestViewSet(viewsets.ModelViewSet):
+    """CRUD for leave requests."""
     serializer_class = LeaveRequestSerializer
     permission_classes = [IsEmployee]
     filterset_fields = ['status', 'employee', 'leave_type']
     ordering_fields = ['start_date', 'created_at']
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """Export leave requests as CSV."""
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="leaves_export.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Employé', 'Type', 'Début', 'Fin', 'Jours', 'Statut'])
+        
+        for req in self.get_queryset():
+            writer.writerow([
+                req.id, req.employee.full_name, req.leave_type.name,
+                req.start_date, req.end_date, req.days_count, req.status
+            ])
+            
+        return response
 
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)

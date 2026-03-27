@@ -11,6 +11,9 @@ from .serializers import (
 )
 
 
+from django.http import HttpResponse
+import csv
+
 class EmployeeViewSet(viewsets.ModelViewSet):
     """CRUD for employees (tenant-scoped)."""
     permission_classes = [IsManager, IsSameTenant]
@@ -22,6 +25,25 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return EmployeeListSerializer
         return EmployeeDetailSerializer
+
+    @action(detail=False, methods=['get'])
+    def export_csv(self, request):
+        """Export employees list as CSV."""
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="employees_export.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow(['ID', 'Matricule', 'Prénom', 'Nom', 'Email', 'Département', 'Poste', 'Statut', 'Date Embauche'])
+        
+        for emp in self.get_queryset():
+            writer.writerow([
+                emp.id, emp.employee_id, emp.first_name, emp.last_name, emp.email,
+                emp.department.name if emp.department else 'N/A',
+                emp.position.title if emp.position else 'N/A',
+                emp.status, emp.hire_date
+            ])
+            
+        return response
 
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
