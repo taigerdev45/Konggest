@@ -13,11 +13,8 @@ export default function TimeTrackingPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [entriesData, meData] = await Promise.all([
-        api.get('/time-tracking/entries/'),
-        api.get('/employees/me/').catch(() => null),
-      ]);
-      setEntries(entriesData);
+      const entriesArr = Array.isArray(entriesData) ? entriesData : [];
+      setEntries(entriesArr);
       setMe(meData);
     } catch (err) {
       console.error('Error fetching time tracking data:', err);
@@ -30,7 +27,7 @@ export default function TimeTrackingPage() {
     fetchData();
   }, []);
 
-  const todayEntry = entries.find(e => e.date === new Date().toISOString().split('T')[0]);
+  const todayEntry = Array.isArray(entries) ? entries.find(e => e.date === new Date().toISOString().split('T')[0]) : null;
 
   const handlePointer = async () => {
     if (!me) return alert('Profil employé non trouvé.');
@@ -68,8 +65,8 @@ export default function TimeTrackingPage() {
 
   const stats = {
     presence: '96.8%', // Mocked for now or calculate from history
-    average: entries.length > 0 
-      ? (entries.reduce((acc, e) => acc + (e.worked_hours || 0), 0) / entries.length).toFixed(2) + 'h'
+    average: (Array.isArray(entries) && entries.length > 0)
+      ? (entries.reduce((acc, e) => acc + (parseFloat(e.worked_hours) || 0), 0) / entries.length).toFixed(2) + 'h'
       : '0h',
     overtime: '34h', // Mocked
   };
@@ -153,7 +150,7 @@ export default function TimeTrackingPage() {
                     <td colSpan="6"><div className="skeleton" style={{ height: 20 }} /></td>
                   </tr>
                 ))
-              ) : entries.length > 0 ? (
+              ) : Array.isArray(entries) && entries.length > 0 ? (
                 entries.map(e => (
                   <tr key={e.id}>
                     <td>{new Date(e.date).toLocaleDateString('fr-FR')}</td>

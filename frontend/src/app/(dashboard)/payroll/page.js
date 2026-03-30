@@ -29,18 +29,21 @@ export default function PayrollPage() {
         api.get('/payroll/payslips/'),
         api.get('/payroll/periods/'),
       ]);
-      setPayslips(payslipData);
-      setPeriods(periodData);
+      const payslipsArr = Array.isArray(payslipData) ? payslipData : [];
+      const periodsArr = Array.isArray(periodData) ? periodData : [];
+      
+      setPayslips(payslipsArr);
+      setPeriods(periodsArr);
       
       // Calculate summary stats
-      if (payslipData.length > 0) {
-        const totalGross = payslipData.reduce((acc, p) => acc + parseFloat(p.gross_salary), 0);
-        const totalDeductions = payslipData.reduce((acc, p) => acc + parseFloat(p.total_deductions), 0);
+      if (payslipsArr.length > 0) {
+        const totalGross = payslipsArr.reduce((acc, p) => acc + parseFloat(p.gross_salary || 0), 0);
+        const totalDeductions = payslipsArr.reduce((acc, p) => acc + parseFloat(p.total_deductions || 0), 0);
         setStats({
           mass_salary: totalGross,
           total_deductions: totalDeductions,
-          average_salary: totalGross / payslipData.length,
-          to_generate: (Array.isArray(payslipData) ? payslipData : []).filter(p => p.status === 'draft').length,
+          average_salary: totalGross / payslipsArr.length,
+          to_generate: payslipsArr.filter(p => p.status === 'draft').length,
         });
       }
     } catch (err) {
@@ -146,7 +149,7 @@ export default function PayrollPage() {
                   <td colSpan="6"><div className="skeleton" style={{ height: 20 }} /></td>
                 </tr>
               ))
-            ) : payslips.length > 0 ? (
+            ) : Array.isArray(payslips) && payslips.length > 0 ? (
               payslips.map(p => (
                 <tr key={p.id}>
                   <td style={{ fontWeight: 500 }}>{p.employee_name}</td>
@@ -298,7 +301,7 @@ export default function PayrollPage() {
                   required
                 >
                   <option value="">Sélectionner une période...</option>
-                  {periods.map(p => (
+                  {Array.isArray(periods) && periods.map(p => (
                     <option key={p.id} value={p.id} disabled={p.is_closed}>
                       {p.name} {p.is_closed ? '(Clôturée)' : ''}
                     </option>
