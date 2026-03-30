@@ -47,6 +47,19 @@ class OrganizationViewSet(viewsets.ModelViewSet):
             return Organization.objects.none()
         return Organization.objects.all()
 
+    @action(detail=False, methods=['get', 'patch'])
+    def me(self, request):
+        """Get or update current user's organization."""
+        org = request.user.profile.organization
+        if request.method == 'PATCH':
+            serializer = self.get_serializer(org, data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)
+        
+        serializer = self.get_serializer(org)
+        return Response(serializer.data)
+
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """View and list audit logs for current organization."""

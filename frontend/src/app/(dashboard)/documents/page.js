@@ -116,16 +116,16 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      <div className="grid grid-3" style={{ marginBottom: 20 }}>
-        <div className="stat-card purple">
-          <div className="stat-icon purple"><HiOutlineDocumentText /></div>
+      <div className="grid grid-3 mb-lg animate-in delay-1">
+        <div className="stat-card blue">
+          <div className="stat-icon blue"><HiOutlineDocumentText /></div>
           <div className="stat-info">
-            <h3>{documents.length}</h3>
+            <h3 style={{ color: 'var(--primary)' }}>{documents.length}</h3>
             <p>Documents stockés</p>
           </div>
         </div>
-        <div className="stat-card cyan">
-          <div className="stat-icon cyan"><HiOutlineDocumentText /></div>
+        <div className="stat-card purple">
+          <div className="stat-icon purple"><HiOutlineDocumentText /></div>
           <div className="stat-info">
             <h3>{documents.filter(d => d.mime_type?.includes('pdf')).length}</h3>
             <p>Fichiers PDF</p>
@@ -140,44 +140,83 @@ export default function DocumentsPage() {
         </div>
       </div>
 
-      <div className="table-container animate-in">
+      <div className="table-container animate-in delay-2">
         <table>
           <thead>
             <tr>
-              <th>Titre</th>
-              <th>Type</th>
+              <th>Nom du document</th>
+              <th>Format</th>
               <th>Taille</th>
-              <th>Date</th>
-              <th>Actions</th>
+              <th>Ajouté le</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               [...Array(3)].map((_, i) => (
                 <tr key={i} className="skeleton-row">
-                  <td colSpan="5"><div className="skeleton" style={{ height: 20 }} /></td>
+                  <td colSpan="5"><div className="skeleton" style={{ height: 24 }} /></td>
                 </tr>
               ))
             ) : documents.length > 0 ? (
-              documents.map(doc => (
-                <tr key={doc.id}>
-                  <td style={{ fontWeight: 500 }}>
+              documents.map((doc, i) => (
+                <tr key={doc.id} className={`animate-in delay-${Math.min(i+1, 4)}`}>
+                  <td>
                     <div className="flex items-center gap-sm">
-                      <HiOutlineDocumentText style={{ color: 'var(--primary-light)' }} />
-                      {doc.title}
+                      <div style={{ 
+                        width: 32, 
+                        height: 32, 
+                        borderRadius: 6, 
+                        background: doc.mime_type?.includes('pdf') ? '#fee2e2' : '#e0f2fe',
+                        color: doc.mime_type?.includes('pdf') ? '#ef4444' : '#0284c7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.1rem'
+                      }}>
+                        <HiOutlineDocumentText />
+                      </div>
+                      <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                        {doc.title}
+                        {doc.is_confidential && (
+                          <span style={{ marginLeft: 8, fontSize: '0.7rem', background: '#fef3c7', color: '#92400e', padding: '2px 6px', borderRadius: 4 }}>
+                            🔒 Privé
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </td>
-                  <td><span className="badge badge-neutral">{doc.mime_type?.split('/')[1]?.toUpperCase() || 'FILE'}</span></td>
-                  <td>{(doc.file_size / 1024).toFixed(1)} KB</td>
-                  <td>{new Date(doc.created_at).toLocaleDateString('fr-FR')}</td>
                   <td>
-                    <div className="flex gap-xs">
-                      <a href={doc.file_url} target="_blank" rel="noopener noreferrer" className="btn btn-xs btn-ghost" title="Télécharger">
-                        <HiOutlineDownload />
+                    <span className="badge badge-neutral" style={{ fontSize: '0.75rem' }}>
+                      {doc.mime_type?.split('/')[1]?.toUpperCase() || 'FILE'}
+                    </span>
+                  </td>
+                  <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {(doc.file_size / 1024).toFixed(1)} KB
+                  </td>
+                  <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {new Date(doc.created_at).toLocaleDateString('fr-FR')}
+                  </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div className="flex gap-xs justify-end">
+                      <a 
+                        href={doc.file_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="btn btn-xs btn-ghost" 
+                        title="Télécharger"
+                        style={{ padding: '8px' }}
+                      >
+                        <HiOutlineDownload fontSize="1.1rem" />
                       </a>
                       {isHR && (
-                        <button className="btn btn-xs btn-ghost text-danger" title="Supprimer" onClick={() => handleDelete(doc.id)}>
-                          <HiOutlineTrash />
+                        <button 
+                          className="btn btn-xs btn-ghost" 
+                          title="Supprimer" 
+                          onClick={() => handleDelete(doc.id)}
+                          style={{ padding: '8px', color: 'var(--danger)' }}
+                        >
+                          <HiOutlineTrash fontSize="1.1rem" />
                         </button>
                       )}
                     </div>
@@ -185,7 +224,15 @@ export default function DocumentsPage() {
                 </tr>
               ))
             ) : (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Aucun document trouvé.</td></tr>
+              <tr>
+                <td colSpan="5" style={{ textAlign: 'center', padding: 60 }}>
+                  <div className="empty-state">
+                    <HiOutlineDocumentText size={48} style={{ color: 'var(--text-muted)', marginBottom: 16 }} />
+                    <h3 style={{ margin: 0 }}>Aucun document</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>Commencez par ajouter vos premiers fichiers RH.</p>
+                  </div>
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -194,39 +241,78 @@ export default function DocumentsPage() {
       {/* Upload Modal */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 450 }}>
+          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
             <div className="modal-header">
-              <h2>Uploader un document</h2>
+              <div>
+                <h2>Uploader un document</h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Ajoutez un fichier à votre coffre-fort numérique.</p>
+              </div>
               <button className="btn-close" onClick={() => setShowModal(false)}>&times;</button>
             </div>
-            <form onSubmit={handleUpload} className="modal-body">
-              <div className="form-group mb-md">
-                <label>Titre du document *</label>
-                <input type="text" value={formData.title} onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} required placeholder="Ex: Contrat de travail..." />
+            <form onSubmit={handleUpload} className="modal-body flex flex-col gap-md">
+              <div className="input-group">
+                <label className="label">Titre du document *</label>
+                <input 
+                  className="input"
+                  type="text" 
+                  value={formData.title} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} 
+                  required 
+                  placeholder="Ex: Contrat de travail, Attestation..." 
+                />
               </div>
-              <div className="form-group mb-md">
-                <label>Fichier *</label>
-                <input type="file" onChange={handleFileChange} required />
+              <div className="input-group">
+                <label className="label">Sélectionner le fichier *</label>
+                <div 
+                  style={{ 
+                    border: '2px dashed var(--border)', 
+                    borderRadius: 'var(--radius-md)', 
+                    padding: '24px', 
+                    textAlign: 'center',
+                    background: 'var(--bg-secondary)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onClick={() => document.getElementById('file-upload').click()}
+                  onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                  onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
+                >
+                  <HiOutlineUpload fontSize="2rem" style={{ color: 'var(--primary)', marginBottom: 8 }} />
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>
+                    {formData.file ? formData.file.name : 'Cliquez pour choisir un fichier'}
+                  </p>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    PDF, PNG, JPG jusqu'à 10MB
+                  </p>
+                  <input 
+                    id="file-upload"
+                    type="file" 
+                    onChange={handleFileChange} 
+                    required 
+                    style={{ display: 'none' }}
+                  />
+                </div>
               </div>
-              <div className="form-group mb-md flex items-center gap-sm">
-                <input type="checkbox" id="confidential" checked={formData.is_confidential} onChange={(e) => setFormData(prev => ({ ...prev, is_confidential: e.target.checked }))} />
-                <label htmlFor="confidential" style={{ marginBottom: 0 }}>Document confidentiel</label>
+              <div className="input-group flex items-center gap-sm mt-xs">
+                <input 
+                  type="checkbox" 
+                  id="confidential" 
+                  checked={formData.is_confidential} 
+                  onChange={(e) => setFormData(prev => ({ ...prev, is_confidential: e.target.checked }))}
+                  style={{ width: 18, height: 18 }}
+                />
+                <label htmlFor="confidential" style={{ marginBottom: 0, fontSize: '0.85rem', cursor: 'pointer' }}>
+                  Restreindre l'accès (Confidentiel)
+                </label>
               </div>
-              <div className="modal-footer">
+              <div className="modal-footer mt-lg">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={uploading || !formData.file}>
-                  {uploading ? 'Upload en cours...' : 'Uploader'}
+                  {uploading ? 'Upload en cours...' : 'Lancer l\'upload'}
                 </button>
               </div>
             </form>
           </div>
-          <style jsx>{`
-            .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-            .modal-content { width: 90%; padding: 24px; }
-            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-            .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
-            .form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 500; }
-          `}</style>
         </div>
       )}
     </div>

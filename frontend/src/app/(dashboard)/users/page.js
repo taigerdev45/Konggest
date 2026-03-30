@@ -144,11 +144,11 @@ export default function UsersPage() {
         <table>
           <thead>
             <tr>
-              <th>Membre</th>
-              <th>Rôle</th>
+              <th>Collaborateur</th>
+              <th>Rôle & Accès</th>
               <th>Statut</th>
-              <th>Date d'ajout</th>
-              <th>Actions</th>
+              <th>Dernière activité</th>
+              <th style={{ textAlign: 'right' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -163,11 +163,17 @@ export default function UsersPage() {
                 <tr key={user.id} className={`animate-in delay-${Math.min(i + 1, 4)}`}>
                   <td>
                     <div className="flex items-center gap-md">
-                      <div className="avatar">
+                      <div className="avatar" style={{ 
+                        background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
+                        color: 'white',
+                        fontWeight: 700,
+                        border: 'none',
+                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
+                      }}>
                         {user.full_name ? user.full_name[0] : 'U'}
                       </div>
                       <div>
-                        <div style={{ fontWeight: 600 }}>{user.full_name || 'Utilisateur'}</div>
+                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user.full_name || 'Utilisateur'}</div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.email}</div>
                       </div>
                     </div>
@@ -177,33 +183,44 @@ export default function UsersPage() {
                       user.role === 'admin' ? 'badge-primary' : 
                       user.role === 'hr' ? 'badge-success' : 
                       user.role === 'manager' ? 'badge-warning' : 'badge-neutral'
-                    }`}>
+                    }`} style={{ fontWeight: 600 }}>
                       {ROLE_LABELS[user.role] || user.role.toUpperCase()}
                     </span>
                   </td>
                   <td>
-                    <span className={`badge ${user.is_active ? 'badge-success' : 'badge-danger'}`}>
-                      {user.is_active ? 'ACTIF' : 'SUSPENDU'}
-                    </span>
+                    <div className="flex items-center gap-xs">
+                      <div style={{ 
+                        width: 8, 
+                        height: 8, 
+                        borderRadius: '50%', 
+                        background: user.is_active ? 'var(--success)' : 'var(--danger)',
+                        boxShadow: `0 0 8px ${user.is_active ? 'var(--success)' : 'var(--danger)'}44`
+                      }} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: user.is_active ? 'var(--success)' : 'var(--danger)' }}>
+                        {user.is_active ? 'Actif' : 'Suspendu'}
+                      </span>
+                    </div>
                   </td>
-                  <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    {new Date(user.created_at).toLocaleDateString('fr-FR')}
+                  <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    {new Date(user.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </td>
-                  <td>
-                    <div className="flex gap-xs">
+                  <td style={{ textAlign: 'right' }}>
+                    <div className="flex gap-xs justify-end">
                       <button 
                         className={`btn btn-xs ${user.is_active ? 'btn-ghost' : 'btn-primary'}`} 
-                        title={user.is_active ? 'Suspendre' : 'Réactiver'}
+                        title={user.is_active ? 'Suspendre l\'accès' : 'Réactiver l\'accès'}
                         onClick={() => handleStatusToggle(user)}
+                        style={{ padding: '8px' }}
                       >
-                        {user.is_active ? <HiOutlineLockClosed /> : <HiOutlineLockOpen />}
+                        {user.is_active ? <HiOutlineLockClosed fontSize="1.1rem" /> : <HiOutlineLockOpen fontSize="1.1rem" />}
                       </button>
                       <button 
-                        className="btn btn-xs btn-ghost text-danger" 
-                        title="Supprimer"
+                        className="btn btn-xs btn-ghost" 
+                        title="Supprimer définitivement"
                         onClick={() => handleDelete(user)}
+                        style={{ padding: '8px', color: 'var(--danger)' }}
                       >
-                        <HiOutlineTrash />
+                        <HiOutlineTrash fontSize="1.1rem" />
                       </button>
                     </div>
                   </td>
@@ -211,11 +228,25 @@ export default function UsersPage() {
               ))
             ) : (
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: 60 }}>
+                <td colSpan="5" style={{ textAlign: 'center', padding: 80 }}>
                   <div className="empty-state">
-                    <HiOutlineSearch size={48} />
-                    <h3>Aucun résultat</h3>
-                    <p>Réessayez avec d'autres filtres ou invitez un nouveau membre.</p>
+                    <div style={{ 
+                      width: 64, 
+                      height: 64, 
+                      borderRadius: '50%', 
+                      background: 'var(--bg-secondary)', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      margin: '0 auto 16px',
+                      color: 'var(--text-muted)'
+                    }}>
+                      <HiOutlineSearch size={32} />
+                    </div>
+                    <h3 style={{ margin: '0 0 8px 0' }}>Aucun membre trouvé</h3>
+                    <p style={{ color: 'var(--text-muted)', maxWidth: 300, margin: '0 auto' }}>
+                      Ajustez vos filtres ou invitez un nouveau collaborateur sur la plateforme.
+                    </p>
                   </div>
                 </td>
               </tr>
@@ -227,14 +258,17 @@ export default function UsersPage() {
       {/* Invitation Modal */}
       {showInviteModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 480 }}>
+          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
             <div className="modal-header">
-              <h2>Inviter un collaborateur</h2>
+              <div>
+                <h2>Inviter un collaborateur</h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Envoyez une invitation pour rejoindre votre organisation.</p>
+              </div>
               <button className="btn-close" onClick={() => setShowInviteModal(false)}>&times;</button>
             </div>
             <form onSubmit={handleInvite} className="modal-body flex flex-col gap-md">
               <div className="input-group">
-                <label>Nom complet</label>
+                <label className="label">Nom complet du membre</label>
                 <input 
                   className="input" 
                   value={inviteData.full_name} 
@@ -244,12 +278,12 @@ export default function UsersPage() {
                 />
               </div>
               <div className="input-group">
-                <label>Adresse email</label>
+                <label className="label">Adresse email professionnelle</label>
                 <div style={{ position: 'relative' }}>
-                  <HiOutlineMail style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <HiOutlineMail style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.7 }} />
                   <input 
                     className="input" 
-                    style={{ paddingLeft: 38 }}
+                    style={{ paddingLeft: 42 }}
                     type="email"
                     value={inviteData.email} 
                     onChange={e => setInviteData({...inviteData, email: e.target.value})}
@@ -259,36 +293,34 @@ export default function UsersPage() {
                 </div>
               </div>
               <div className="input-group">
-                <label>Rôle assigné</label>
+                <label className="label">Rôle et Niveau d'accès</label>
                 <select 
                   className="input" 
                   value={inviteData.role} 
                   onChange={e => setInviteData({...inviteData, role: e.target.value})}
                 >
-                  <option value="employee">Employé (Standard)</option>
-                  <option value="manager">Manager (Approbation)</option>
-                  <option value="hr">RH (Gestion complète)</option>
-                  <option value="admin">Administrateur</option>
+                  <option value="employee">Employé (Consultation & Congés)</option>
+                  <option value="manager">Manager (Approbation & Équipe)</option>
+                  <option value="hr">RH (Paie & Gestion complète)</option>
+                  <option value="admin">Administrateur (Configuration système)</option>
                 </select>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
-                  Les permissions seront appliquées dès que le membre se connectera.
-                </p>
+                <div className="helper-text ml-xs" style={{ background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: 8, marginTop: 12, border: '1px solid var(--border)' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', lineHeight: 1.4 }}>
+                    <HiOutlineShieldCheck style={{ verticalAlign: 'text-bottom', marginRight: 6, color: 'var(--primary)' }} />
+                    L'invité recevra un accès sécurisé avec les permissions liées à son rôle.
+                  </p>
+                </div>
               </div>
               <div className="modal-footer mt-lg">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowInviteModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Envoi...' : 'Envoyer l’invitation'}
+                  {submitting ? 'Envoi en cours...' : 'Envoyer l’invitation'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      
-      <style jsx>{`
-        .text-danger { color: var(--danger) !important; }
-        .text-danger:hover { background: var(--danger-bg) !important; }
-      `}</style>
     </div>
   );
 }

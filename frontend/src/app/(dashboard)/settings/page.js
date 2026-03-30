@@ -71,110 +71,143 @@ export default function SettingsPage() {
       </div>
 
       {message.text && (
-        <div className={`card animate-in mb-md ${message.type === 'success' ? 'border-success' : 'border-danger'}`} 
-             style={{ padding: '12px 20px', background: message.type === 'success' ? 'var(--success-bg)' : 'var(--danger-bg)' }}>
-          <p style={{ color: message.type === 'success' ? 'var(--success)' : 'var(--danger)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {message.type === 'success' && <HiOutlineCheckCircle />} {message.text}
-          </p>
+        <div className={`toast animate-in ${message.type === 'success' ? 'toast-success' : 'toast-error'}`} 
+             style={{ 
+               position: 'fixed', 
+               bottom: '30px', 
+               right: '30px', 
+               zIndex: 1000,
+               padding: '16px 24px',
+               borderRadius: 'var(--radius-lg)',
+               background: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
+               color: 'white',
+               boxShadow: 'var(--shadow-xl)',
+               display: 'flex',
+               alignItems: 'center',
+               gap: '12px',
+               fontWeight: 600
+             }}>
+          {message.type === 'success' ? <HiOutlineCheckCircle fontSize="1.4rem" /> : <HiOutlineCog fontSize="1.4rem" />}
+          {message.text}
         </div>
       )}
 
-      <div className="grid grid-2 animate-in delay-1">
+      <div className="grid grid-2 gap-lg animate-in delay-1">
         {/* Profile Card */}
-        <div className="card-glass">
-          <h3 style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <HiOutlineUser /> Mon Profil
-          </h3>
+        <div className="card shadow-md">
+          <div className="flex items-center gap-md mb-lg">
+            <div className="avatar avatar-md" style={{ background: 'var(--primary-glow)', color: 'var(--primary)', border: 'none' }}>
+              <HiOutlineUser />
+            </div>
+            <div>
+              <h3 style={{ margin: 0 }}>Mon Profil</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Gérez vos informations personnelles.</p>
+            </div>
+          </div>
+          
           <form onSubmit={handleProfileSave} className="flex flex-col gap-md">
             <div className="input-group">
-              <label>Nom complet</label>
+              <label className="label">Nom complet</label>
               <input 
                 className="input" 
                 value={profileData.full_name} 
                 onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                placeholder="Votre nom"
+                placeholder="Ex: Jean Dupont"
                 required
               />
             </div>
             <div className="input-group">
-              <label>Email</label>
+              <label className="label">Adresse Email</label>
               <input 
-                className="input" 
+                className="input bg-secondary" 
                 value={profileData.email} 
                 type="email" 
                 disabled 
-                style={{ opacity: 0.6, cursor: 'not-allowed' }} 
+                style={{ cursor: 'not-allowed' }} 
               />
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>L'email ne peut pas être modifié ici.</span>
+              <span className="helper-text">L&apos;email est lié à votre compte d&apos;authentification.</span>
             </div>
             <div className="input-group">
-              <label>Rôle</label>
-              <input 
-                className="input" 
-                value={user?.profile?.role?.toUpperCase() || 'ADMIN'} 
-                disabled 
-                style={{ opacity: 0.6, cursor: 'not-allowed' }} 
-              />
+              <label className="label">Rôle d&apos;accès</label>
+              <div className="input bg-secondary flex items-center gap-sm">
+                <span className="badge badge-primary">{user?.profile?.role?.toUpperCase() || 'ADMIN'}</span>
+              </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Enregistrement...' : 'Sauvegarder les modifications'}
-            </button>
+            <div className="mt-md pt-md border-top">
+              <button type="submit" className="btn btn-primary w-full" disabled={submitting}>
+                {submitting ? 'Mise à jour...' : 'Sauvegarder le profil'}
+              </button>
+            </div>
           </form>
         </div>
 
         {/* Organization Card */}
-        <div className="card-glass">
-          <h3 style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <HiOutlineOfficeBuilding /> Organisation
-          </h3>
+        <div className="card shadow-md">
+          <div className="flex items-center gap-md mb-lg">
+            <div className="avatar avatar-md" style={{ background: 'var(--accent-light)', color: 'white', border: 'none', backgroundOpacity: 0.1 }}>
+              <HiOutlineOfficeBuilding />
+            </div>
+            <div>
+              <h3 style={{ margin: 0 }}>Organisation</h3>
+              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Configurez l&apos;identité de votre entreprise.</p>
+            </div>
+          </div>
+
           <form onSubmit={handleOrgSave} className="flex flex-col gap-md">
             <div className="input-group">
-              <label>Nom de l&apos;entreprise</label>
+              <label className="label">Nom de l&apos;entreprise</label>
               <input 
                 className="input" 
                 value={orgData.name} 
                 onChange={(e) => setOrgData({ ...orgData, name: e.target.value })}
-                placeholder="Nom de l'organisation"
+                placeholder="Ex: Konggest Inc."
                 required
               />
             </div>
             <div className="input-group">
-              <label>Secteur d&apos;activité</label>
+              <label className="label">Secteur d&apos;activité</label>
               <select 
                 className="input"
                 value={orgData.sector}
                 onChange={(e) => setOrgData({ ...orgData, sector: e.target.value })}
               >
-                <option value="Technologie">Technologie</option>
-                <option value="Finance">Finance</option>
-                <option value="Santé">Santé</option>
-                <option value="Éducation">Éducation</option>
-                <option value="Commerce">Commerce</option>
-                <option value="Industrie">Industrie</option>
-                <option value="Autre">Autre</option>
+                <option value="Technologie">Technologie & Logiciel</option>
+                <option value="Finance">Services Financiers</option>
+                <option value="Santé">Santé & Médical</option>
+                <option value="Éducation">Éducation & Formation</option>
+                <option value="Commerce">Commerce & Retail</option>
+                <option value="Industrie">Industrie & Manufacturier</option>
+                <option value="Autre">Autre secteur</option>
               </select>
             </div>
             <div className="input-group">
-              <label>Plan actuel</label>
-              <div className="flex items-center justify-between p-md rounded border border-dashed" style={{ borderColor: 'var(--primary)', background: 'rgba(14, 165, 233, 0.05)' }}>
-                <span className="badge badge-primary" style={{ padding: '6px 12px' }}>Business Plan</span>
-                <button type="button" className="btn btn-sm btn-ghost">Changer de plan</button>
+              <label className="label">Abonnement</label>
+              <div className="flex items-center justify-between p-md rounded-lg border-dashed" style={{ border: '2px dashed var(--primary-light)', background: 'var(--primary-glow)' }}>
+                <div>
+                  <div style={{ fontWeight: 700, color: 'var(--primary)' }}>Business Plan</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Actif jusqu&apos;au 31 Déc. 2026</div>
+                </div>
+                <button type="button" className="btn btn-sm btn-ghost">Gérer</button>
               </div>
             </div>
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
-              {submitting ? 'Enregistrement...' : 'Mettre à jour l\'organisation'}
-            </button>
+            <div className="mt-md pt-md border-top">
+              <button type="submit" className="btn btn-primary w-full" disabled={submitting}>
+                {submitting ? 'Mise à jour...' : 'Mettre à jour l&apos;organisation'}
+              </button>
+            </div>
           </form>
         </div>
       </div>
 
-      <div className="card-glass mt-lg animate-in delay-2" style={{ border: '1px solid var(--primary-glow)' }}>
-        <div className="flex items-center justify-between">
+      <div className="card-glass mt-xl animate-in delay-2" style={{ border: '1px solid var(--primary-glow)', padding: '24px 32px' }}>
+        <div className="flex items-center justify-between gap-lg">
           <div>
-            <h3>👥 Gestion d'équipe</h3>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Ajoutez des collaborateurs pour intervenir sur la plateforme.</p>
+            <h3 style={{ margin: '0 0 4px 0' }}>Gestion des Accès Équipe</h3>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Gérez les invitations et les rôles de vos administrateurs et managers.</p>
           </div>
-          <Link href="/users" className="btn btn-secondary">Gérer les utilisateurs</Link>
+          <Link href="/users" className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+            Accéder à l&apos;équipe →
+          </Link>
         </div>
       </div>
     </div>

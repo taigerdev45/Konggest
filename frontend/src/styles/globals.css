@@ -1,6 +1,6 @@
 /* ============================================
    KONGGEST — Global Design System
-   Premium HR SaaS Dark Theme
+   Premium HR SaaS Light Theme — Frost White
    ============================================ */
 
 /* ─── Google Fonts ─── */
@@ -8,54 +8,54 @@
 
 /* ─── CSS Variables ─── */
 :root {
-  /* Primary Brand - Arctic Blue / Sky */
-  --primary: #0EA5E9;
-  --primary-light: #38BDF8;
-  --primary-dark: #0284C7;
-  --primary-glow: rgba(14, 165, 233, 0.15);
+  /* Primary Brand - Azure Blue */
+  --primary: #2563EB;
+  --primary-light: #60A5FA;
+  --primary-dark: #1E40AF;
+  --primary-glow: rgba(37, 99, 235, 0.1);
 
-  /* Accent - Rose / Amber for refined touches */
-  --accent: #F472B6;
-  --accent-light: #FB923C;
+  /* Accent - Indigo / Cyan */
+  --accent: #06B6D4;
+  --accent-light: #22D3EE;
 
   /* Success / Warning / Danger */
   --success: #10B981;
-  --success-bg: rgba(16, 185, 129, 0.1);
+  --success-bg: rgba(16, 185, 129, 0.08);
   --warning: #F59E0B;
-  --warning-bg: rgba(245, 158, 11, 0.1);
+  --warning-bg: rgba(245, 158, 11, 0.08);
   --danger: #EF4444;
-  --danger-bg: rgba(239, 68, 68, 0.1);
+  --danger-bg: rgba(239, 68, 68, 0.08);
 
-  /* Premium Obsidian Backgrounds */
-  --bg-primary: #020617;
-  --bg-secondary: #0F172A;
-  --bg-tertiary: #1E293B;
-  --bg-card: #0F172A;
-  --bg-card-hover: #1E293B;
-  --bg-input: #020617;
-  --bg-sidebar: #020617;
+  /* Frost White Backgrounds */
+  --bg-primary: #F8FAFC;
+  --bg-secondary: #F1F5F9;
+  --bg-tertiary: #E2E8F0;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F8FAFC;
+  --bg-input: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
 
-  /* Text - High Contrast */
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --text-muted: #64748B;
-  --text-inverse: #020617;
+  /* Text - High Readability */
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+  --text-inverse: #FFFFFF;
 
-  /* Borders - Minimalist */
-  --border: #1E293B;
-  --border-light: #334155;
+  /* Borders - Subtle */
+  --border: #E2E8F0;
+  --border-light: #F1F5F9;
   --border-focus: var(--primary);
 
-  /* Glassmorphism - Refined */
-  --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.05);
+  /* Glassmorphism - Light Mode */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.4);
 
-  /* Shadows - Deep */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.7);
-  --shadow-xl: 0 24px 48px -8px rgba(0, 0, 0, 0.8);
-  --shadow-glow: 0 0 40px rgba(14, 165, 233, 0.1);
+  /* Shadows - Minimalist but Deep */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 40px rgba(37, 99, 235, 0.05);
 
   /* Spacing */
   --sidebar-width: 280px;

@@ -144,54 +144,49 @@ export default function EmployeesPage() {
       {/* Add Employee Modal */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 600 }}>
+          <div className="modal-content card animate-in" style={{ maxWidth: 700 }}>
             <div className="modal-header">
-              <h2>Ajouter un employé</h2>
+              <div>
+                <h2>Ajouter un collaborateur</h2>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Renseignez les informations de base pour créer le profil.</p>
+              </div>
               <button className="btn-close" onClick={() => setShowModal(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit} className="modal-body">
               <div className="grid grid-2 gap-md">
-                <div className="form-group">
+                <div className="input-group">
                   <label>Matricule *</label>
-                  <input type="text" name="employee_id" value={formData.employee_id} onChange={handleInputChange} required placeholder="EMP-001" />
+                  <input className="input" type="text" name="employee_id" value={formData.employee_id} onChange={handleInputChange} required placeholder="Ex: EMP-2024-001" />
                 </div>
-                <div className="form-group">
-                  <label>Email *</label>
-                  <input type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="email@exemple.com" />
+                <div className="input-group">
+                  <label>Email Professionnel *</label>
+                  <input className="input" type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="nom@entreprise.com" />
                 </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>Prénom *</label>
-                  <input type="text" name="first_name" value={formData.first_name} onChange={handleInputChange} required />
+                  <input className="input" type="text" name="first_name" value={formData.first_name} onChange={handleInputChange} required />
                 </div>
-                <div className="form-group">
-                  <label>Nom *</label>
-                  <input type="text" name="last_name" value={formData.last_name} onChange={handleInputChange} required />
+                <div className="input-group">
+                  <label>Nom de famille *</label>
+                  <input className="input" type="text" name="last_name" value={formData.last_name} onChange={handleInputChange} required />
                 </div>
-                <div className="form-group">
-                  <label>Téléphone</label>
-                  <input type="text" name="phone" value={formData.phone} onChange={handleInputChange} />
-                </div>
-                <div className="form-group">
-                  <label>Date d'embauche *</label>
-                  <input type="date" name="hire_date" value={formData.hire_date} onChange={handleInputChange} required />
-                </div>
-                <div className="form-group">
-                  <label>Département</label>
-                  <select name="department" value={formData.department} onChange={handleInputChange}>
-                    <option value="">Sélectionner...</option>
-                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
+                <div className="input-group">
                   <label>Poste</label>
-                  <select name="position" value={formData.position} onChange={handleInputChange}>
-                    <option value="">Sélectionner...</option>
+                  <select className="input" name="position" value={formData.position} onChange={handleInputChange}>
+                    <option value="">Sélectionner un poste...</option>
                     {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
+                <div className="input-group">
+                  <label>Département</label>
+                  <select className="input" name="department" value={formData.department} onChange={handleInputChange}>
+                    <option value="">Sélectionner un département...</option>
+                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                  </select>
+                </div>
+                <div className="input-group">
                   <label>Type de contrat</label>
-                  <select name="contract_type" value={formData.contract_type} onChange={handleInputChange}>
+                  <select className="input" name="contract_type" value={formData.contract_type} onChange={handleInputChange}>
                     <option value="cdi">CDI</option>
                     <option value="cdd">CDD</option>
                     <option value="stage">Stage</option>
@@ -199,68 +194,26 @@ export default function EmployeesPage() {
                     <option value="freelance">Freelance</option>
                   </select>
                 </div>
-                <div className="form-group">
-                  <label>Statut</label>
-                  <select name="status" value={formData.status} onChange={handleInputChange}>
-                    <option value="active">Actif</option>
-                    <option value="on_leave">En congé</option>
-                    <option value="suspended">Suspendu</option>
-                  </select>
+                <div className="input-group">
+                  <label>Date d'embauche *</label>
+                  <input className="input" type="date" name="hire_date" value={formData.hire_date} onChange={handleInputChange} required />
                 </div>
               </div>
-              <div className="modal-footer" style={{ marginTop: 20 }}>
+              <div className="modal-footer mt-lg">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Enregistrement...' : 'Enregistrer'}
+                  {submitting ? 'Enregistrement...' : 'Créer le profil'}
                 </button>
               </div>
             </form>
           </div>
-          <style jsx>{`
-            .modal-overlay {
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: rgba(0,0,0,0.5);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              z-index: 1000;
-              backdrop-filter: blur(4px);
-            }
-            .modal-content {
-              width: 90%;
-              padding: 24px;
-            }
-            .modal-header {
-              display: flex;
-              justify-content: space-between;
-              align-items: center;
-              margin-bottom: 20px;
-            }
-            .btn-close {
-              background: none;
-              border: none;
-              font-size: 24px;
-              cursor: pointer;
-              color: var(--text-muted);
-            }
-            .form-group label {
-              display: block;
-              margin-bottom: 6px;
-              font-size: 0.9rem;
-              font-weight: 500;
-            }
-          `}</style>
         </div>
       )}
 
       {/* Filters */}
-      <div className="card" style={{ marginBottom: 20, padding: '16px 20px' }}>
+      <div className="card-glass mb-lg animate-in delay-1">
         <div className="flex items-center gap-md" style={{ flexWrap: 'wrap' }}>
-          <div className="search-bar" style={{ flex: 1 }}>
+          <div className="search-bar" style={{ flex: 1, minWidth: '300px' }}>
             <HiOutlineSearch className="search-icon" />
             <input
               type="text"
@@ -270,21 +223,24 @@ export default function EmployeesPage() {
               id="employee-search"
             />
           </div>
-          <select
-            className="input"
-            style={{ width: 180 }}
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            id="status-filter"
-          >
-            <option value="">Tous les statuts</option>
-            <option value="active">Actif</option>
-            <option value="on_leave">En congé</option>
-            <option value="suspended">Suspendu</option>
-          </select>
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            {filtered.length} résultat{filtered.length !== 1 ? 's' : ''}
-          </span>
+          <div className="flex gap-sm items-center">
+            <HiOutlineFilter style={{ color: 'var(--text-muted)' }} />
+            <select
+              className="input"
+              style={{ width: 'auto', minWidth: '180px' }}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              id="status-filter"
+            >
+              <option value="">Tous les statuts</option>
+              <option value="active">Actif</option>
+              <option value="on_leave">En congé</option>
+              <option value="suspended">Suspendu</option>
+            </select>
+            <div className="badge badge-neutral">
+              {filtered.length} collaborateur{filtered.length !== 1 ? 's' : ''}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -324,26 +280,41 @@ export default function EmployeesPage() {
               ))
             ) : filtered.length > 0 ? (
               filtered.map((emp) => (
-                <tr key={emp.id}>
-                  <td style={{ fontWeight: 500, color: 'var(--primary-light)' }}>{emp.employee_id}</td>
+                <tr key={emp.id} className="animate-in">
                   <td>
-                    <div className="flex items-center gap-sm">
-                      <div className="avatar avatar-sm">
+                    <span style={{ fontFamily: 'monospace', fontWeight: 600, color: 'var(--primary)' }}>
+                      {emp.employee_id}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="flex items-center gap-md">
+                      <div className="avatar avatar-sm" style={{ border: '2px solid var(--bg-secondary)' }}>
                         {emp.photo ? (
                           <img src={emp.photo} alt={`${emp.first_name} ${emp.last_name}`} />
                         ) : (
                           `${emp.first_name[0]}${emp.last_name[0]}`
                         )}
                       </div>
-                      <Link href={`/employees/${emp.id}`} style={{ fontWeight: 500, color: 'inherit', textDecoration: 'none' }} className="hover-link">
-                        {emp.first_name} {emp.last_name}
-                      </Link>
+                      <div>
+                        <Link href={`/employees/${emp.id}`} style={{ fontWeight: 600, color: 'var(--text-primary)', textDecoration: 'none' }} className="hover-link">
+                          {emp.first_name} {emp.last_name}
+                        </Link>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{emp.email}</div>
+                      </div>
                     </div>
                   </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{emp.email}</td>
-                  <td>{emp.department_name}</td>
-                  <td>{emp.position_title}</td>
-                  <td><span className="badge badge-primary">{emp.contract_type.toUpperCase()}</span></td>
+                  <td>
+                    <div style={{ fontWeight: 500 }}>{emp.department_name}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{emp.position_title}</div>
+                  </td>
+                  <td>
+                    <span className={`badge ${
+                      emp.contract_type === 'cdi' ? 'badge-primary' : 
+                      emp.contract_type === 'cdd' ? 'badge-warning' : 'badge-neutral'
+                    }`}>
+                      {emp.contract_type.toUpperCase()}
+                    </span>
+                  </td>
                   <td>
                     <span className={`badge ${STATUS_MAP[emp.status]?.class || 'badge-neutral'}`}>
                       {STATUS_MAP[emp.status]?.label || emp.status}
@@ -351,6 +322,11 @@ export default function EmployeesPage() {
                   </td>
                   <td style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
                     {new Date(emp.hire_date).toLocaleDateString('fr-FR')}
+                  </td>
+                  <td>
+                    <Link href={`/employees/${emp.id}`} className="btn btn-ghost btn-xs">
+                      Détails
+                    </Link>
                   </td>
                 </tr>
               ))

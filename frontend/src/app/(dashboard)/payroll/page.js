@@ -96,29 +96,29 @@ export default function PayrollPage() {
         </div>
       </div>
 
-      <div className="grid grid-4" style={{ marginBottom: 20 }}>
-        <div className="stat-card green">
-          <div className="stat-icon green"><HiOutlineCurrencyDollar /></div>
+      <div className="grid grid-4 mb-lg">
+        <div className="stat-card blue animate-in delay-1">
+          <div className="stat-icon purple"><HiOutlineCurrencyDollar /></div>
           <div className="stat-info">
             <h3>{formatCurrency(stats.mass_salary)}</h3>
             <p>Masse salariale</p>
           </div>
         </div>
-        <div className="stat-card purple">
-          <div className="stat-icon purple"><HiOutlineCurrencyDollar /></div>
+        <div className="stat-card purple animate-in delay-2">
+          <div className="stat-icon purple"><HiOutlinePlus /></div>
           <div className="stat-info">
             <h3>{stats.to_generate}</h3>
             <p>Fiches à valider</p>
           </div>
         </div>
-        <div className="stat-card cyan">
-          <div className="stat-icon cyan"><HiOutlineCurrencyDollar /></div>
+        <div className="stat-card cyan animate-in delay-3">
+          <div className="stat-icon cyan"><HiOutlineTrendingUp /></div>
           <div className="stat-info">
             <h3>{formatCurrency(stats.average_salary)}</h3>
             <p>Salaire moyen</p>
           </div>
         </div>
-        <div className="stat-card orange">
+        <div className="stat-card orange animate-in delay-4">
           <div className="stat-icon orange"><HiOutlineCurrencyDollar /></div>
           <div className="stat-info">
             <h3>{formatCurrency(stats.total_deductions)}</h3>
@@ -127,11 +127,11 @@ export default function PayrollPage() {
         </div>
       </div>
 
-      <div className="table-container animate-in">
+      <div className="table-container animate-in delay-2">
         <table>
           <thead>
             <tr>
-              <th>Employé</th>
+              <th>Collaborateur</th>
               <th>Période</th>
               <th>Salaire Brut</th>
               <th>Net à Payer</th>
@@ -191,22 +191,24 @@ export default function PayrollPage() {
       {/* Preview Modal */}
       {showPreviewModal && selectedPayslip && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 800, padding: 0, overflow: 'hidden' }}>
+          <div className="modal-content card animate-in" style={{ maxWidth: 850, padding: 0, overflow: 'hidden' }}>
             <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
-              <h2>Prévisualisation de la Fiche de Paie</h2>
+              <div>
+                <h2 style={{ fontSize: '1.2rem' }}>Aperçu du Bulletin de Paie</h2>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Période : {selectedPayslip.period_name}</p>
+              </div>
               <button className="btn-close" onClick={() => setShowPreviewModal(false)}>&times;</button>
             </div>
-            <div className="modal-body" style={{ padding: 40, background: 'white', color: '#1e293b' }}>
+            <div className="modal-body" style={{ padding: '40px 50px', background: 'white', color: '#1e293b' }}>
               {/* Payslip Header */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 40, borderBottom: '2px solid #334155', paddingBottom: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 40, borderBottom: '2px solid #0f172a', paddingBottom: 20 }}>
                 <div>
-                  <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.5rem' }}>KONGGEST</h3>
-                  <p style={{ margin: '4px 0', fontSize: '0.85rem' }}>123 Avenue de la République</p>
-                  <p style={{ margin: '4px 0', fontSize: '0.85rem' }}>75011 Paris, France</p>
+                  <h3 style={{ margin: 0, color: 'var(--primary)', fontSize: '1.8rem', fontWeight: 800 }}>KONGGEST</h3>
+                  <p style={{ margin: '4px 0', fontSize: '0.85rem', color: '#64748b' }}>Solutions RH Modernes</p>
                 </div>
                 <div style={{ textAlign: 'right' }}>
-                  <h4 style={{ margin: 0, color: '#64748b' }}>BULLETIN DE PAIE</h4>
-                  <p style={{ margin: '4px 0', fontWeight: 600 }}>Période : {selectedPayslip.period_name}</p>
+                  <h4 style={{ margin: 0, color: '#0f172a', letterSpacing: '0.1em' }}>BULLETIN DE PAIE</h4>
+                  <p style={{ margin: '4px 0', fontWeight: 700, color: 'var(--primary)' }}># {selectedPayslip.id.toString().padStart(6, '0')}</p>
                 </div>
               </div>
 
