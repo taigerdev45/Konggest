@@ -25,7 +25,7 @@ export default function AuditLogsPage() {
     fetchLogs();
   }, []);
 
-  const filteredLogs = logs.filter(log => 
+  const filteredLogs = (Array.isArray(logs) ? logs : []).filter(log => 
     log.user_name?.toLowerCase().includes(search.toLowerCase()) ||
     log.action.toLowerCase().includes(search.toLowerCase()) ||
     log.resource_type.toLowerCase().includes(search.toLowerCase())

@@ -105,7 +105,7 @@ export default function EmployeesPage() {
     }
   };
 
-  const filtered = employees.filter((emp) => {
+  const filtered = (Array.isArray(employees) ? employees : []).filter((emp) => {
     const matchSearch = `${emp.first_name} ${emp.last_name} ${emp.employee_id} ${emp.email}`
       .toLowerCase()
       .includes(search.toLowerCase());

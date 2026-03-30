@@ -76,7 +76,7 @@ export default function PerformancePage() {
     : '0.0';
 
   const objectivesCompletion = objectives.length > 0
-    ? Math.round((objectives.filter(o => o.status === 'completed').length / objectives.length) * 100)
+    ? Math.round(((Array.isArray(objectives) ? objectives : []).filter(o => o.status === 'completed').length / objectives.length) * 100)
     : 0;
 
   const isHR = user?.profile?.role === 'hr' || user?.profile?.role === 'admin';

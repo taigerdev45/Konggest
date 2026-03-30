@@ -102,7 +102,7 @@ export default function RecruitmentPage() {
         <div className="stat-card purple">
           <div className="stat-icon purple"><HiOutlineBriefcase /></div>
           <div className="stat-info">
-            <h3>{jobs.filter(j => j.status === 'published').length}</h3>
+            <h3>{(Array.isArray(jobs) ? jobs : []).filter(j => j.status === 'published').length}</h3>
             <p>Postes ouverts</p>
           </div>
         </div>

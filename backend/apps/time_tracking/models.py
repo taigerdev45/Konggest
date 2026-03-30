@@ -65,6 +65,11 @@ class OvertimeSerializer(serializers.ModelSerializer):
 
 
 # ─── Views ───
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from django.utils import timezone
+from datetime import date
+
 class TimeEntryViewSet(viewsets.ModelViewSet):
     serializer_class = TimeEntrySerializer
     permission_classes = [IsEmployee]
@@ -72,7 +77,54 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
         qs = TimeEntry.objects.select_related('employee')
-        return qs.filter(employee__organization_id=tenant_id) if tenant_id else qs
+        if tenant_id:
+            qs = qs.filter(employee__organization_id=tenant_id)
+        
+        # Filter by employee if not manager
+        if not self.request.user.is_staff and hasattr(self.request.user, 'profile'):
+            if self.request.user.profile.role == 'employee':
+                qs = qs.filter(employee__user=self.request.user)
+                
+        return qs
+
+    @action(detail=False, methods=['get'])
+    def today(self, request):
+        """Get today's time entry for current employee."""
+        if not hasattr(request.user, 'profile') or not hasattr(request.user.profile, 'employee'):
+            return Response({'error': 'Employee profile not found'}, status=400)
+            
+        today = date.today()
+        entry = TimeEntry.objects.filter(employee=request.user.profile.employee, date=today).first()
+        if not entry:
+            return Response(None, status=204)
+        
+        serializer = self.get_serializer(entry)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['post'])
+    def toggle(self, request):
+        """Toggle check-in/check-out for today."""
+        if not hasattr(request.user, 'profile') or not hasattr(request.user.profile, 'employee'):
+            return Response({'error': 'Employee profile not found'}, status=400)
+            
+        emp = request.user.profile.employee
+        today = date.today()
+        now = timezone.now().time()
+        
+        entry, created = TimeEntry.objects.get_or_create(
+            employee=emp, date=today,
+            defaults={'check_in': now}
+        )
+        
+        if not created:
+            if not entry.check_out:
+                entry.check_out = now
+                entry.save()
+            else:
+                return Response({'error': 'Déjà pointé pour aujourd\'hui.'}, status=400)
+                
+        serializer = self.get_serializer(entry)
+        return Response(serializer.data)
 
 class OvertimeViewSet(viewsets.ModelViewSet):
     serializer_class = OvertimeSerializer

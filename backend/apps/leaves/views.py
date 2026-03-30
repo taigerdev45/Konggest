@@ -6,6 +6,7 @@ from django.utils import timezone
 from core.permissions import IsManager, IsEmployee
 from .models import LeaveType, LeaveRequest, LeaveBalance
 from .serializers import LeaveTypeSerializer, LeaveRequestSerializer, LeaveBalanceSerializer
+from apps.accounts.utils import log_action
 
 
 class LeaveTypeViewSet(viewsets.ModelViewSet):
@@ -72,6 +73,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             leave.approved_by = None
         leave.approved_at = timezone.now()
         leave.save()
+        log_action(request.user, request.user.profile.organization, 'update', 'leave', leave.id, {'status': 'approved'})
         return Response({'status': 'approved'})
 
     @action(detail=True, methods=['post'], permission_classes=[IsManager])
@@ -87,6 +89,7 @@ class LeaveRequestViewSet(viewsets.ModelViewSet):
             leave.approved_by = None
         leave.approved_at = timezone.now()
         leave.save()
+        log_action(request.user, request.user.profile.organization, 'update', 'leave', leave.id, {'status': 'rejected', 'reason': leave.rejection_reason})
         return Response({'status': 'rejected'})
 
 

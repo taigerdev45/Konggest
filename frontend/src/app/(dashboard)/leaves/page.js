@@ -159,14 +159,14 @@ export default function LeavesPage() {
         <div className="stat-card purple">
           <div className="stat-icon purple"><HiOutlineCheck /></div>
           <div className="stat-info">
-            <h3>{requests.filter(r => r.status === 'approved' && new Date(r.start_date) <= new Date() && new Date(r.end_date) >= new Date()).length}</h3>
+            <h3>{(Array.isArray(requests) ? requests : []).filter(r => r.status === 'approved' && new Date(r.start_date) <= new Date() && new Date(r.end_date) >= new Date()).length}</h3>
             <p>En congé aujourd&apos;hui</p>
           </div>
         </div>
         <div className="stat-card orange">
           <div className="stat-icon orange"><HiOutlineCalendar /></div>
           <div className="stat-info">
-            <h3>{requests.filter(r => r.status === 'pending').length}</h3>
+            <h3>{(Array.isArray(requests) ? requests : []).filter(r => r.status === 'pending').length}</h3>
             <p>Demandes en attente</p>
           </div>
         </div>

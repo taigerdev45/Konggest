@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from core.permissions import IsHRManager
 from .models import PayrollPeriod, Payslip, PayrollItem
+from apps.accounts.utils import log_action
 
 
 class PayrollPeriodSerializer(serializers.ModelSerializer):
@@ -92,5 +93,24 @@ class PayslipViewSet(viewsets.ModelViewSet):
             )
             if created:
                 created_count += 1
+        
+        if created_count > 0:
+            log_action(request.user, request.user.profile.organization, 'create', 'payroll', f'period_{period_id}', {'count': created_count})
                 
         return Response({'status': f'{created_count} payslips generated.'})
+
+    @action(detail=True, methods=['post'])
+    def validate(self, request, pk=None):
+        payslip = self.get_object()
+        payslip.status = 'validated'
+        payslip.save()
+        log_action(request.user, request.user.profile.organization, 'update', 'payslip', payslip.id, {'status': 'validated'})
+        return Response({'status': 'validated'})
+
+    @action(detail=True, methods=['post'])
+    def pay(self, request, pk=None):
+        payslip = self.get_object()
+        payslip.status = 'paid'
+        payslip.save()
+        log_action(request.user, request.user.profile.organization, 'update', 'payslip', payslip.id, {'status': 'paid'})
+        return Response({'status': 'paid'})

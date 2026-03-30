@@ -9,6 +9,7 @@ from .serializers import (
     EmployeeListSerializer, EmployeeDetailSerializer,
     DepartmentSerializer, PositionSerializer
 )
+from apps.accounts.utils import log_action
 
 
 from django.http import HttpResponse
@@ -53,16 +54,21 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(organization_id=self.request.tenant_id)
+        emp = serializer.save(organization_id=self.request.tenant_id)
         invalidate_cache(self.request.tenant_id, 'employees')
+        log_action(self.request.user, self.request.user.profile.organization, 'create', 'employee', emp.id, {'full_name': emp.full_name})
 
     def perform_update(self, serializer):
-        serializer.save()
+        emp = serializer.save()
         invalidate_cache(self.request.tenant_id, 'employees')
+        log_action(self.request.user, self.request.user.profile.organization, 'update', 'employee', emp.id, {'full_name': emp.full_name})
 
     def perform_destroy(self, instance):
+        emp_id = instance.id
+        emp_name = instance.full_name
         instance.delete()
         invalidate_cache(self.request.tenant_id, 'employees')
+        log_action(self.request.user, self.request.user.profile.organization, 'delete', 'employee', emp_id, {'full_name': emp_name})
 
     @action(detail=False, methods=['get'])
     def me(self, request):

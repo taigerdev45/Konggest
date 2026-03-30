@@ -127,14 +127,14 @@ export default function DocumentsPage() {
         <div className="stat-card purple">
           <div className="stat-icon purple"><HiOutlineDocumentText /></div>
           <div className="stat-info">
-            <h3>{documents.filter(d => d.mime_type?.includes('pdf')).length}</h3>
+            <h3>{(Array.isArray(documents) ? documents : []).filter(d => d.mime_type?.includes('pdf')).length}</h3>
             <p>Fichiers PDF</p>
           </div>
         </div>
         <div className="stat-card orange">
           <div className="stat-icon orange"><HiOutlineDocumentText /></div>
           <div className="stat-info">
-            <h3>{documents.filter(d => d.is_confidential).length}</h3>
+            <h3>{(Array.isArray(documents) ? documents : []).filter(d => d.is_confidential).length}</h3>
             <p>Confidentiels</p>
           </div>
         </div>

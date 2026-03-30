@@ -40,7 +40,7 @@ export default function PayrollPage() {
           mass_salary: totalGross,
           total_deductions: totalDeductions,
           average_salary: totalGross / payslipData.length,
-          to_generate: payslipData.filter(p => p.status === 'draft').length,
+          to_generate: (Array.isArray(payslipData) ? payslipData : []).filter(p => p.status === 'draft').length,
         });
       }
     } catch (err) {
