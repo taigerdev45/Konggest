@@ -98,7 +98,7 @@ export default function StaffDashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {stats.org_distribution.map((item, i) => (
+                    {(Array.isArray(stats?.org_distribution) ? stats.org_distribution : []).map((item, i) => (
                       <tr key={i}>
                         <td style={{ textTransform: 'capitalize' }}>{item.plan}</td>
                         <td style={{ fontWeight: 600 }}>{item.count}</td>
@@ -143,7 +143,7 @@ export default function StaffDashboardPage() {
                 </tr>
               </thead>
               <tbody>
-                {organizations.map((org) => (
+                {(Array.isArray(organizations) ? organizations : []).map((org) => (
                   <tr key={org.id}>
                     <td style={{ fontWeight: 600 }}>{org.name}</td>
                     <td>{org.sector || 'N/A'}</td>

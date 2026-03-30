@@ -53,7 +53,7 @@ export default function DashboardPage() {
           mass_salary: '452M FCFA',
           open_positions: 8,
         });
-        setRecentLeaves(leavesData.slice(0, 5));
+        setRecentLeaves(Array.isArray(leavesData) ? leavesData.slice(0, 5) : []);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
       } finally {
