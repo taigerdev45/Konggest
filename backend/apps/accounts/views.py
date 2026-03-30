@@ -203,72 +203,40 @@ class LoginView(APIView):
         return x_forwarded_for.split(',')[0].strip() if x_forwarded_for else request.META.get('REMOTE_ADDR', '')
 
 
-class ProfileView(generics.RetrieveUpdateAPIView):
-    """Get or update current user's profile."""
-    permission_classes = [IsAuthenticated]
-    serializer_class = UserProfileSerializer
-
     def get(self, request, *args, **kwargs):
         user = request.user
+        from .models import SaaSAdmin, UserProfile
         
-        # SaaS Admin check — must use try/except, not hasattr
-        # (Django OneToOne reverse descriptors always exist on the class)
+        # 1. Reliable SaaS Admin detection
+        is_saas = SaaSAdmin.objects.filter(user=user).exists()
+        
+        # 2. Initial data with guaranteed fields
+        data = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'full_name': user.get_full_name() or user.email,
+            'is_saas_admin': is_saas,
+            'redirect_to': '/staff' if is_saas else '/dashboard',
+            'role': 'saas_admin' if is_saas else 'admin',
+            'organization': None
+        }
+        
+        # 3. Safely augment with profile data if available
         try:
-            user.saas_admin  # Will raise RelatedObjectDoesNotExist if not a SaaS admin
-            is_saas = True
-        except Exception:
-            is_saas = False
-        
-        # Try to get existing profile
-        try:
-            profile = user.profile  # Will raise RelatedObjectDoesNotExist if no profile
-            serializer = self.get_serializer(profile)
-            data = serializer.data
-            data['is_saas_admin'] = is_saas
-            data['redirect_to'] = '/staff' if is_saas else '/dashboard'
-            return Response(data)
-        except Exception:
-            pass  # No profile exists
-        
-        # No profile: if SaaS Admin, return special response (no profile needed)
-        if is_saas:
-            return Response({
-                'id': user.id,
-                'full_name': user.get_full_name() or user.email,
-                'role': 'saas_admin',
-                'is_saas_admin': True,
-                'organization': None,
-                'redirect_to': '/staff'
-            })
-        
-        # No profile and not SaaS: Create default profile
-        try:
-            from django.utils.text import slugify
-            org_slug = slugify(f"org-{user.id}")
-            org, _ = Organization.objects.get_or_create(
-                slug=org_slug,
-                defaults={'name': 'Mon Organisation'}
-            )
-            profile = UserProfile.objects.create(
-                user=user,
-                organization=org,
-                role='admin',
-            )
-            data = self.get_serializer(profile).data
-            data['is_saas_admin'] = False
-            data['redirect_to'] = '/dashboard'
-            return Response(data)
+            profile = UserProfile.objects.filter(user=user).first()
+            if profile:
+                serializer = self.get_serializer(profile)
+                profile_data = serializer.data
+                # Update but keep our guaranteed flags
+                data.update(profile_data)
+                data['is_saas_admin'] = is_saas
+                data['redirect_to'] = '/staff' if is_saas else '/dashboard'
         except Exception as e:
             import logging
-            logging.getLogger('django').error(f"ProfileView error: {e}", exc_info=True)
-            return Response({
-                'id': user.id,
-                'full_name': user.get_full_name() or user.email,
-                'role': 'admin',
-                'is_saas_admin': False,
-                'organization': None,
-                'redirect_to': '/dashboard'
-            })
+            logging.getLogger('django').error(f"Profile augmentation error: {e}")
+            
+        return Response(data)
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
