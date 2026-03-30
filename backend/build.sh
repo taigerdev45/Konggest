@@ -8,10 +8,7 @@ pip install -r requirements.txt
 echo "=== Collecting static files ==="
 python manage.py collectstatic --noinput
 
-echo "=== Generating database migrations ==="
-python manage.py makemigrations
-
 echo "=== Running database migrations ==="
-python manage.py migrate --noinput
+python manage.py migrate --noinput --fake-initial
 
 echo "=== Build complete ==="
