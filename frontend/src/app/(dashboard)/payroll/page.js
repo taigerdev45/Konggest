@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye } from 'react-icons/hi';
+import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye, HiOutlineTrendingUp } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
