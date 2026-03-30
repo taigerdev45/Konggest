@@ -44,7 +44,7 @@ class UserProfile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='members')
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='members', null=True, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='employee')
     avatar = models.URLField(blank=True)
     phone = models.CharField(max_length=20, blank=True)
@@ -108,3 +108,17 @@ class LoginAttempt(models.Model):
             models.Index(fields=['email', '-created_at']),
             models.Index(fields=['ip_address', '-created_at']),
         ]
+
+
+class SaaSAdmin(models.Model):
+    """Platform-level administrators (SaaS owners)."""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='saas_admin')
+    is_super_admin = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Administrateur SaaS"
+        verbose_name_plural = "Administrateurs SaaS"
+
+    def __str__(self):
+        return f"SaaS Admin: {self.user.email}"

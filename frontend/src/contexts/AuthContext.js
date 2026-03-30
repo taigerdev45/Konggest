@@ -52,6 +52,8 @@ export function AuthProvider({ children }) {
         profile: {
           role: djangoProfile.role || 'admin',
           full_name: djangoProfile.full_name || sessionUser.email,
+          is_saas_admin: djangoProfile.is_saas_admin || false,
+          redirect_to: djangoProfile.redirect_to || '/dashboard',
           organization: djangoProfile.organization
             ? { id: djangoProfile.organization, name: djangoProfile.organization_name || 'Organisation' }
             : null,
@@ -66,6 +68,8 @@ export function AuthProvider({ children }) {
         profile: {
           role: meta.role || 'admin',
           full_name: meta.full_name || sessionUser.email,
+          is_saas_admin: false,
+          redirect_to: '/dashboard',
           organization: { name: meta.organization_name || 'Mon Organisation' },
         },
       });

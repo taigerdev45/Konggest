@@ -4,7 +4,7 @@
  * Konggest — Login Page
  * Premium auth page with glassmorphism.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import styles from './login.module.css';
@@ -19,8 +19,15 @@ export default function LoginPage() {
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, register } = useAuth();
+  const { user, login, register } = useAuth();
   const router = useRouter();
+  
+  // Handle intelligent redirection based on profile
+  useEffect(() => {
+    if (user?.profile?.redirect_to) {
+      router.push(user.profile.redirect_to);
+    }
+  }, [user, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,7 +47,7 @@ export default function LoginPage() {
       } else {
         await login(email, password);
       }
-      router.push('/dashboard');
+      // Redirection is handled by useEffect when user state updates
     } catch (err) {
       setError(err.message || err.error || err.detail || 'Une erreur est survenue.');
     } finally {

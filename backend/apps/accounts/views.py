@@ -151,9 +151,19 @@ class LoginView(APIView):
 
         refresh = RefreshToken.for_user(user)
 
+        # SaaS Admin check
+        is_saas_admin = hasattr(user, 'saas_admin')
+        organization = None
+        role = 'saas_admin' if is_saas_admin else None
+
+        if hasattr(user, 'profile') and user.profile.organization:
+            organization = user.profile.organization
+            if not role:
+                role = user.profile.role
+
         AuditLog.objects.create(
             user=user,
-            organization=user.profile.organization,
+            organization=organization,
             action='login',
             resource_type='auth',
             ip_address=ip,
@@ -169,9 +179,11 @@ class LoginView(APIView):
                 'id': user.id,
                 'email': user.email,
                 'full_name': user.get_full_name(),
-                'role': user.profile.role,
-                'organization': user.profile.organization.name,
-                'organization_id': user.profile.organization.id,
+                'role': role,
+                'is_saas_admin': is_saas_admin,
+                'organization': organization.name if organization else None,
+                'organization_id': organization.id if organization else None,
+                'redirect_to': '/staff' if is_saas_admin else '/dashboard',
             }
         })
 
@@ -186,20 +198,42 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 
-    def get_object(self):
+    def get(self, request, *args, **kwargs):
+        # SaaS Admin check
+        is_saas_admin = hasattr(request.user, 'saas_admin')
+        
         try:
-            return self.request.user.profile
+            profile = request.user.profile
+            serializer = self.get_serializer(profile)
+            data = serializer.data
+            data['is_saas_admin'] = is_saas_admin
+            data['redirect_to'] = '/staff' if is_saas_admin else '/dashboard'
+            return Response(data)
         except UserProfile.DoesNotExist:
-            # Auto-create a default profile if it doesn't exist
+            if is_saas_admin:
+                return Response({
+                    'id': request.user.id,
+                    'full_name': request.user.get_full_name() or request.user.email,
+                    'role': 'saas_admin',
+                    'is_saas_admin': True,
+                    'organization': None,
+                    'redirect_to': '/staff'
+                })
+            
+            # Auto-create for regular users if needed (standard behavior)
             org, _ = Organization.objects.get_or_create(
                 slug='default',
                 defaults={'name': 'Mon Organisation'}
             )
-            return UserProfile.objects.create(
+            profile = UserProfile.objects.create(
                 user=self.request.user,
                 organization=org,
                 role='admin',
             )
+            data = self.get_serializer(profile).data
+            data['is_saas_admin'] = False
+            data['redirect_to'] = '/dashboard'
+            return Response(data)
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):

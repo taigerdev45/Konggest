@@ -8,10 +8,21 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# ─── Environment Loading ───
+from decouple import Config, RepositoryEnv
+try:
+    # Look for .env in the root project directory
+    env_path = BASE_DIR.parent / '.env'
+    config = Config(RepositoryEnv(str(env_path)))
+except Exception:
+    # Fallback to os.environ if .env is missing
+    from decouple import config
+
+
 # ─── Security ───
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'insecure-dev-key')
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true'
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='insecure-dev-key')
+DEBUG = config('DJANGO_DEBUG', default='False', cast=bool)
+ALLOWED_HOSTS = config('DJANGO_ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
 
 # ─── Applications ───
 INSTALLED_APPS = [
@@ -73,33 +84,39 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# ─── Database (Supabase PostgreSQL) ───
+# ─── Database (Supabase PostgreSQL or SQLite fallback) ───
 import dj_database_url
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL', 'postgresql://postgres:postgres@localhost:5432/konggest'),
-        conn_max_age=600,
-        conn_health_checks=True,
-        ssl_require=False,  # Internal Docker network
-    )
-}
-
-# ─── Cache (Redis) ───
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.environ.get('REDIS_URL', 'redis://localhost:6379/0'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PASSWORD': 'konggest_redis_2024',
-            'SOCKET_CONNECT_TIMEOUT': 5,
-            'SOCKET_TIMEOUT': 5,
-            'RETRY_ON_TIMEOUT': True,
-        },
-        'KEY_PREFIX': 'konggest',
-        'TIMEOUT': 900,  # 15 minutes default
+db_url = config('DATABASE_URL', default='')
+if db_url and 'konggest-db' not in db_url: # If it's a real URL (not docker internal)
+    default_db = dj_database_url.config(default=db_url, ssl_require=False)
+else:
+    # Fallback to local SQLite for hassle-free local development
+    default_db = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
+
+DATABASES = {'default': default_db}
+
+# ─── Cache (Redis with LocMem fallback) ───
+redis_url = config('REDIS_URL', default='')
+if redis_url and 'konggest-redis' not in redis_url:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': redis_url,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            }
+        }
+    }
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
 
 # Use Redis for sessions
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
