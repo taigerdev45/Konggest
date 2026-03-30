@@ -176,12 +176,12 @@
 }
 
 .navItem:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: var(--primary-glow);
   color: var(--text-primary);
 }
 
 .navItem.active {
-  background: rgba(99, 102, 241, 0.12);
+  background: rgba(14, 165, 233, 0.12);
   color: var(--primary-light);
 }
 

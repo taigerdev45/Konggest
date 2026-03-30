@@ -27,37 +27,47 @@ class SupabaseJWTAuthentication(authentication.BaseAuthentication):
 
         token = auth_header.split(' ')[1]
 
-        # Get the JWT secret
+        # Get the JWT secret and audience
         secret = getattr(settings, 'SUPABASE_JWT_SECRET', '')
         if not secret:
             secret = getattr(settings, 'SUPABASE_ANON_KEY', '')
+            
+        allowed_audiences = getattr(settings, 'SUPABASE_JWT_AUDIENCES', ["authenticated", "anon"])
 
         payload = None
 
-        # Strategy 1: Standard decode with audience
+        # Strategy 1: Standard decode with various audiences
         if secret:
-            try:
-                payload = jwt.decode(
-                    token,
-                    secret,
-                    algorithms=["HS256"],
-                    audience="authenticated"
-                )
-            except jwt.InvalidAudienceError:
-                # Try without audience
+            for aud in allowed_audiences:
                 try:
                     payload = jwt.decode(
                         token,
                         secret,
                         algorithms=["HS256"],
-                        options={"verify_aud": False}
+                        audience=aud
                     )
-                except Exception:
-                    pass
-            except Exception:
-                pass
+                    if payload: break
+                except jwt.ExpiredSignatureError:
+                    raise exceptions.AuthenticationFailed('Le jeton a expiré.')
+                except jwt.InvalidAudienceError:
+                    continue # Try next audience
+                except Exception as e:
+                    logger.debug(f"JWT decode failed for audience '{aud}': {str(e)}")
+                    continue
 
-        # Strategy 2: Decode without verification to inspect the token
+        # Strategy 2: Fallback without audience verification
+        if secret and not payload:
+            try:
+                payload = jwt.decode(
+                    token,
+                    secret,
+                    algorithms=["HS256"],
+                    options={"verify_aud": False}
+                )
+            except Exception as e:
+                logger.error(f"JWT decode failed even without audience: {str(e)}")
+
+        # Strategy 3: Decode without verification to inspect the token (DEBUG ONLY)
         # (only if previous strategies failed)
         if payload is None:
             try:

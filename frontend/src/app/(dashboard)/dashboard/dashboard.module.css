@@ -4,6 +4,20 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: relative;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.dashboard::before {
+  content: '';
+  position: absolute;
+  top: -100px;
+  right: -100px;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* Welcome */
@@ -133,7 +147,15 @@
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 20px 24px;
+  padding: 24px;
+  border: 1px solid var(--glass-border);
+  transition: all var(--transition-base);
+}
+
+.quickStat:hover {
+  background: rgba(14, 165, 233, 0.05);
+  transform: translateY(-5px);
+  border-color: rgba(14, 165, 233, 0.2);
 }
 
 .quickIcon {

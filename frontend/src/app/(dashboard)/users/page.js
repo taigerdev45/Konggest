@@ -1,13 +1,20 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HiOutlineUserAdd, HiOutlineMail, HiOutlineShieldCheck, HiOutlineDotsVertical, HiOutlineRefresh, HiOutlineSearch } from 'react-icons/hi';
+import { 
+  HiOutlineUserAdd, HiOutlineMail, HiOutlineShieldCheck, 
+  HiOutlineDotsVertical, HiOutlineRefresh, HiOutlineSearch,
+  HiOutlineTrash, HiOutlineLockClosed, HiOutlineLockOpen,
+  HiOutlineFilter
+} from 'react-icons/hi';
 import api from '@/lib/api';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterRole, setFilterRole] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteData, setInviteData] = useState({ email: '', full_name: '', role: 'employee' });
   const [submitting, setSubmitting] = useState(false);
@@ -43,37 +50,93 @@ export default function UsersPage() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.user_full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    u.user_email?.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleStatusToggle = async (user) => {
+    const action = user.is_active ? 'suspend' : 'activate';
+    const confirmMsg = user.is_active 
+      ? `Suspendre l'accès de ${user.full_name} ?` 
+      : `Réactiver l'accès de ${user.full_name} ?`;
+    
+    if (!confirm(confirmMsg)) return;
+
+    try {
+      await api.post(`/accounts/user-profiles/${user.id}/${action}/`);
+      fetchUsers();
+    } catch (err) {
+      alert('Erreur lors du changement de statut.');
+    }
+  };
+
+  const handleDelete = async (user) => {
+    if (!confirm(`Supprimer définitivement le profil de ${user.full_name} ? Cette action est irréversible.`)) return;
+    try {
+      await api.delete(`/accounts/user-profiles/${user.id}/`);
+      fetchUsers();
+    } catch (err) {
+      alert('Erreur lors de la suppression.');
+    }
+  };
+
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+                         u.email?.toLowerCase().includes(search.toLowerCase());
+    const matchesRole = filterRole === 'all' || u.role === filterRole;
+    const matchesStatus = filterStatus === 'all' || 
+                         (filterStatus === 'active' ? u.is_active : !u.is_active);
+    
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  const ROLE_LABELS = {
+    admin: 'Administrateur',
+    hr: 'RH',
+    manager: 'Manager',
+    employee: 'Employé',
+  };
 
   return (
     <div className="animate-in">
       <div className="page-header">
         <div>
-          <h1>Utilisateurs Plateforme</h1>
-          <p>Gérez les accès et les rôles de votre équipe Konggest</p>
+          <h1><HiOutlineShieldCheck style={{ verticalAlign: 'middle', marginRight: '10px' }} /> Gestion d'Équipe</h1>
+          <p>Supervisez les accès et les permissions de vos collaborateurs</p>
         </div>
         <div className="flex gap-sm">
           <button className="btn btn-ghost" onClick={fetchUsers} disabled={loading}>
             <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
           </button>
           <button className="btn btn-primary" onClick={() => setShowInviteModal(true)}>
-            <HiOutlineUserAdd /> Inviter un collaborateur
+            <HiOutlineUserAdd /> Inviter un membre
           </button>
         </div>
       </div>
 
-      <div className="card-glass mb-lg animate-in delay-1">
-        <div className="search-bar">
-          <HiOutlineSearch className="search-icon" />
-          <input 
-            type="text" 
-            placeholder="Rechercher par nom ou email..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+      {/* Filters Bar */}
+      <div className="card-glass mb-lg animate-in delay-1 overflow-visible">
+        <div className="flex flex-wrap gap-md items-center justify-between">
+          <div className="search-bar" style={{ flex: 1, minWidth: '250px' }}>
+            <HiOutlineSearch className="search-icon" />
+            <input 
+              type="text" 
+              placeholder="Rechercher par nom ou email..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="flex gap-sm items-center">
+            <HiOutlineFilter style={{ color: 'var(--text-muted)' }} />
+            <select className="input" style={{ width: 'auto', minWidth: '140px' }} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+              <option value="all">Tous les rôles</option>
+              <option value="admin">Administrateur</option>
+              <option value="hr">RH</option>
+              <option value="manager">Manager</option>
+              <option value="employee">Employé</option>
+            </select>
+            <select className="input" style={{ width: 'auto', minWidth: '140px' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+              <option value="all">Tous les statuts</option>
+              <option value="active">Actif</option>
+              <option value="inactive">Suspendu</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -81,11 +144,10 @@ export default function UsersPage() {
         <table>
           <thead>
             <tr>
-              <th>Collaborateur</th>
-              <th>Email</th>
+              <th>Membre</th>
               <th>Rôle</th>
               <th>Statut</th>
-              <th>Dernière connexion</th>
+              <th>Date d'ajout</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -93,7 +155,7 @@ export default function UsersPage() {
             {loading ? (
               [...Array(5)].map((_, i) => (
                 <tr key={i} className="skeleton-row">
-                  <td colSpan="6"><div className="skeleton" style={{ height: 24, margin: '8px 0' }} /></td>
+                  <td colSpan="5"><div className="skeleton" style={{ height: 28, margin: '8px 0' }} /></td>
                 </tr>
               ))
             ) : filteredUsers.length > 0 ? (
@@ -101,20 +163,22 @@ export default function UsersPage() {
                 <tr key={user.id} className={`animate-in delay-${Math.min(i + 1, 4)}`}>
                   <td>
                     <div className="flex items-center gap-md">
-                      <div className="avatar avatar-sm">
-                        {user.user_full_name ? user.user_full_name[0] : 'U'}
+                      <div className="avatar">
+                        {user.full_name ? user.full_name[0] : 'U'}
                       </div>
-                      <span style={{ fontWeight: 600 }}>{user.user_full_name || 'Utilisateur'}</span>
+                      <div>
+                        <div style={{ fontWeight: 600 }}>{user.full_name || 'Utilisateur'}</div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.email}</div>
+                      </div>
                     </div>
                   </td>
-                  <td style={{ color: 'var(--text-secondary)' }}>{user.user_email}</td>
                   <td>
                     <span className={`badge ${
                       user.role === 'admin' ? 'badge-primary' : 
                       user.role === 'hr' ? 'badge-success' : 
                       user.role === 'manager' ? 'badge-warning' : 'badge-neutral'
                     }`}>
-                      {user.role.toUpperCase()}
+                      {ROLE_LABELS[user.role] || user.role.toUpperCase()}
                     </span>
                   </td>
                   <td>
@@ -123,17 +187,36 @@ export default function UsersPage() {
                     </span>
                   </td>
                   <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    {user.updated_at ? new Date(user.updated_at).toLocaleDateString() : 'Jamais'}
+                    {new Date(user.created_at).toLocaleDateString('fr-FR')}
                   </td>
                   <td>
-                    <button className="btn btn-xs btn-ghost"><HiOutlineDotsVertical /></button>
+                    <div className="flex gap-xs">
+                      <button 
+                        className={`btn btn-xs ${user.is_active ? 'btn-ghost' : 'btn-primary'}`} 
+                        title={user.is_active ? 'Suspendre' : 'Réactiver'}
+                        onClick={() => handleStatusToggle(user)}
+                      >
+                        {user.is_active ? <HiOutlineLockClosed /> : <HiOutlineLockOpen />}
+                      </button>
+                      <button 
+                        className="btn btn-xs btn-ghost text-danger" 
+                        title="Supprimer"
+                        onClick={() => handleDelete(user)}
+                      >
+                        <HiOutlineTrash />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-                  Aucun utilisateur trouvé.
+                <td colSpan="5" style={{ textAlign: 'center', padding: 60 }}>
+                  <div className="empty-state">
+                    <HiOutlineSearch size={48} />
+                    <h3>Aucun résultat</h3>
+                    <p>Réessayez avec d'autres filtres ou invitez un nouveau membre.</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -144,7 +227,7 @@ export default function UsersPage() {
       {/* Invitation Modal */}
       {showInviteModal && (
         <div className="modal-overlay">
-          <div className="modal-content card-glass animate-in">
+          <div className="modal-content card animate-in" style={{ maxWidth: 480 }}>
             <div className="modal-header">
               <h2>Inviter un collaborateur</h2>
               <button className="btn-close" onClick={() => setShowInviteModal(false)}>&times;</button>
@@ -156,7 +239,7 @@ export default function UsersPage() {
                   className="input" 
                   value={inviteData.full_name} 
                   onChange={e => setInviteData({...inviteData, full_name: e.target.value})}
-                  placeholder="Jean Dupont"
+                  placeholder="Ex: Jean Dupont"
                   required
                 />
               </div>
@@ -182,13 +265,16 @@ export default function UsersPage() {
                   value={inviteData.role} 
                   onChange={e => setInviteData({...inviteData, role: e.target.value})}
                 >
-                  <option value="employee">Employé (Lecture seule)</option>
-                  <option value="manager">Manager (Validation)</option>
+                  <option value="employee">Employé (Standard)</option>
+                  <option value="manager">Manager (Approbation)</option>
                   <option value="hr">RH (Gestion complète)</option>
                   <option value="admin">Administrateur</option>
                 </select>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>
+                  Les permissions seront appliquées dès que le membre se connectera.
+                </p>
               </div>
-              <div className="modal-footer mt-lg flex justify-end gap-sm">
+              <div className="modal-footer mt-lg">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowInviteModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? 'Envoi...' : 'Envoyer l’invitation'}
@@ -196,12 +282,13 @@ export default function UsersPage() {
               </div>
             </form>
           </div>
-          <style jsx>{`
-            .btn-close { background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer; }
-            .modal-content { max-width: 480px; width: 100%; }
-          `}</style>
         </div>
       )}
+      
+      <style jsx>{`
+        .text-danger { color: var(--danger) !important; }
+        .text-danger:hover { background: var(--danger-bg) !important; }
+      `}</style>
     </div>
   );
 }

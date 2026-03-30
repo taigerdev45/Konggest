@@ -8,15 +8,15 @@
 
 /* ─── CSS Variables ─── */
 :root {
-  /* Primary Brand */
-  --primary: #6366F1;
-  --primary-light: #818CF8;
-  --primary-dark: #4F46E5;
-  --primary-glow: rgba(99, 102, 241, 0.15);
+  /* Primary Brand - Arctic Blue / Sky */
+  --primary: #0EA5E9;
+  --primary-light: #38BDF8;
+  --primary-dark: #0284C7;
+  --primary-glow: rgba(14, 165, 233, 0.15);
 
-  /* Accent */
-  --accent: #06B6D4;
-  --accent-light: #22D3EE;
+  /* Accent - Rose / Amber for refined touches */
+  --accent: #F472B6;
+  --accent-light: #FB923C;
 
   /* Success / Warning / Danger */
   --success: #10B981;
@@ -26,52 +26,52 @@
   --danger: #EF4444;
   --danger-bg: rgba(239, 68, 68, 0.1);
 
-  /* Dark Theme Backgrounds */
-  --bg-primary: #0F0F1A;
-  --bg-secondary: #1A1A2E;
-  --bg-tertiary: #16213E;
-  --bg-card: #1E1E32;
-  --bg-card-hover: #252542;
-  --bg-input: #1A1A2E;
-  --bg-sidebar: #0D0D1A;
+  /* Premium Obsidian Backgrounds */
+  --bg-primary: #020617;
+  --bg-secondary: #0F172A;
+  --bg-tertiary: #1E293B;
+  --bg-card: #0F172A;
+  --bg-card-hover: #1E293B;
+  --bg-input: #020617;
+  --bg-sidebar: #020617;
 
-  /* Text */
-  --text-primary: #F1F5F9;
+  /* Text - High Contrast */
+  --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
-  --text-inverse: #0F172A;
+  --text-inverse: #020617;
 
-  /* Borders */
-  --border: #2D2D4A;
-  --border-light: #3D3D5C;
+  /* Borders - Minimalist */
+  --border: #1E293B;
+  --border-light: #334155;
   --border-focus: var(--primary);
 
-  /* Glassmorphism */
-  --glass-bg: rgba(30, 30, 50, 0.6);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  /* Glassmorphism - Refined */
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 30px var(--primary-glow);
+  /* Shadows - Deep */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.7);
+  --shadow-xl: 0 24px 48px -8px rgba(0, 0, 0, 0.8);
+  --shadow-glow: 0 0 40px rgba(14, 165, 233, 0.1);
 
   /* Spacing */
-  --sidebar-width: 260px;
-  --sidebar-collapsed: 72px;
-  --header-height: 64px;
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 80px;
+  --header-height: 72px;
 
   /* Transitions */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 400ms ease;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Border Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* Border Radius - Modern */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
   --radius-full: 9999px;
 }
 
@@ -848,5 +848,38 @@ tbody tr:hover {
   body {
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* ─── Print Optimization ─── */
+@media print {
+  nav, aside, .sidebar, header, .page-header, .btn, .modal-header button, .modal-footer, .quickStat, .table-container, .card-glass {
+    display: none !important;
+  }
+  body, main, .main-content, .dashboard {
+    background: white !important;
+    color: black !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+  .modal-overlay {
+    position: static !important;
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    display: block !important;
+  }
+  .modal-content {
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  * {
+    color: black !important;
+    text-shadow: none !important;
   }
 }

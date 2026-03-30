@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter } from 'react-icons/hi';
+import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,6 +17,8 @@ export default function PayrollPage() {
     to_generate: 0,
   });
   const [showGenModal, setShowGenModal] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [selectedPayslip, setSelectedPayslip] = useState(null);
   const [genData, setGenData] = useState({ period: '' });
   const [submitting, setSubmitting] = useState(false);
 
@@ -157,9 +159,21 @@ export default function PayrollPage() {
                     </span>
                   </td>
                   <td>
-                    <button className="btn btn-xs btn-ghost" title="Imprimer/PDF">
-                      <HiOutlinePrinter />
-                    </button>
+                    <div className="flex gap-xs">
+                      <button 
+                        className="btn btn-xs btn-ghost" 
+                        title="Prévisualiser"
+                        onClick={() => {
+                          setSelectedPayslip(p);
+                          setShowPreviewModal(true);
+                        }}
+                      >
+                        <HiOutlineEye />
+                      </button>
+                      <button className="btn btn-xs btn-ghost" title="Imprimer/PDF">
+                        <HiOutlinePrinter />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -174,6 +188,96 @@ export default function PayrollPage() {
         </table>
       </div>
 
+      {/* Preview Modal */}
+      {showPreviewModal && selectedPayslip && (
+        <div className="modal-overlay">
+          <div className="modal-content card animate-in" style={{ maxWidth: 800, padding: 0, overflow: 'hidden' }}>
+            <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+              <h2>Prévisualisation de la Fiche de Paie</h2>
+              <button className="btn-close" onClick={() => setShowPreviewModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body" style={{ padding: 40, background: 'white', color: '#1e293b' }}>
+              {/* Payslip Header */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 40, borderBottom: '2px solid #334155', paddingBottom: 20 }}>
+                <div>
+                  <h3 style={{ margin: 0, color: '#0f172a', fontSize: '1.5rem' }}>KONGGEST</h3>
+                  <p style={{ margin: '4px 0', fontSize: '0.85rem' }}>123 Avenue de la République</p>
+                  <p style={{ margin: '4px 0', fontSize: '0.85rem' }}>75011 Paris, France</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <h4 style={{ margin: 0, color: '#64748b' }}>BULLETIN DE PAIE</h4>
+                  <p style={{ margin: '4px 0', fontWeight: 600 }}>Période : {selectedPayslip.period_name}</p>
+                </div>
+              </div>
+
+              {/* Employee Info */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 40, marginBottom: 40 }}>
+                <div style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>EMPLOYEUR</p>
+                  <p style={{ margin: 0, fontWeight: 700 }}>KONGGEST SA</p>
+                  <p style={{ margin: '4px 0' }}>SIRET : 123 456 789 00010</p>
+                  <p style={{ margin: '4px 0' }}>Code APE : 6201Z</p>
+                </div>
+                <div style={{ padding: 16, border: '1px solid #e2e8f0', borderRadius: 8 }}>
+                  <p style={{ margin: '0 0 8px 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 700 }}>SALARIÉ</p>
+                  <p style={{ margin: 0, fontWeight: 700 }}>{selectedPayslip.employee_name}</p>
+                  <p style={{ margin: '4px 0' }}>Matricule : {selectedPayslip.employee_id || 'EMP-001'}</p>
+                  <p style={{ margin: '4px 0' }}>Poste : {selectedPayslip.position_title || 'Collaborateur'}</p>
+                </div>
+              </div>
+
+              {/* Table of items */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 40 }}>
+                <thead>
+                  <tr style={{ background: '#f8fafc' }}>
+                    <th style={{ padding: 12, textAlign: 'left', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Désignation</th>
+                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Nombre / Base</th>
+                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Taux</th>
+                    <th style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #e2e8f0', color: '#475569' }}>Part Salariale</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>Salaire de base</td>
+                    <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>151.67 h</td>
+                    <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>-</td>
+                    <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>{formatCurrency(selectedPayslip.gross_salary)}</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>Cotisations sociales (est.)</td>
+                    <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>-</td>
+                    <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>22%</td>
+                    <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9', color: '#dc2626' }}>- {formatCurrency(selectedPayslip.total_deductions)}</td>
+                  </tr>
+                  {parseFloat(selectedPayslip.total_bonuses) > 0 && (
+                    <tr>
+                      <td style={{ padding: 12, borderBottom: '1px solid #f1f5f9' }}>Primes exceptionnelles</td>
+                      <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>-</td>
+                      <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9' }}>-</td>
+                      <td style={{ padding: 12, textAlign: 'right', borderBottom: '1px solid #f1f5f9', color: '#059669' }}>+ {formatCurrency(selectedPayslip.total_bonuses)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              {/* Totals */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ background: '#0f172a', color: 'white', padding: '20px 30px', borderRadius: 8, textAlign: 'right', minWidth: 300 }}>
+                  <p style={{ margin: '0 0 8px 0', opacity: 0.7, fontSize: '0.85rem' }}>NET À PAYER</p>
+                  <p style={{ margin: 0, fontSize: '2rem', fontWeight: 800 }}>{formatCurrency(selectedPayslip.net_salary)}</p>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer" style={{ padding: '16px 24px', background: 'var(--bg-secondary)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
+              <button className="btn btn-secondary" onClick={() => setShowPreviewModal(false)}>Fermer</button>
+              <button className="btn btn-primary" onClick={() => window.print()}>
+                <HiOutlinePrinter /> Imprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Generation Modal */}
       {showGenModal && (
         <div className="modal-overlay">
@@ -186,6 +290,7 @@ export default function PayrollPage() {
               <div className="form-group mb-lg">
                 <label>Période de paie *</label>
                 <select 
+                  className="input"
                   value={genData.period} 
                   onChange={(e) => setGenData({ period: e.target.value })}
                   required
@@ -209,13 +314,6 @@ export default function PayrollPage() {
               </div>
             </form>
           </div>
-          <style jsx>{`
-            .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-            .modal-content { width: 90%; padding: 24px; }
-            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-            .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
-            .form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 500; }
-          `}</style>
         </div>
       )}
     </div>

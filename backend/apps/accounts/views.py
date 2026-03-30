@@ -2,6 +2,7 @@
 from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import action
 from core.permissions import IsManager
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -200,6 +201,57 @@ class UserProfileViewSet(viewsets.ModelViewSet):
             qs = qs.filter(organization_id=tenant_id)
         return qs
 
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserInviteSerializer
+        return UserProfileSerializer
+
     def perform_create(self, serializer):
-        # Specific logic for creating users via invitation or direct creation
-        serializer.save(organization_id=self.request.tenant_id)
+        from django.contrib.auth.models import User
+        import random
+        import string
+
+        email = serializer.validated_data['email']
+        full_name = serializer.validated_data['full_name']
+        role = serializer.validated_data['role']
+        
+        # 1. Create Django User
+        first_name = full_name.split(' ')[0]
+        last_name = ' '.join(full_name.split(' ')[1:]) if ' ' in full_name else ''
+        
+        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+        user = User.objects.create_user(
+            username=email,
+            email=email,
+            password=temp_password,
+            first_name=first_name,
+            last_name=last_name
+        )
+
+        # 2. Create Profile associated with manager organization
+        # Note: organization is retrieved from context/tenant middleware
+        org_id = getattr(self.request, 'tenant_id', None)
+        if not org_id:
+            # Fallback for dev/manual creation
+            org_id = self.request.user.profile.organization_id
+
+        UserProfile.objects.create(
+            user=user,
+            organization_id=org_id,
+            role=role
+        )
+        # Note: In a real app, send an invite email with temp_password or Supabase invite here.
+
+    @action(detail=True, methods=['post'])
+    def suspend(self, request, pk=None):
+        profile = self.get_object()
+        profile.is_active = False
+        profile.save()
+        return Response({'status': 'Profil suspendu'})
+
+    @action(detail=True, methods=['post'])
+    def activate(self, request, pk=None):
+        profile = self.get_object()
+        profile.is_active = True
+        profile.save()
+        return Response({'status': 'Profil activé'})

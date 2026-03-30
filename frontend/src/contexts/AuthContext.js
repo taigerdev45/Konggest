@@ -87,7 +87,22 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    if (error) {
+      // Traduire les erreurs Supabase en français
+      if (error.message?.includes('email_not_confirmed') || error.code === 'email_not_confirmed') {
+        throw new Error('Veuillez confirmer votre adresse email avant de vous connecter. Vérifiez votre boîte de réception.');
+      }
+      if (error.message?.includes('invalid_credentials') || error.code === 'invalid_credentials') {
+        throw new Error('Email ou mot de passe incorrect.');
+      }
+      if (error.message?.includes('invalid_login') || error.code === 'invalid_login') {
+        throw new Error('Email ou mot de passe incorrect.');
+      }
+      if (error.message?.includes('user_not_found') || error.code === 'user_not_found') {
+        throw new Error('Utilisateur non trouvé.');
+      }
+      throw error;
+    }
     return data;
   }, []);
 
@@ -104,7 +119,16 @@ export function AuthProvider({ children }) {
         }
       }
     });
-    if (error) throw error;
+    if (error) {
+      if (error.message?.includes('already registered') || error.code === 'user_already_exists') {
+        throw new Error('Cet email est déjà utilisé.');
+      }
+      throw error;
+    }
+    // Si confirmation email requise
+    if (data?.user && data.user.identities?.length === 0) {
+      throw new Error('Un email de confirmation a été envoyé. Vérifiez votre boîte de réception.');
+    }
     return data;
   }, []);
 

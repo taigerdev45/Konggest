@@ -29,9 +29,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'email', 'full_name', 'role', 'avatar',
+        fields = ['id', 'user_id', 'username', 'email', 'full_name', 'role', 'avatar',
                   'phone', 'organization', 'is_active', 'created_at']
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'user_id', 'created_at', 'username', 'email']
 
     def get_full_name(self, obj):
         return obj.user.get_full_name()
@@ -78,3 +78,15 @@ class RegisterSerializer(serializers.Serializer):
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
+
+
+class UserInviteSerializer(serializers.Serializer):
+    """Serializer for inviting/creating a new user in an organization."""
+    email = serializers.EmailField()
+    full_name = serializers.CharField(max_length=255)
+    role = serializers.ChoiceField(choices=UserProfile.ROLE_CHOICES, default='employee')
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Cet utilisateur existe déjà.")
+        return value
