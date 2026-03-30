@@ -87,8 +87,11 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # ─── Database (Supabase PostgreSQL or SQLite fallback) ───
 import dj_database_url
 db_url = config('DATABASE_URL', default='')
-if db_url and 'konggest-db' not in db_url: # If it's a real URL (not docker internal)
-    default_db = dj_database_url.config(default=db_url, ssl_require=False)
+if db_url and 'sqlite' not in db_url:
+    default_db = dj_database_url.config(default=db_url, ssl_require=True)
+    default_db['OPTIONS'] = {
+        'connect_timeout': 10,
+    }
 else:
     # Fallback to local SQLite for hassle-free local development
     default_db = {
