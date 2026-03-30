@@ -50,7 +50,7 @@ export default function DashboardPage() {
         
         setStats({
           ...statsData,
-          mass_salary: '€452K',
+          mass_salary: '452M FCFA',
           open_positions: 8,
         });
         setRecentLeaves(leavesData.slice(0, 5));

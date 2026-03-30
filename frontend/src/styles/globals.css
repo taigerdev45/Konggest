@@ -8,11 +8,11 @@
 
 /* ─── CSS Variables ─── */
 :root {
-  /* Primary Brand - Azure Blue */
-  --primary: #2563EB;
-  --primary-light: #60A5FA;
-  --primary-dark: #1E40AF;
-  --primary-glow: rgba(37, 99, 235, 0.1);
+  /* Primary Brand - Premium Emerald Green */
+  --primary: #059669;
+  --primary-light: #34D399;
+  --primary-dark: #065F46;
+  --primary-glow: rgba(5, 150, 105, 0.1);
 
   /* Accent - Indigo / Cyan */
   --accent: #06B6D4;
@@ -26,12 +26,12 @@
   --danger: #EF4444;
   --danger-bg: rgba(239, 68, 68, 0.08);
 
-  /* Frost White Backgrounds */
-  --bg-primary: #F8FAFC;
-  --bg-secondary: #F1F5F9;
-  --bg-tertiary: #E2E8F0;
+  /* Mint White Backgrounds */
+  --bg-primary: #F0FDF4; /* Light Green Tint */
+  --bg-secondary: #DCFCE7;
+  --bg-tertiary: #BBF7D0;
   --bg-card: #FFFFFF;
-  --bg-card-hover: #F8FAFC;
+  --bg-card-hover: #F8FAF9;
   --bg-input: #FFFFFF;
   --bg-sidebar: #FFFFFF;
 
@@ -51,11 +51,11 @@
   --glass-border: rgba(255, 255, 255, 0.4);
 
   /* Shadows - Minimalist but Deep */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-  --shadow-glow: 0 0 40px rgba(37, 99, 235, 0.05);
+  --shadow-sm: 0 1px 2px rgba(6, 95, 70, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(6, 95, 70, 0.05), 0 2px 4px -2px rgba(6, 95, 70, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(6, 95, 70, 0.04), 0 4px 6px -4px rgba(6, 95, 70, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(6, 95, 70, 0.1), 0 8px 10px -6px rgba(6, 95, 70, 0.1);
+  --shadow-glow: 0 0 40px rgba(5, 150, 105, 0.05);
 
   /* Spacing */
   --sidebar-width: 280px;
@@ -593,6 +593,19 @@ tbody tr:hover {
 .delay-2 { animation-delay: 0.1s; }
 .delay-3 { animation-delay: 0.15s; }
 .delay-4 { animation-delay: 0.2s; }
+
+/* ─── Utility Classes ─── */
+.bg-secondary { background: var(--bg-secondary) !important; }
+.bg-primary { background: var(--bg-primary) !important; }
+.rounded { border-radius: var(--radius-md); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.p-sm { padding: 8px; }
+.p-md { padding: 16px; }
+.p-lg { padding: 24px; }
+.p-xl { padding: 48px; }
+.m-0 { margin: 0 !important; }
+.text-center { text-align: center; }
+.w-full { width: 100%; }
 
 /* ============================================
    RESPONSIVE BREAKPOINTS

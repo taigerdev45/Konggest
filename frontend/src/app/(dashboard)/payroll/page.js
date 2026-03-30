@@ -72,7 +72,7 @@ export default function PayrollPage() {
   }, []);
 
   const formatCurrency = (val) => {
-    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(val);
+    return new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(val) + ' FCFA';
   };
 
   const isHR = user?.profile?.role === 'hr' || user?.profile?.role === 'admin';
