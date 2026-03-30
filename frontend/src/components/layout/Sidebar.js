@@ -33,7 +33,7 @@ const NAV_ITEMS = [
 const BOTTOM_ITEMS = [
   { path: '/notifications', icon: HiOutlineBell, label: 'Notifications', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/settings', icon: HiOutlineCog, label: 'Paramètres', roles: ['admin', 'hr', 'manager', 'employee'] },
-  { path: '/staff', icon: HiOutlineChartBar, label: 'Espace Staff', roles: ['admin'] },
+  { path: '/staff', icon: HiOutlineChartBar, label: 'Espace Staff', roles: ['admin', 'saas_admin'] },
 ];
 
 export default function Sidebar() {
