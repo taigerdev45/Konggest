@@ -201,34 +201,41 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
 
     def get(self, request, *args, **kwargs):
-        # SaaS Admin check
-        is_saas_admin = hasattr(request.user, 'saas_admin')
+        user = request.user
+        # SaaS Admin check (highest priority)
+        is_saas = hasattr(user, 'saas_admin')
         
         try:
-            profile = request.user.profile
-            serializer = self.get_serializer(profile)
-            data = serializer.data
-            data['is_saas_admin'] = is_saas_admin
-            data['redirect_to'] = '/staff' if is_saas_admin else '/dashboard'
-            return Response(data)
-        except UserProfile.DoesNotExist:
-            if is_saas_admin:
+            # 1. Try to get existing profile
+            if hasattr(user, 'profile'):
+                profile = user.profile
+                serializer = self.get_serializer(profile)
+                data = serializer.data
+                data['is_saas_admin'] = is_saas
+                data['redirect_to'] = '/staff' if is_saas else '/dashboard'
+                return Response(data)
+            
+            # 2. No profile: if SaaS Admin, return special response (no profile needed)
+            if is_saas:
                 return Response({
-                    'id': request.user.id,
-                    'full_name': request.user.get_full_name() or request.user.email,
+                    'id': user.id,
+                    'full_name': user.get_full_name() or user.email,
                     'role': 'saas_admin',
                     'is_saas_admin': True,
                     'organization': None,
                     'redirect_to': '/staff'
                 })
             
-            # Auto-create for regular users if needed (standard behavior)
+            # 3. No profile and not SaaS: Create default profile
+            from django.utils.text import slugify
+            org_name = "Mon Organisation"
+            org_slug = slugify(f"org-{user.id}") # unique slug per user to avoid collisions
             org, _ = Organization.objects.get_or_create(
-                slug='default',
-                defaults={'name': 'Mon Organisation'}
+                slug=org_slug,
+                defaults={'name': org_name}
             )
             profile = UserProfile.objects.create(
-                user=self.request.user,
+                user=user,
                 organization=org,
                 role='admin',
             )
@@ -236,6 +243,16 @@ class ProfileView(generics.RetrieveUpdateAPIView):
             data['is_saas_admin'] = False
             data['redirect_to'] = '/dashboard'
             return Response(data)
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger('django')
+            logger.error(f"Critical error in ProfileView: {str(e)}", exc_info=True)
+            return Response({
+                'error': 'Internal server error during profile management',
+                'detail': str(e),
+                'redirect_to': '/staff' if is_saas else '/dashboard' # Fallback redirect even on error
+            }, status=500)
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):
