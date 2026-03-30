@@ -224,7 +224,8 @@ class ProfileView(generics.RetrieveUpdateAPIView):
             'is_saas_admin': is_saas,
             'redirect_to': '/staff' if is_saas else '/dashboard',
             'role': 'saas_admin' if is_saas else 'admin',
-            'organization': None
+            'organization': None,
+            'v': '1.0.2'  # Version tag for cache busting diagnosis
         }
         
         # 3. Safely augment with profile data if available
