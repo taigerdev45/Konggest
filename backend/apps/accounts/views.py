@@ -203,6 +203,11 @@ class LoginView(APIView):
         return x_forwarded_for.split(',')[0].strip() if x_forwarded_for else request.META.get('REMOTE_ADDR', '')
 
 
+class ProfileView(generics.RetrieveUpdateAPIView):
+    """Get or update current user's profile."""
+    permission_classes = [IsAuthenticated]
+    serializer_class = UserProfileSerializer
+
     def get(self, request, *args, **kwargs):
         user = request.user
         from .models import SaaSAdmin, UserProfile
