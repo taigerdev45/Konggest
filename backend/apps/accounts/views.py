@@ -16,7 +16,8 @@ class StaffDashboardView(APIView):
     permission_classes = [IsAuthenticated] # Should be IsSuperUser in production
 
     def get(self, request):
-        if not request.user.is_staff:
+        is_saas = hasattr(request.user, 'saas_admin')
+        if not request.user.is_staff and not is_saas:
             return Response({'error': 'Access denied'}, status=403)
 
         from apps.employees.models import Employee
@@ -43,7 +44,8 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        if not self.request.user.is_staff:
+        is_saas = hasattr(self.request.user, 'saas_admin')
+        if not self.request.user.is_staff and not is_saas:
             return Organization.objects.none()
         return Organization.objects.all()
 

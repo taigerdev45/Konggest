@@ -13,6 +13,10 @@ export default function TimeTrackingPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      const [entriesData, meData] = await Promise.all([
+        api.get('/time-tracking/entries/'),
+        api.get('/employees/me/').catch(() => null),
+      ]);
       const entriesArr = Array.isArray(entriesData) ? entriesData : [];
       setEntries(entriesArr);
       setMe(meData);
