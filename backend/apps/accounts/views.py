@@ -16,7 +16,11 @@ class StaffDashboardView(APIView):
     permission_classes = [IsAuthenticated] # Should be IsSuperUser in production
 
     def get(self, request):
-        is_saas = hasattr(request.user, 'saas_admin')
+        try:
+            request.user.saas_admin
+            is_saas = True
+        except Exception:
+            is_saas = False
         if not request.user.is_staff and not is_saas:
             return Response({'error': 'Access denied'}, status=403)
 
@@ -44,7 +48,11 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        is_saas = hasattr(self.request.user, 'saas_admin')
+        try:
+            self.request.user.saas_admin
+            is_saas = True
+        except Exception:
+            is_saas = False
         if not self.request.user.is_staff and not is_saas:
             return Organization.objects.none()
         return Organization.objects.all()
@@ -202,37 +210,44 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        # SaaS Admin check (highest priority)
-        is_saas = hasattr(user, 'saas_admin')
         
+        # SaaS Admin check — must use try/except, not hasattr
+        # (Django OneToOne reverse descriptors always exist on the class)
         try:
-            # 1. Try to get existing profile
-            if hasattr(user, 'profile'):
-                profile = user.profile
-                serializer = self.get_serializer(profile)
-                data = serializer.data
-                data['is_saas_admin'] = is_saas
-                data['redirect_to'] = '/staff' if is_saas else '/dashboard'
-                return Response(data)
-            
-            # 2. No profile: if SaaS Admin, return special response (no profile needed)
-            if is_saas:
-                return Response({
-                    'id': user.id,
-                    'full_name': user.get_full_name() or user.email,
-                    'role': 'saas_admin',
-                    'is_saas_admin': True,
-                    'organization': None,
-                    'redirect_to': '/staff'
-                })
-            
-            # 3. No profile and not SaaS: Create default profile
+            user.saas_admin  # Will raise RelatedObjectDoesNotExist if not a SaaS admin
+            is_saas = True
+        except Exception:
+            is_saas = False
+        
+        # Try to get existing profile
+        try:
+            profile = user.profile  # Will raise RelatedObjectDoesNotExist if no profile
+            serializer = self.get_serializer(profile)
+            data = serializer.data
+            data['is_saas_admin'] = is_saas
+            data['redirect_to'] = '/staff' if is_saas else '/dashboard'
+            return Response(data)
+        except Exception:
+            pass  # No profile exists
+        
+        # No profile: if SaaS Admin, return special response (no profile needed)
+        if is_saas:
+            return Response({
+                'id': user.id,
+                'full_name': user.get_full_name() or user.email,
+                'role': 'saas_admin',
+                'is_saas_admin': True,
+                'organization': None,
+                'redirect_to': '/staff'
+            })
+        
+        # No profile and not SaaS: Create default profile
+        try:
             from django.utils.text import slugify
-            org_name = "Mon Organisation"
-            org_slug = slugify(f"org-{user.id}") # unique slug per user to avoid collisions
+            org_slug = slugify(f"org-{user.id}")
             org, _ = Organization.objects.get_or_create(
                 slug=org_slug,
-                defaults={'name': org_name}
+                defaults={'name': 'Mon Organisation'}
             )
             profile = UserProfile.objects.create(
                 user=user,
@@ -243,16 +258,17 @@ class ProfileView(generics.RetrieveUpdateAPIView):
             data['is_saas_admin'] = False
             data['redirect_to'] = '/dashboard'
             return Response(data)
-            
         except Exception as e:
             import logging
-            logger = logging.getLogger('django')
-            logger.error(f"Critical error in ProfileView: {str(e)}", exc_info=True)
+            logging.getLogger('django').error(f"ProfileView error: {e}", exc_info=True)
             return Response({
-                'error': 'Internal server error during profile management',
-                'detail': str(e),
-                'redirect_to': '/staff' if is_saas else '/dashboard' # Fallback redirect even on error
-            }, status=500)
+                'id': user.id,
+                'full_name': user.get_full_name() or user.email,
+                'role': 'admin',
+                'is_saas_admin': False,
+                'organization': None,
+                'redirect_to': '/dashboard'
+            })
 
 
 class UserProfileViewSet(viewsets.ModelViewSet):

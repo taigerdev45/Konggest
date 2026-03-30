@@ -63,15 +63,14 @@ export function AuthProvider({ children }) {
     } else {
       // Fallback: use Supabase metadata directly
       const meta = sessionUser.user_metadata || {};
-      const isSaas = meta.role === 'saas_admin' || sessionUser.email === 'taigermboumba@gmail.com';
       setUser({
         ...sessionUser,
         profile: {
-          role: isSaas ? 'saas_admin' : (meta.role || 'admin'),
+          role: meta.role || 'admin',
           full_name: meta.full_name || sessionUser.email,
-          is_saas_admin: isSaas,
-          redirect_to: isSaas ? '/staff' : '/dashboard',
-          organization: isSaas ? null : { name: meta.organization_name || 'Mon Organisation' },
+          is_saas_admin: false,
+          redirect_to: '/dashboard',
+          organization: { name: meta.organization_name || 'Mon Organisation' },
         },
       });
     }
