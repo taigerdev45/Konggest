@@ -27,6 +27,7 @@ const NAV_ITEMS = [
   { path: '/time-tracking', icon: HiOutlineClock, label: 'Pointage', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/recruitment', icon: HiOutlineBriefcase, label: 'Recrutement', roles: ['admin', 'hr'] },
   { path: '/performance', icon: HiOutlineChartBar, label: 'Performance', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/settings/organization', icon: HiOutlineOfficeBuilding, label: 'Organisation', roles: ['admin', 'hr'] },
   { path: '/audit-logs', icon: HiOutlineShieldCheck, label: 'Audit Logs', roles: ['admin', 'hr'] },
 ];
 

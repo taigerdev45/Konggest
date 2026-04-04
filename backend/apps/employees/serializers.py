@@ -1,6 +1,6 @@
 """Konggest — Employees Serializers"""
 from rest_framework import serializers
-from .models import Employee, Department, Position
+from .models import Employee, Department, Position, Location
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -21,6 +21,13 @@ class PositionSerializer(serializers.ModelSerializer):
         fields = ['id', 'title', 'description', 'department', 'is_active']
 
 
+class LocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Location
+        fields = ['id', 'name', 'address', 'city', 'is_active', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+
 class EmployeeListSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True, default='')
     position_title = serializers.CharField(source='position.title', read_only=True, default='')
@@ -28,13 +35,14 @@ class EmployeeListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Employee
         fields = ['id', 'employee_id', 'cnss_number', 'first_name', 'last_name', 'email', 'phone',
-                  'department', 'department_name', 'position', 'position_title', 'site_location',
-                  'contract_type', 'is_expat', 'status', 'hire_date', 'photo']
+                  'department', 'department_name', 'position', 'position_title', 'location', 
+                  'site_location', 'contract_type', 'is_expat', 'status', 'hire_date', 'photo']
 
 
 class EmployeeDetailSerializer(serializers.ModelSerializer):
     department_name = serializers.CharField(source='department.name', read_only=True, default='')
     position_title = serializers.CharField(source='position.title', read_only=True, default='')
+    location_name = serializers.CharField(source='location.name', read_only=True, default='')
     manager_name = serializers.SerializerMethodField()
 
     class Meta:

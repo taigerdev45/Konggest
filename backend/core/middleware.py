@@ -25,10 +25,12 @@ class TenantMiddleware(MiddlewareMixin):
 
         if hasattr(request, 'user') and request.user.is_authenticated:
             try:
-                profile = request.user.profile
-                request.tenant_id = profile.organization_id
-            except Exception:
-                pass
+                # First try to get it from the user profile
+                if hasattr(request.user, 'profile') and request.user.profile.organization_id:
+                    request.tenant_id = request.user.profile.organization_id
+                # Fallback if profile exists but organization is none (e.g. support user)
+            except Exception as e:
+                logger.error(f"Error extracting tenant_id: {e}")
 
         return None
 

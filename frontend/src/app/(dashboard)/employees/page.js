@@ -13,6 +13,7 @@ export default function EmployeesPage() {
   const [employees, setEmployees] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [positions, setPositions] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
@@ -29,7 +30,8 @@ export default function EmployeesPage() {
     phone: '',
     department: '',
     position: '',
-    site_location: 'libreville',
+    location: '',
+    site_location: '',
     contract_type: 'cdi',
     is_expat: false,
     salary: 0,
@@ -46,15 +48,18 @@ export default function EmployeesPage() {
         api.get('/employees/'),
         api.get('/departments/'),
         api.get('/employees/positions/'),
+        api.get('/employees/locations/'),
       ]);
       
       const empData = resp[0].status === 'fulfilled' ? resp[0].value : [];
       const deptData = resp[1].status === 'fulfilled' ? resp[1].value : [];
       const posData = resp[2].status === 'fulfilled' ? resp[2].value : [];
+      const locData = resp[3].status === 'fulfilled' ? resp[3].value : [];
 
       setEmployees(empData.results || empData || []);
       setDepartments(deptData.results || deptData || []);
       setPositions(posData.results || posData || []);
+      setLocations(locData.results || locData || []);
       
       if (resp.some(r => r.status === 'rejected')) {
         console.warn('Some requests failed', resp);
@@ -105,7 +110,9 @@ export default function EmployeesPage() {
       fetchInitialData();
     } catch (err) {
       console.error('Error creating employee:', err);
-      alert(err.error || 'Erreur lors de la création de l\'employé.');
+      const errorMsg = typeof err.error === 'string' ? err.error : 
+                       (err.details ? JSON.stringify(err.details) : 'Une erreur interne est survenue.');
+      alert(errorMsg);
     } finally {
       setSubmitting(false);
     }
@@ -202,12 +209,9 @@ export default function EmployeesPage() {
                 </div>
                 <div className="input-group">
                   <label>Site d'affectation</label>
-                  <select className="input" name="site_location" value={formData.site_location} onChange={handleInputChange}>
-                    <option value="libreville">Libreville</option>
-                    <option value="port-gentil">Port-Gentil (POG)</option>
-                    <option value="franceville">Franceville</option>
-                    <option value="moanda">Moanda</option>
-                    <option value="site_distant">Site Distant (Exploitation)</option>
+                  <select className="input" name="location" value={formData.location} onChange={handleInputChange}>
+                    <option value="">Sélectionner un site...</option>
+                    {locations.map(loc => <option key={loc.id} value={loc.id}>{loc.name}</option>)}
                   </select>
                 </div>
                 <div className="input-group">

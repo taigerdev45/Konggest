@@ -4,10 +4,10 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from core.permissions import IsHRManager, IsManager, IsSameTenant
 from core.cache import cache_response, invalidate_cache
-from .models import Employee, Department, Position
+from .models import Employee, Department, Position, Location
 from .serializers import (
     EmployeeListSerializer, EmployeeDetailSerializer,
-    DepartmentSerializer, PositionSerializer
+    DepartmentSerializer, PositionSerializer, LocationSerializer
 )
 from apps.accounts.utils import log_action
 
@@ -48,15 +48,28 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
-        qs = Employee.objects.select_related('department', 'position', 'manager')
+        qs = Employee.objects.select_related('department', 'position', 'manager', 'location')
         if tenant_id:
             qs = qs.filter(organization_id=tenant_id)
         return qs
 
     def perform_create(self, serializer):
-        emp = serializer.save(organization_id=self.request.tenant_id)
-        invalidate_cache(self.request.tenant_id, 'employees')
-        log_action(self.request.user, self.request.user.profile.organization, 'create', 'employee', emp.id, {'full_name': emp.full_name})
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            # Try to get it from user profile if middleware missed it
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                raise serializers.ValidationError({"error": "Organisation non identifiée."})
+
+        emp = serializer.save(organization_id=tenant_id)
+        invalidate_cache(tenant_id, 'employees')
+        
+        # Safe logging
+        try:
+            log_action(self.request.user, emp.organization, 'create', 'employee', emp.id, {'full_name': emp.full_name})
+        except Exception:
+            pass
 
     def perform_update(self, serializer):
         emp = serializer.save()
@@ -138,6 +151,22 @@ class PositionViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
         qs = Position.objects.all()
+        if tenant_id:
+            qs = qs.filter(organization_id=tenant_id)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(organization_id=self.request.tenant_id)
+
+
+class LocationViewSet(viewsets.ModelViewSet):
+    """CRUD for company locations."""
+    serializer_class = LocationSerializer
+    permission_classes = [IsHRManager]
+
+    def get_queryset(self):
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        qs = Location.objects.all()
         if tenant_id:
             qs = qs.filter(organization_id=tenant_id)
         return qs

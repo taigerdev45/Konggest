@@ -38,6 +38,24 @@ class Position(models.Model):
         return self.title
 
 
+class Location(models.Model):
+    """Company site or branch location."""
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='locations')
+    name = models.CharField(max_length=100, verbose_name="Nom du site/lieu")
+    address = models.TextField(blank=True, verbose_name="Adresse")
+    city = models.CharField(max_length=100, blank=True, verbose_name="Ville")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Lieu/Site"
+        unique_together = ['organization', 'name']
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class Employee(models.Model):
     """Employee master record."""
     CONTRACT_CHOICES = [
@@ -91,7 +109,8 @@ class Employee(models.Model):
     # Professional info
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
     position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, related_name='employees')
-    site_location = models.CharField(max_length=50, choices=SITE_CHOICES, default='libreville', verbose_name="Site")
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees', verbose_name="Site/Lieu")
+    site_location = models.CharField(max_length=50, choices=SITE_CHOICES, default='libreville', verbose_name="Site (Obsolète)")
     sector = models.CharField(max_length=50, choices=SECTOR_CHOICES, default='commerce', verbose_name="Secteur")
     manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinates')
     contract_type = models.CharField(max_length=20, choices=CONTRACT_CHOICES, default='cdi')
