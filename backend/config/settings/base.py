@@ -84,6 +84,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
+import sys
+
 # ─── Database (Supabase PostgreSQL or SQLite fallback) ───
 import dj_database_url
 db_url = config('DATABASE_URL', default='')
@@ -100,6 +102,14 @@ else:
     }
 
 DATABASES = {'default': default_db}
+
+# Force SQLite and DEBUG for testing
+if 'test' in sys.argv:
+    DEBUG = True
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'test_db.sqlite3',
+    }
 
 # ─── Cache (Redis with LocMem fallback) ───
 redis_url = config('REDIS_URL', default='')

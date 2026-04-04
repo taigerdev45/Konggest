@@ -14,9 +14,9 @@ def custom_exception_handler(exc, context):
         response.data['status_code'] = response.status_code
         return response
 
-    # Log unhandled exceptions
+    from django.conf import settings
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-
+    
     return Response(
         {'error': 'Une erreur interne est survenue.', 'status_code': 500},
         status=status.HTTP_500_INTERNAL_SERVER_ERROR

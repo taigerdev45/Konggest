@@ -56,7 +56,12 @@ class PayslipViewSet(viewsets.ModelViewSet):
         # Non-managers see only their own payslips
         if hasattr(self.request.user, 'profile') and self.request.user.profile.role == 'employee':
             qs = qs.filter(employee__user=self.request.user)
-        return qs
+    @action(detail=False, methods=['post'])
+    def generate_for_period(self, request):
+        """Mass generate payslips for a specific period (Gabon 2026 Engine)."""
+        period_id = request.data.get('period_id')
+        if not period_id:
+            return Response({'error': 'period_id is required'}, status=400)
 
         from apps.employees.models import Employee
         from .models import PayrollPeriod, Payslip, PayrollItem

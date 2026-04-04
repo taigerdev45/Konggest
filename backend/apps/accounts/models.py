@@ -78,7 +78,7 @@ class AuditLog(models.Model):
     resource_id = models.CharField(max_length=50, blank=True)
     details = models.JSONField(default=dict)
     ip_address = models.GenericIPAddressField(null=True)
-    user_agent = models.TextField(blank=True)
+    user_agent = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -97,7 +97,7 @@ class LoginAttempt(models.Model):
     """Track login attempts for brute force detection."""
     email = models.EmailField()
     ip_address = models.GenericIPAddressField()
-    user_agent = models.TextField(blank=True)
+    user_agent = models.TextField(blank=True, null=True)
     success = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
