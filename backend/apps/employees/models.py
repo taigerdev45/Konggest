@@ -110,7 +110,7 @@ class Employee(models.Model):
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
     position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, related_name='employees')
     location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name='employees', verbose_name="Site/Lieu")
-    site_location = models.CharField(max_length=50, choices=SITE_CHOICES, default='libreville', verbose_name="Site (Obsolète)")
+    site_location = models.CharField(max_length=50, choices=SITE_CHOICES, default='libreville', blank=True, null=True, verbose_name="Site (Obsolète)")
     sector = models.CharField(max_length=50, choices=SECTOR_CHOICES, default='commerce', verbose_name="Secteur")
     manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinates')
     contract_type = models.CharField(max_length=20, choices=CONTRACT_CHOICES, default='cdi')

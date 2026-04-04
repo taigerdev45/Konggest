@@ -37,6 +37,9 @@ class EmployeeListSerializer(serializers.ModelSerializer):
         fields = ['id', 'employee_id', 'cnss_number', 'first_name', 'last_name', 'email', 'phone',
                   'department', 'department_name', 'position', 'position_title', 'location', 
                   'site_location', 'contract_type', 'is_expat', 'status', 'hire_date', 'photo']
+        extra_kwargs = {
+            'site_location': {'required': False, 'allow_null': True, 'allow_blank': True}
+        }
 
 
 class EmployeeDetailSerializer(serializers.ModelSerializer):
@@ -49,6 +52,9 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
         model = Employee
         fields = '__all__'
         read_only_fields = ['id', 'organization', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'site_location': {'required': False, 'allow_null': True, 'allow_blank': True}
+        }
 
     def get_manager_name(self, obj):
         return obj.manager.full_name if obj.manager else None

@@ -110,9 +110,16 @@ export default function EmployeesPage() {
       fetchInitialData();
     } catch (err) {
       console.error('Error creating employee:', err);
-      const errorMsg = typeof err.error === 'string' ? err.error : 
-                       (err.details ? JSON.stringify(err.details) : 'Une erreur interne est survenue.');
-      alert(errorMsg);
+      // Format DRF error response
+      let errorMsg = 'Une erreur est survenue.';
+      if (err.details && typeof err.details === 'object') {
+        errorMsg = Object.entries(err.details)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`)
+          .join('\n');
+      } else if (err.error) {
+        errorMsg = typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+      }
+      alert(`Échec de la création :\n${errorMsg}`);
     } finally {
       setSubmitting(false);
     }

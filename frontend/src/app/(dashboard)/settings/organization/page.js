@@ -111,7 +111,16 @@ export default function OrganizationSettingsPage() {
       fetchData();
     } catch (err) {
       console.error('Save error:', err);
-      showToast('error', err.error || 'Une erreur est survenue lors de l\'enregistrement.');
+      // Format DRF error response
+      let errorMsg = 'Une erreur est survenue.';
+      if (err.details && typeof err.details === 'object') {
+        errorMsg = Object.entries(err.details)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`)
+          .join('\n');
+      } else if (err.error) {
+        errorMsg = typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
+      }
+      showToast('error', `Échec : ${errorMsg}`);
     } finally {
       setLoading(false);
     }
