@@ -318,7 +318,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         # Generate temp password
         temp_password = ''.join(random.choices(string.ascii_letters + string.digits + '!@#$', k=14))
 
-        # --- 1. Create user in Supabase (sends email) ---
+        # --- 1. Create user in Supabase WITH password (not just invite) ---
         supabase_url = getattr(settings, 'SUPABASE_URL', '')
         service_key  = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
         supabase_ok  = False
@@ -326,10 +326,12 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
         if supabase_url and service_key:
             try:
-                url = f"{supabase_url}/auth/v1/invite"
+                url = f"{supabase_url}/auth/v1/admin/users"
                 payload = json.dumps({
                     "email": email,
-                    "data": {
+                    "password": temp_password,
+                    "email_confirm": True,
+                    "user_metadata": {
                         "full_name": full_name,
                         "role": role,
                         "invited_by": request.user.email,
@@ -352,8 +354,9 @@ class UserProfileViewSet(viewsets.ModelViewSet):
                         resp_body = json.loads(sb_resp.read().decode('utf-8'))
                         supabase_uid = resp_body.get('id')
                         supabase_ok = True
-            except Exception:
-                pass  # Supabase unavailable — fall through to Django-only creation
+            except Exception as e:
+                import logging
+                logging.getLogger('django').warning(f"Supabase user creation failed: {e}")
 
         # --- 2. Create local Django user (for JWT auth fallback) ---
         first = full_name.split(' ')[0]
@@ -382,13 +385,24 @@ class UserProfileViewSet(viewsets.ModelViewSet):
             profile.organization_id = tenant_id
             profile.save()
 
+        # Build login URL
+        from django.conf import settings
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://localhost')
+        if not frontend_url or frontend_url == 'https://localhost':
+            # Try to get from request
+            frontend_url = f"{request.scheme}://{request.get_host()}".replace('/api', '')
+        
+        login_url = f"{frontend_url}/login"
+
         return Response({
-            'message': f"Invitation envoyée à {email}.",
+            'message': f"Utilisateur {email} créé avec succès.",
             'email': email,
             'role': role,
             'temp_password': temp_password,
+            'login_url': login_url,
             'supabase_user_created': supabase_ok,
-            'email_sent': supabase_ok,   # Supabase sends email automatically
+            'email_sent': False,  # Pas d'email envoyé, on affiche le mot de passe à l'admin
+            'instructions': f"L'utilisateur peut se connecter immédiatement avec son email et le mot de passe temporaire affiché ci-dessus à l'adresse : {login_url}"
         }, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
