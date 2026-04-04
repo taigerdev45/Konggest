@@ -15,11 +15,8 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      // Use the staff-stats endpoint to get user count, and organizations for user listing
-      // For a full user list, we'd need a dedicated endpoint
-      const orgs = await api.get('/accounts/organizations/');
-      // Flatten all org data into a simple user-like list
-      setUsers(Array.isArray(orgs) ? orgs : []);
+      const data = await api.get('/accounts/platform-users/');
+      setUsers(Array.isArray(data) ? data : (data.results || []));
     } catch (err) {
       console.error('Error:', err);
     } finally {
@@ -30,7 +27,7 @@ export default function UsersPage() {
   useEffect(() => { fetchUsers(); }, []);
 
   const filtered = users.filter(u => {
-    if (search && !u.name?.toLowerCase().includes(search.toLowerCase()) &&
+    if (search && !u.full_name?.toLowerCase().includes(search.toLowerCase()) &&
         !u.email?.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
@@ -61,13 +58,7 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Info */}
-      <div className="card" style={{ marginBottom: 20, padding: '16px 20px', background: 'var(--primary-glow)', border: '1px solid var(--primary)', borderRadius: 12 }}>
-        <p style={{ margin: 0, fontSize: '0.9rem' }}>
-          <strong>💡 Note :</strong> Cette vue affiche les organisations et leurs membres. Pour une liste complète des utilisateurs individuels,
-          un endpoint dédié sera nécessaire dans l'API backend.
-        </p>
-      </div>
+      {/* Info removed as it's now accurate */}
 
       {/* Organizations as user groups */}
       <div className="card" style={{ padding: 0 }}>
@@ -75,12 +66,12 @@ export default function UsersPage() {
           <table>
             <thead>
               <tr>
-                <th>Organisation</th>
+                <th>Utilisateurs</th>
                 <th>Email</th>
-                <th>Plan</th>
+                <th>Rôle</th>
+                <th>Organisation</th>
                 <th>Statut</th>
-                <th>Max Employés</th>
-                <th>Créée le</th>
+                <th>Créé le</th>
               </tr>
             </thead>
             <tbody>
@@ -89,34 +80,32 @@ export default function UsersPage() {
                   <tr key={i}><td colSpan="6"><div className="skeleton" style={{ height: 20 }} /></td></tr>
                 ))
               ) : filtered.length > 0 ? (
-                filtered.map(org => (
-                  <tr key={org.id}>
+                filtered.map(u => (
+                  <tr key={u.id}>
                     <td style={{ fontWeight: 600 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <HiOutlineUsers style={{ color: 'var(--primary)' }} />
-                        {org.name}
+                        {u.full_name}
                       </div>
                     </td>
                     <td>
-                      {org.email ? (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <HiOutlineMail style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }} />
-                          {org.email}
-                        </div>
-                      ) : '—'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <HiOutlineMail style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }} />
+                        {u.email}
+                      </div>
                     </td>
                     <td>
-                      <span className={`badge ${org.plan === 'enterprise' ? 'badge-purple' : org.plan === 'business' ? 'badge-primary' : 'badge-neutral'}`}>
-                        {(org.plan || '').toUpperCase()}
+                      <span className={`badge badge-neutral`}>
+                        {(u.role || '').toUpperCase()}
                       </span>
                     </td>
+                    <td>{u.organization_name || `ID: ${u.organization}`}</td>
                     <td>
-                      <span className={`badge ${org.is_active ? 'badge-success' : 'badge-danger'}`}>
-                        {org.is_active ? 'ACTIF' : 'INACTIF'}
+                      <span className={`badge ${u.is_active ? 'badge-success' : 'badge-danger'}`}>
+                        {u.is_active ? 'ACTIF' : 'INACTIF'}
                       </span>
                     </td>
-                    <td>{org.max_employees || 10}</td>
-                    <td style={{ fontSize: '0.85rem' }}>{new Date(org.created_at).toLocaleDateString('fr-FR')}</td>
+                    <td style={{ fontSize: '0.85rem' }}>{new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
                   </tr>
                 ))
               ) : (

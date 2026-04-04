@@ -58,15 +58,9 @@ class PayslipViewSet(viewsets.ModelViewSet):
             qs = qs.filter(employee__user=self.request.user)
         return qs
 
-    @action(detail=False, methods=['post'], url_path='generate')
-    def generate_for_period(self, request):
-        """Logic to generate draft payslips for all active employees in a period."""
-        period_id = request.data.get('period')
-        if not period_id:
-            return Response({'error': 'Period ID is required'}, status=400)
-        
         from apps.employees.models import Employee
-        from .models import PayrollPeriod
+        from .models import PayrollPeriod, Payslip, PayrollItem
+        from core import hr_settings
         
         try:
             period = PayrollPeriod.objects.get(id=period_id, organization_id=self.request.tenant_id)
@@ -80,24 +74,68 @@ class PayslipViewSet(viewsets.ModelViewSet):
         
         created_count = 0
         for emp in active_employees:
-            # Basic logic: create a draft payslip based on base salary
-            payslip, created = Payslip.objects.get_or_create(
+            # 1. Base Salary
+            gross = float(emp.salary)
+            
+            # 2. CNSS (5% Employee)
+            cnss_base = min(gross, hr_settings.CNSS_CEILING)
+            cnss_amount = round(cnss_base * hr_settings.CNSS_EMPLOYEE_RATE, 2)
+            
+            # 3. CNAMGS (1% Employee)
+            cnamgs_amount = round(gross * hr_settings.CNAMGS_EMPLOYEE_RATE, 2)
+            
+            # 4. TCS (5% > 150k)
+            tcs_taxable = max(0, gross - hr_settings.TCS_EXEMPT_BASE)
+            tcs_amount = round(tcs_taxable * hr_settings.TCS_RATE, 2)
+            
+            # 5. IRPP (Progressive)
+            # Deduction of social charges and professional expenses
+            taxable_for_irpp = (gross - cnss_amount - cnamgs_amount - tcs_amount) * (1 - hr_settings.PROFESSIONAL_EXPENSES_RATE)
+            irpp_amount = hr_settings.calculate_irpp_monthly(taxable_for_irpp, float(emp.family_parts))
+            
+            total_deductions = cnss_amount + cnamgs_amount + tcs_amount + irpp_amount
+            
+            # --- 6. Sector Specifics (13th Month in December) ---
+            total_bonuses = 0
+            is_december = period.start_date.month == 12
+            if is_december and emp.sector in ['petrole', 'bois']:
+                total_bonuses = gross # 13th Month is usually 100% of base
+            
+            net_salary = gross + total_bonuses - total_deductions
+            
+            # Create/Update Payslip
+            payslip, created = Payslip.objects.update_or_create(
                 employee=emp,
                 period=period,
                 defaults={
-                    'gross_salary': emp.salary,
-                    'net_salary': emp.salary * 0.78, # Simple 22% deduction estimate
-                    'total_deductions': emp.salary * 0.22,
+                    'gross_salary': gross,
+                    'total_deductions': total_deductions,
+                    'total_bonuses': total_bonuses,
+                    'net_salary': net_salary,
                     'status': 'draft'
                 }
             )
+            
+            # Create Details (items)
+            PayrollItem.objects.filter(payslip=payslip).delete()
+            items = [
+                PayrollItem(payslip=payslip, name='CNSS (5%)', item_type='deduction', amount=cnss_amount),
+                PayrollItem(payslip=payslip, name='CNAMGS (1%)', item_type='deduction', amount=cnamgs_amount),
+                PayrollItem(payslip=payslip, name='TCS (5%)', item_type='deduction', amount=tcs_amount),
+                PayrollItem(payslip=payslip, name='IRPP', item_type='deduction', amount=irpp_amount),
+            ]
+            if total_bonuses > 0:
+                items.append(PayrollItem(payslip=payslip, name='13ème Mois', item_type='bonus', amount=total_bonuses))
+                
+            PayrollItem.objects.bulk_create(items)
+            
             if created:
                 created_count += 1
         
         if created_count > 0:
             log_action(request.user, request.user.profile.organization, 'create', 'payroll', f'period_{period_id}', {'count': created_count})
                 
-        return Response({'status': f'{created_count} payslips generated.'})
+        return Response({'status': f'{created_count} payslips generated/updated with Gabonese calculation.'})
 
     @action(detail=True, methods=['post'])
     def validate(self, request, pk=None):

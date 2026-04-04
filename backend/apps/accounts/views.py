@@ -3,7 +3,7 @@ from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
-from core.permissions import IsManager
+from core.permissions import IsManager, IsSaaSAdmin
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -73,13 +73,31 @@ class OrganizationViewSet(viewsets.ModelViewSet):
 
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """View and list audit logs for current organization."""
-    permission_classes = [IsAuthenticated, IsManager]
+    permission_classes = [IsAuthenticated, IsManager | IsSaaSAdmin]
     serializer_class = AuditLogSerializer
 
     def get_queryset(self):
+        user = self.request.user
+        is_saas = hasattr(user, 'saas_admin')
+        
+        if is_saas:
+            return AuditLog.objects.select_related('user', 'organization').all()
+            
         tenant_id = getattr(self.request, 'tenant_id', None)
         qs = AuditLog.objects.select_related('user').all()
         return qs.filter(organization_id=tenant_id) if tenant_id else qs
+
+
+class UserPlatformViewSet(viewsets.ReadOnlyModelViewSet):
+    """Global user list for SaaS administrators."""
+    permission_classes = [IsAuthenticated, IsSaaSAdmin]
+    serializer_class = UserProfileSerializer
+    queryset = UserProfile.objects.select_related('user', 'organization').all()
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        # Add extra context if needed
+        return context
 
 
 class RegisterView(generics.CreateAPIView):

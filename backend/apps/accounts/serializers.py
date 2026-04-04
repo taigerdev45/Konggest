@@ -26,11 +26,12 @@ class UserProfileSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', read_only=True)
     full_name = serializers.SerializerMethodField()
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
 
     class Meta:
         model = UserProfile
         fields = ['id', 'user_id', 'username', 'email', 'full_name', 'role', 'avatar',
-                  'phone', 'organization', 'is_active', 'created_at']
+                  'phone', 'organization', 'organization_name', 'is_active', 'created_at']
         read_only_fields = ['id', 'user_id', 'created_at', 'username', 'email']
 
     def get_full_name(self, obj):

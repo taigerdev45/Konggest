@@ -59,10 +59,25 @@ class Employee(models.Model):
         ('suspended', 'Suspendu'),
         ('terminated', 'Terminé'),
     ]
+    SITE_CHOICES = [
+        ('libreville', 'Libreville'),
+        ('port-gentil', 'Port-Gentil'),
+        ('franceville', 'Franceville'),
+        ('moanda', 'Moanda'),
+        ('site_distant', 'Site Distant (Exploitation)'),
+    ]
+    SECTOR_CHOICES = [
+        ('petrole', 'Pétrole & Mines'),
+        ('bois', 'Exploitation Forestière'),
+        ('btp', 'BTP & Construction'),
+        ('agro', 'Agro-industrie'),
+        ('commerce', 'Commerce & Services'),
+    ]
 
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='employees')
     user = models.OneToOneField('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='employee')
     employee_id = models.CharField(max_length=20, verbose_name="Matricule")
+    cnss_number = models.CharField(max_length=20, blank=True, verbose_name="Numéro CNSS")
     first_name = models.CharField(max_length=100, verbose_name="Prénom")
     last_name = models.CharField(max_length=100, verbose_name="Nom")
     email = models.EmailField(verbose_name="Email")
@@ -71,15 +86,19 @@ class Employee(models.Model):
     date_of_birth = models.DateField(null=True, blank=True, verbose_name="Date de naissance")
     address = models.TextField(blank=True, verbose_name="Adresse")
     nationality = models.CharField(max_length=50, blank=True, verbose_name="Nationalité")
+    is_expat = models.BooleanField(default=False, verbose_name="Expatrié")
 
     # Professional info
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
     position = models.ForeignKey(Position, on_delete=models.SET_NULL, null=True, related_name='employees')
+    site_location = models.CharField(max_length=50, choices=SITE_CHOICES, default='libreville', verbose_name="Site")
+    sector = models.CharField(max_length=50, choices=SECTOR_CHOICES, default='commerce', verbose_name="Secteur")
     manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='subordinates')
     contract_type = models.CharField(max_length=20, choices=CONTRACT_CHOICES, default='cdi')
     hire_date = models.DateField(verbose_name="Date d'embauche")
     end_date = models.DateField(null=True, blank=True, verbose_name="Date de fin")
     salary = models.DecimalField(max_digits=12, decimal_places=2, default=0, verbose_name="Salaire brut")
+    family_parts = models.DecimalField(max_digits=3, decimal_places=1, default=1.0, verbose_name="Parts IRPP")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
 
     # Emergency contact
@@ -106,3 +125,11 @@ class Employee(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def seniority_years(self):
+        """Calculate seniority in years."""
+        from django.utils import timezone
+        from dateutil.relativedelta import relativedelta
+        delta = relativedelta(timezone.now().date(), self.hire_date)
+        return delta.years

@@ -82,22 +82,35 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        """Get employee statistics for dashboard."""
+        """Get employee statistics for dashboard with Gabonese context."""
         qs = self.get_queryset()
+        total = qs.count()
+        terminated = qs.filter(status='terminated').count()
+        
+        # Simple turnover calculation (Terminated / Total)
+        turnover = round((terminated / total * 100), 2) if total > 0 else 0
+        
         return Response({
-            'total': qs.count(),
+            'total': total,
             'active': qs.filter(status='active').count(),
             'on_leave': qs.filter(status='on_leave').count(),
+            'turnover_rate': turnover,
             'by_department': list(
                 qs.filter(status='active')
                 .values('department__name')
                 .annotate(count=models.Count('id'))
                 .order_by('-count')[:10]
             ),
+            'by_site': list(
+                qs.values('site_location')
+                .annotate(count=models.Count('id'))
+                .order_by('-count')
+            ),
             'by_contract': list(
                 qs.values('contract_type')
                 .annotate(count=models.Count('id'))
             ),
+            'expat_ratio': round((qs.filter(is_expat=True).count() / total * 100), 1) if total > 0 else 0
         })
 
 

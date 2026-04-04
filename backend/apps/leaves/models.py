@@ -74,5 +74,16 @@ class LeaveBalance(models.Model):
     def remaining_days(self):
         return self.total_days + self.carried_over - self.used_days
 
+    def recalculate_balance(self):
+        """Update total_days based on Gabonese regulation (24 base + seniority)."""
+        from core import hr_settings
+        # Base accrual for the year (2 days * 12 months)
+        base = hr_settings.BASE_LEAVE_DAYS_PER_MONTH * 12
+        # Seniority bonus
+        bonus = hr_settings.calculate_seniority_leave_bonus(self.employee.seniority_years)
+        
+        self.total_days = base + bonus
+        self.save()
+
     def __str__(self):
         return f"{self.employee.full_name} - {self.leave_type.name}: {self.remaining_days}j restants"

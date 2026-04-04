@@ -43,3 +43,11 @@ class IsSameTenant(BasePermission):
         if obj_org is None and hasattr(obj, 'employee'):
             obj_org = getattr(obj.employee, 'organization_id', None)
         return obj_org == request.user.profile.organization_id
+
+class IsSaaSAdmin(BasePermission):
+    """Only platform-level SaaS administrators."""
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            hasattr(request.user, 'saas_admin')
+        )

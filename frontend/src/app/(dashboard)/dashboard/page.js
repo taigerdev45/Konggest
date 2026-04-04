@@ -34,7 +34,9 @@ export default function DashboardPage() {
     total: 0,
     active: 0,
     on_leave: 0,
-    mass_salary: 0,
+    turnover_rate: 0,
+    expat_ratio: 0,
+    mass_salary: '0 FCFA',
     open_positions: 0,
   });
   const [recentLeaves, setRecentLeaves] = useState([]);
@@ -50,7 +52,7 @@ export default function DashboardPage() {
         
         setStats({
           ...statsData,
-          mass_salary: '452M FCFA',
+          mass_salary: '452M FCFA', // Mock for now, requires total sum in API
           open_positions: 8,
         });
         setRecentLeaves(Array.isArray(leavesData) ? leavesData.slice(0, 5) : []);
@@ -64,10 +66,10 @@ export default function DashboardPage() {
   }, []);
 
   const STATS_CARDS = [
-    { label: 'Employés actifs', value: stats.active.toString(), change: '+3', icon: HiOutlineUsers, color: 'purple' },
-    { label: 'En congé', value: stats.on_leave.toString(), change: '+2', icon: HiOutlineCalendar, color: 'cyan' },
-    { label: 'Masse salariale', value: stats.mass_salary, change: '+1.5%', icon: HiOutlineCurrencyDollar, color: 'green' },
-    { label: 'Postes ouverts', value: stats.open_positions.toString(), change: '+1', icon: HiOutlineBriefcase, color: 'orange' },
+    { label: 'Employés actifs', value: stats.active.toString(), change: 'Cible : 100%', icon: HiOutlineUsers, color: 'purple' },
+    { label: 'En congé / Absence', value: stats.on_leave.toString(), change: 'Aujourd\'hui', icon: HiOutlineCalendar, color: 'cyan' },
+    { label: 'Turnover Global', value: `${stats.turnover_rate}%`, change: 'Annuel est.', icon: HiOutlineTrendingUp, color: 'orange' },
+    { label: 'Ratio Expatriés', value: `${stats.expat_ratio}%`, change: 'Gabonisation', icon: HiOutlineBriefcase, color: 'green' },
   ];
 
   const greeting = getGreeting();

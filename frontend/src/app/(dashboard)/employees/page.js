@@ -22,13 +22,18 @@ export default function EmployeesPage() {
 
   const [formData, setFormData] = useState({
     employee_id: '',
+    cnss_number: '',
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
     department: '',
     position: '',
+    site_location: 'libreville',
     contract_type: 'cdi',
+    is_expat: false,
+    salary: 0,
+    family_parts: 1.0,
     status: 'active',
     hire_date: new Date().toISOString().split('T')[0],
   });
@@ -58,8 +63,11 @@ export default function EmployeesPage() {
   }, []);
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -70,13 +78,18 @@ export default function EmployeesPage() {
       setShowModal(false);
       setFormData({
         employee_id: '',
+        cnss_number: '',
         first_name: '',
         last_name: '',
         email: '',
         phone: '',
         department: '',
         position: '',
+        site_location: 'libreville',
         contract_type: 'cdi',
+        is_expat: false,
+        salary: 0,
+        family_parts: 1.0,
         status: 'active',
         hire_date: new Date().toISOString().split('T')[0],
       });
@@ -106,7 +119,7 @@ export default function EmployeesPage() {
   };
 
   const filtered = (Array.isArray(employees) ? employees : []).filter((emp) => {
-    const matchSearch = `${emp.first_name} ${emp.last_name} ${emp.employee_id} ${emp.email}`
+    const matchSearch = `${emp.first_name} ${emp.last_name} ${emp.employee_id} ${emp.email} ${emp.cnss_number}`
       .toLowerCase()
       .includes(search.toLowerCase());
     const matchStatus = !statusFilter || emp.status === statusFilter;
@@ -126,7 +139,7 @@ export default function EmployeesPage() {
       <div className="page-header">
         <div>
           <h1>Employés</h1>
-          <p>Gérez les employés de votre organisation</p>
+          <p>Gérez les employés de votre organisation (Conformité Gabon 2026)</p>
         </div>
         <div className="flex gap-sm">
           <button className="btn btn-ghost" onClick={fetchInitialData} disabled={loading}>
@@ -144,11 +157,11 @@ export default function EmployeesPage() {
       {/* Add Employee Modal */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 700 }}>
+          <div className="modal-content card animate-in" style={{ maxWidth: 800 }}>
             <div className="modal-header">
               <div>
                 <h2>Ajouter un collaborateur</h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Renseignez les informations de base pour créer le profil.</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Renseignez les informations de base et fiscales (Réglementation Gabon).</p>
               </div>
               <button className="btn-close" onClick={() => setShowModal(false)}>&times;</button>
             </div>
@@ -156,11 +169,11 @@ export default function EmployeesPage() {
               <div className="grid grid-2 gap-md">
                 <div className="input-group">
                   <label>Matricule *</label>
-                  <input className="input" type="text" name="employee_id" value={formData.employee_id} onChange={handleInputChange} required placeholder="Ex: EMP-2024-001" />
+                  <input className="input" type="text" name="employee_id" value={formData.employee_id} onChange={handleInputChange} required placeholder="Ex: EMP-2026-001" />
                 </div>
                 <div className="input-group">
-                  <label>Email Professionnel *</label>
-                  <input className="input" type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="nom@entreprise.com" />
+                  <label>Numéro CNSS</label>
+                  <input className="input" type="text" name="cnss_number" value={formData.cnss_number} onChange={handleInputChange} placeholder="Ex: 123456-A" />
                 </div>
                 <div className="input-group">
                   <label>Prénom *</label>
@@ -171,10 +184,21 @@ export default function EmployeesPage() {
                   <input className="input" type="text" name="last_name" value={formData.last_name} onChange={handleInputChange} required />
                 </div>
                 <div className="input-group">
-                  <label>Poste</label>
-                  <select className="input" name="position" value={formData.position} onChange={handleInputChange}>
-                    <option value="">Sélectionner un poste...</option>
-                    {positions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
+                  <label>Email Professionnel *</label>
+                  <input className="input" type="email" name="email" value={formData.email} onChange={handleInputChange} required placeholder="nom@entreprise.com" />
+                </div>
+                <div className="input-group">
+                  <label>Téléphone</label>
+                  <input className="input" type="text" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+241 ..." />
+                </div>
+                <div className="input-group">
+                  <label>Site d'affectation</label>
+                  <select className="input" name="site_location" value={formData.site_location} onChange={handleInputChange}>
+                    <option value="libreville">Libreville</option>
+                    <option value="port-gentil">Port-Gentil (POG)</option>
+                    <option value="franceville">Franceville</option>
+                    <option value="moanda">Moanda</option>
+                    <option value="site_distant">Site Distant (Exploitation)</option>
                   </select>
                 </div>
                 <div className="input-group">
@@ -197,6 +221,18 @@ export default function EmployeesPage() {
                 <div className="input-group">
                   <label>Date d'embauche *</label>
                   <input className="input" type="date" name="hire_date" value={formData.hire_date} onChange={handleInputChange} required />
+                </div>
+                <div className="input-group">
+                  <label>Salaire Brut Mensuel (XAF) *</label>
+                  <input className="input" type="number" name="salary" value={formData.salary} onChange={handleInputChange} required />
+                </div>
+                <div className="input-group">
+                  <label>Parts IRPP (Quotient Familial)</label>
+                  <input className="input" type="number" step="0.5" name="family_parts" value={formData.family_parts} onChange={handleInputChange} />
+                </div>
+                <div className="input-group flex items-center gap-md" style={{ gridColumn: 'span 2', padding: '10px 0' }}>
+                  <input type="checkbox" name="is_expat" checked={formData.is_expat} onChange={handleInputChange} id="is_expat" />
+                  <label htmlFor="is_expat" style={{ marginBottom: 0, cursor: 'pointer' }}>Cet employé est un Expatrié</label>
                 </div>
               </div>
               <div className="modal-footer mt-lg">

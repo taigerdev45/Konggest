@@ -53,9 +53,12 @@ export default function EmployeeDetailPage() {
             <p>Détails du profil employé — {employee.employee_id}</p>
           </div>
         </div>
-        <span className={`badge ${STATUS_MAP[employee.status]?.class || 'badge-neutral'}`}>
-          {STATUS_MAP[employee.status]?.label || employee.status}
-        </span>
+        <div className="flex gap-sm">
+          {employee.is_expat && <span className="badge badge-warning">Expatrié</span>}
+          <span className={`badge ${STATUS_MAP[employee.status]?.class || 'badge-neutral'}`}>
+            {STATUS_MAP[employee.status]?.label || employee.status}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-3 gap-lg">
@@ -80,30 +83,38 @@ export default function EmployeeDetailPage() {
                   <HiOutlineIdentification /> {employee.employee_id}
                 </div>
                 <div className="flex items-center gap-sm text-secondary">
+                  <HiOutlineOfficeBuilding /> Site : {employee.site_location?.replace('-', ' ').toUpperCase() || 'LIBREVILLE'}
+                </div>
+                <div className="flex items-center gap-sm text-secondary">
                   <HiOutlineCalendar /> Embauché le {new Date(employee.hire_date).toLocaleDateString('fr-FR')}
+                </div>
+                <div className="flex items-center gap-sm text-secondary">
+                  <span style={{ fontWeight: 600, color: 'var(--primary)' }}>CNSS :</span> {employee.cnss_number || 'SANS NUMÉRO'}
                 </div>
               </div>
             </div>
           </div>
 
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 20 }}>
-            <h3 className="mb-md">Informations Professionnelles</h3>
+            <h3 className="mb-md">Informations Professionnelles & Fiscales</h3>
             <div className="grid grid-2 gap-lg">
               <div>
                 <p className="text-muted small">Type de contrat</p>
                 <p style={{ fontWeight: 500 }}>{employee.contract_type.toUpperCase()}</p>
               </div>
               <div>
-                <p className="text-muted small">Manager</p>
-                <p style={{ fontWeight: 500 }}>{employee.manager_name || 'Aucun'}</p>
+                <p className="text-muted small">Parts IRPP (Quotient Familial)</p>
+                <p style={{ fontWeight: 500 }}>{employee.family_parts} part(s)</p>
               </div>
               <div>
-                <p className="text-muted small">Salaire brut annuel</p>
-                <p style={{ fontWeight: 500 }}>{new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(employee.salary * 12)}</p>
+                <p className="text-muted small">Salaire brut mensuel</p>
+                <p style={{ fontWeight: 500, color: 'var(--success)' }}>
+                  {new Intl.NumberFormat('fr-GA', { style: 'currency', currency: 'XAF' }).format(employee.salary)}
+                </p>
               </div>
               <div>
-                <p className="text-muted small">Nationalité</p>
-                <p style={{ fontWeight: 500 }}>{employee.nationality || 'N/A'}</p>
+                <p className="text-muted small">Nationalité / Statut</p>
+                <p style={{ fontWeight: 500 }}>{employee.nationality || 'Gabonaise'} {employee.is_expat ? '(Expatrié)' : '(National)'}</p>
               </div>
             </div>
           </div>
