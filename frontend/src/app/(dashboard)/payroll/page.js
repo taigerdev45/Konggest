@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye, HiOutlineTrendingUp } from 'react-icons/hi';
+import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye, HiOutlineTrendingUp, HiOutlineCheck } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+
+const TH = { padding: '13px 18px', textAlign: 'left', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', whiteSpace: 'nowrap', background: 'var(--bg-secondary)', borderBottom: '2px solid var(--border-color)' };
+const TD = { padding: '13px 18px', verticalAlign: 'middle', borderBottom: '1px solid var(--border-color)' };
 
 export default function PayrollPage() {
   const { user } = useAuth();
@@ -130,65 +133,74 @@ export default function PayrollPage() {
         </div>
       </div>
 
-      <div className="table-container animate-in delay-2">
-        <table>
-          <thead>
-            <tr>
-              <th>Collaborateur</th>
-              <th>Période</th>
-              <th>Salaire Brut</th>
-              <th>Net à Payer</th>
-              <th>Statut</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              [...Array(3)].map((_, i) => (
-                <tr key={i} className="skeleton-row">
-                  <td colSpan="6"><div className="skeleton" style={{ height: 20 }} /></td>
-                </tr>
-              ))
-            ) : Array.isArray(payslips) && payslips.length > 0 ? (
-              payslips.map(p => (
-                <tr key={p.id}>
-                  <td style={{ fontWeight: 500 }}>{p.employee_name}</td>
-                  <td>{p.period_name}</td>
-                  <td>{formatCurrency(p.gross_salary)}</td>
-                  <td style={{ color: 'var(--success)', fontWeight: 600 }}>{formatCurrency(p.net_salary)}</td>
-                  <td>
-                    <span className={`badge ${p.status === 'paid' ? 'badge-success' : p.status === 'validated' ? 'badge-primary' : 'badge-warning'}`}>
-                      {p.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex gap-xs">
-                      <button 
-                        className="btn btn-xs btn-ghost" 
-                        title="Prévisualiser"
-                        onClick={() => {
-                          setSelectedPayslip(p);
-                          setShowPreviewModal(true);
-                        }}
-                      >
-                        <HiOutlineEye />
-                      </button>
-                      <button className="btn btn-xs btn-ghost" title="Imprimer/PDF">
-                        <HiOutlinePrinter />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
+      <div className="card animate-in delay-2" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
               <tr>
-                <td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-                  Aucune fiche de paie trouvée.
-                </td>
+                <th style={TH}>Collaborateur</th>
+                <th style={TH}>Période</th>
+                <th style={{ ...TH, textAlign: 'right' }}>Salaire Brut</th>
+                <th style={{ ...TH, textAlign: 'right' }}>Net à Payer</th>
+                <th style={{ ...TH, textAlign: 'center' }}>Statut</th>
+                <th style={{ ...TH, textAlign: 'center', width: 100 }}>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                [...Array(4)].map((_, i) => (
+                  <tr key={i}>
+                    {[...Array(6)].map((_, j) => (
+                      <td key={j} style={{ padding: '13px 18px' }}>
+                        <div className="skeleton" style={{ height: 16, borderRadius: 4 }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : Array.isArray(payslips) && payslips.length > 0 ? (
+                payslips.map(p => (
+                  <tr key={p.id}
+                    style={{ transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                  >
+                    <td style={{ ...TD, fontWeight: 600 }}>{p.employee_name}</td>
+                    <td style={{ ...TD, color: 'var(--text-secondary)', fontSize: '0.87rem' }}>{p.period_name}</td>
+                    <td style={{ ...TD, textAlign: 'right', fontWeight: 500 }}>{formatCurrency(p.gross_salary)}</td>
+                    <td style={{ ...TD, textAlign: 'right', color: 'var(--success)', fontWeight: 700 }}>{formatCurrency(p.net_salary)}</td>
+                    <td style={{ ...TD, textAlign: 'center' }}>
+                      <span className={`badge ${p.status === 'paid' ? 'badge-success' : p.status === 'validated' ? 'badge-primary' : 'badge-warning'}`}>
+                        {p.status === 'paid' ? 'Payé' : p.status === 'validated' ? 'Validé' : 'Brouillon'}
+                      </span>
+                    </td>
+                    <td style={{ ...TD, textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          style={{ padding: '6px 8px' }}
+                          title="Prévisualiser"
+                          onClick={() => { setSelectedPayslip(p); setShowPreviewModal(true); }}
+                        >
+                          <HiOutlineEye size={15} />
+                        </button>
+                        <button className="btn btn-ghost btn-sm" style={{ padding: '6px 8px' }} title="Imprimer / PDF"
+                          onClick={() => { setSelectedPayslip(p); setShowPreviewModal(true); }}>
+                          <HiOutlinePrinter size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={6} style={{ padding: '48px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Aucune fiche de paie trouvée.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Preview Modal */}

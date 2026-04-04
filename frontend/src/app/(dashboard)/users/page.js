@@ -1,39 +1,46 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  HiOutlineUserAdd, HiOutlineMail, HiOutlineShieldCheck, 
-  HiOutlineDotsVertical, HiOutlineRefresh, HiOutlineSearch,
-  HiOutlineTrash, HiOutlineLockClosed, HiOutlineLockOpen,
-  HiOutlineFilter
+import {
+  HiOutlineShieldCheck, HiOutlineRefresh, HiOutlineSearch, HiOutlineFilter,
+  HiOutlineUserAdd, HiOutlineMail, HiOutlineTrash, HiOutlineLockClosed,
+  HiOutlineLockOpen, HiOutlinePencil, HiOutlineCheckCircle, HiOutlineExclamationCircle
 } from 'react-icons/hi';
 import api from '@/lib/api';
 
+const TH = { padding: '13px 18px', textAlign: 'left', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', whiteSpace: 'nowrap', background: 'var(--bg-secondary)', borderBottom: '2px solid var(--border-color)' };
+const TD = { padding: '13px 18px', verticalAlign: 'middle', borderBottom: '1px solid var(--border-color)' };
+
+const ROLE_LABELS = { admin: 'Administrateur', hr: 'RH', manager: 'Manager', employee: 'Employé' };
+const ROLE_CLS    = { admin: 'badge-primary', hr: 'badge-success', manager: 'badge-warning', employee: 'badge-neutral' };
+
 export default function UsersPage() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
+  const [users, setUsers]               = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [search, setSearch]             = useState('');
+  const [filterRole, setFilterRole]     = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteData, setInviteData] = useState({ email: '', full_name: '', role: 'employee' });
-  const [submitting, setSubmitting] = useState(false);
+  const [inviteData, setInviteData]     = useState({ email: '', full_name: '', role: 'employee' });
+  const [submitting, setSubmitting]     = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [toast, setToast]               = useState({ show: false, type: '', text: '' });
+
+  const showToast = (type, text) => {
+    setToast({ show: true, type, text });
+    setTimeout(() => setToast({ show: false }), 4000);
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const data = await api.get('/accounts/user-profiles/');
       setUsers(data?.results || data || []);
-    } catch (err) {
-      console.error('Error fetching users:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* silent */ }
+    finally { setLoading(false); }
   };
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
+  useEffect(() => { fetchUsers(); }, []);
 
   const handleInvite = async (e) => {
     e.preventDefault();
@@ -42,9 +49,10 @@ export default function UsersPage() {
       await api.post('/accounts/user-profiles/', inviteData);
       setShowInviteModal(false);
       setInviteData({ email: '', full_name: '', role: 'employee' });
+      showToast('success', 'Invitation envoyée avec succès.');
       fetchUsers();
     } catch (err) {
-      alert(err.error || 'Erreur lors de l’invitation.');
+      showToast('error', err?.error || "Erreur lors de l'invitation.");
     } finally {
       setSubmitting(false);
     }
@@ -52,52 +60,42 @@ export default function UsersPage() {
 
   const handleStatusToggle = async (user) => {
     const action = user.is_active ? 'suspend' : 'activate';
-    const confirmMsg = user.is_active 
-      ? `Suspendre l'accès de ${user.full_name} ?` 
-      : `Réactiver l'accès de ${user.full_name} ?`;
-    
-    if (!confirm(confirmMsg)) return;
-
+    const label  = user.is_active ? `Suspendre l'accès de ${user.full_name} ?` : `Réactiver l'accès de ${user.full_name} ?`;
+    if (!confirm(label)) return;
     try {
       await api.post(`/accounts/user-profiles/${user.id}/${action}/`);
+      showToast('success', user.is_active ? 'Accès suspendu.' : 'Accès réactivé.');
       fetchUsers();
-    } catch (err) {
-      alert('Erreur lors du changement de statut.');
+    } catch {
+      showToast('error', 'Erreur lors du changement de statut.');
     }
   };
 
-  const handleDelete = async (user) => {
-    if (!confirm(`Supprimer définitivement le profil de ${user.full_name} ? Cette action est irréversible.`)) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await api.delete(`/accounts/user-profiles/${user.id}/`);
+      await api.delete(`/accounts/user-profiles/${deleteTarget.id}/`);
+      showToast('success', `${deleteTarget.full_name} supprimé(e).`);
+      setDeleteTarget(null);
       fetchUsers();
-    } catch (err) {
-      alert('Erreur lors de la suppression.');
+    } catch {
+      showToast('error', 'Erreur lors de la suppression.');
+      setDeleteTarget(null);
     }
   };
 
-  const filteredUsers = (Array.isArray(users) ? users : []).filter(u => {
-    const matchesSearch = u.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-                         u.email?.toLowerCase().includes(search.toLowerCase());
-    const matchesRole = filterRole === 'all' || u.role === filterRole;
-    const matchesStatus = filterStatus === 'all' || 
-                         (filterStatus === 'active' ? u.is_active : !u.is_active);
-    
-    return matchesSearch && matchesRole && matchesStatus;
+  const filtered = (Array.isArray(users) ? users : []).filter(u => {
+    const q = `${u.full_name || ''} ${u.email || ''}`.toLowerCase();
+    const matchRole   = filterRole   === 'all' || u.role === filterRole;
+    const matchStatus = filterStatus === 'all' || (filterStatus === 'active' ? u.is_active : !u.is_active);
+    return q.includes(search.toLowerCase()) && matchRole && matchStatus;
   });
-
-  const ROLE_LABELS = {
-    admin: 'Administrateur',
-    hr: 'RH',
-    manager: 'Manager',
-    employee: 'Employé',
-  };
 
   return (
     <div className="animate-in">
       <div className="page-header">
         <div>
-          <h1><HiOutlineShieldCheck style={{ verticalAlign: 'middle', marginRight: '10px' }} /> Gestion d'Équipe</h1>
+          <h1>Gestion d&apos;Équipe</h1>
           <p>Supervisez les accès et les permissions de vos collaborateurs</p>
         </div>
         <div className="flex gap-sm">
@@ -110,215 +108,193 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {/* Filters Bar */}
-      <div className="card-glass mb-lg animate-in delay-1 overflow-visible">
-        <div className="flex flex-wrap gap-md items-center justify-between">
-          <div className="search-bar" style={{ flex: 1, minWidth: '250px' }}>
+      {/* Filters */}
+      <div className="card-glass mb-lg animate-in" style={{ padding: '14px 20px' }}>
+        <div className="flex gap-md items-center" style={{ flexWrap: 'wrap' }}>
+          <div className="search-bar" style={{ flex: 1, minWidth: 240 }}>
             <HiOutlineSearch className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Rechercher par nom ou email..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <input type="text" placeholder="Rechercher par nom ou email..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
           <div className="flex gap-sm items-center">
             <HiOutlineFilter style={{ color: 'var(--text-muted)' }} />
-            <select className="input" style={{ width: 'auto', minWidth: '140px' }} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
+            <select className="input" style={{ width: 'auto', minWidth: 140 }} value={filterRole} onChange={e => setFilterRole(e.target.value)}>
               <option value="all">Tous les rôles</option>
               <option value="admin">Administrateur</option>
               <option value="hr">RH</option>
               <option value="manager">Manager</option>
               <option value="employee">Employé</option>
             </select>
-            <select className="input" style={{ width: 'auto', minWidth: '140px' }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+            <select className="input" style={{ width: 'auto', minWidth: 130 }} value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
               <option value="all">Tous les statuts</option>
               <option value="active">Actif</option>
               <option value="inactive">Suspendu</option>
             </select>
+            <span className="badge badge-neutral">{filtered.length} membre{filtered.length !== 1 ? 's' : ''}</span>
           </div>
         </div>
       </div>
 
-      <div className="table-container animate-in delay-2">
-        <table>
-          <thead>
-            <tr>
-              <th>Collaborateur</th>
-              <th>Rôle & Accès</th>
-              <th>Statut</th>
-              <th>Dernière activité</th>
-              <th style={{ textAlign: 'right' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              [...Array(5)].map((_, i) => (
-                <tr key={i} className="skeleton-row">
-                  <td colSpan="5"><div className="skeleton" style={{ height: 28, margin: '8px 0' }} /></td>
-                </tr>
-              ))
-            ) : filteredUsers.length > 0 ? (
-              filteredUsers.map((user, i) => (
-                <tr key={user.id} className={`animate-in delay-${Math.min(i + 1, 4)}`}>
-                  <td>
-                    <div className="flex items-center gap-md">
-                      <div className="avatar" style={{ 
-                        background: 'linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%)',
-                        color: 'white',
-                        fontWeight: 700,
-                        border: 'none',
-                        boxShadow: '0 4px 12px rgba(37, 99, 235, 0.2)'
-                      }}>
-                        {user.full_name ? user.full_name[0] : 'U'}
-                      </div>
-                      <div>
-                        <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{user.full_name || 'Utilisateur'}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{user.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>
-                    <span className={`badge ${
-                      user.role === 'admin' ? 'badge-primary' : 
-                      user.role === 'hr' ? 'badge-success' : 
-                      user.role === 'manager' ? 'badge-warning' : 'badge-neutral'
-                    }`} style={{ fontWeight: 600 }}>
-                      {ROLE_LABELS[user.role] || user.role.toUpperCase()}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="flex items-center gap-xs">
-                      <div style={{ 
-                        width: 8, 
-                        height: 8, 
-                        borderRadius: '50%', 
-                        background: user.is_active ? 'var(--success)' : 'var(--danger)',
-                        boxShadow: `0 0 8px ${user.is_active ? 'var(--success)' : 'var(--danger)'}44`
-                      }} />
-                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: user.is_active ? 'var(--success)' : 'var(--danger)' }}>
-                        {user.is_active ? 'Actif' : 'Suspendu'}
-                      </span>
-                    </div>
-                  </td>
-                  <td style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                    {new Date(user.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td style={{ textAlign: 'right' }}>
-                    <div className="flex gap-xs justify-end">
-                      <button 
-                        className={`btn btn-xs ${user.is_active ? 'btn-ghost' : 'btn-primary'}`} 
-                        title={user.is_active ? 'Suspendre l\'accès' : 'Réactiver l\'accès'}
-                        onClick={() => handleStatusToggle(user)}
-                        style={{ padding: '8px' }}
-                      >
-                        {user.is_active ? <HiOutlineLockClosed fontSize="1.1rem" /> : <HiOutlineLockOpen fontSize="1.1rem" />}
-                      </button>
-                      <button 
-                        className="btn btn-xs btn-ghost" 
-                        title="Supprimer définitivement"
-                        onClick={() => handleDelete(user)}
-                        style={{ padding: '8px', color: 'var(--danger)' }}
-                      >
-                        <HiOutlineTrash fontSize="1.1rem" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
+      {/* Table */}
+      <div className="card animate-in" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
               <tr>
-                <td colSpan="5" style={{ textAlign: 'center', padding: 80 }}>
-                  <div className="empty-state">
-                    <div style={{ 
-                      width: 64, 
-                      height: 64, 
-                      borderRadius: '50%', 
-                      background: 'var(--bg-secondary)', 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center',
-                      margin: '0 auto 16px',
-                      color: 'var(--text-muted)'
-                    }}>
-                      <HiOutlineSearch size={32} />
-                    </div>
-                    <h3 style={{ margin: '0 0 8px 0' }}>Aucun membre trouvé</h3>
-                    <p style={{ color: 'var(--text-muted)', maxWidth: 300, margin: '0 auto' }}>
-                      Ajustez vos filtres ou invitez un nouveau collaborateur sur la plateforme.
-                    </p>
-                  </div>
-                </td>
+                <th style={TH}>Collaborateur</th>
+                <th style={TH}>Rôle & Accès</th>
+                <th style={{ ...TH, textAlign: 'center' }}>Statut</th>
+                <th style={{ ...TH, textAlign: 'center' }}>Membre depuis</th>
+                <th style={{ ...TH, textAlign: 'center', width: 120 }}>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {loading ? (
+                [...Array(5)].map((_, i) => (
+                  <tr key={i}>
+                    {[...Array(5)].map((_, j) => (
+                      <td key={j} style={{ padding: '14px 18px' }}>
+                        <div className="skeleton" style={{ height: 16, borderRadius: 4 }} />
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              ) : filtered.length > 0 ? (
+                filtered.map(u => (
+                  <tr key={u.id}
+                    style={{ transition: 'background 0.15s' }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-secondary)'}
+                    onMouseLeave={e => e.currentTarget.style.background = ''}
+                  >
+                    <td style={TD}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div className="avatar" style={{ background: 'linear-gradient(135deg, var(--primary), var(--accent))', color: '#fff', fontWeight: 700, border: 'none', flexShrink: 0 }}>
+                          {u.full_name ? u.full_name[0].toUpperCase() : 'U'}
+                        </div>
+                        <div>
+                          <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{u.full_name || 'Utilisateur'}</div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={TD}>
+                      <span className={`badge ${ROLE_CLS[u.role] || 'badge-neutral'}`} style={{ fontWeight: 600 }}>
+                        {ROLE_LABELS[u.role] || u.role?.toUpperCase()}
+                      </span>
+                    </td>
+                    <td style={{ ...TD, textAlign: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center' }}>
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: u.is_active ? 'var(--success)' : 'var(--danger)', boxShadow: `0 0 6px ${u.is_active ? 'var(--success)' : 'var(--danger)'}66` }} />
+                        <span style={{ fontSize: '0.85rem', fontWeight: 600, color: u.is_active ? 'var(--success)' : 'var(--danger)' }}>
+                          {u.is_active ? 'Actif' : 'Suspendu'}
+                        </span>
+                      </div>
+                    </td>
+                    <td style={{ ...TD, textAlign: 'center', fontSize: '0.83rem', color: 'var(--text-secondary)' }}>
+                      {u.created_at ? new Date(u.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                    </td>
+                    <td style={{ ...TD, textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: 4, justifyContent: 'center' }}>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          style={{ padding: '6px 8px', color: u.is_active ? 'var(--warning)' : 'var(--success)' }}
+                          title={u.is_active ? 'Suspendre' : 'Réactiver'}
+                          onClick={() => handleStatusToggle(u)}
+                        >
+                          {u.is_active ? <HiOutlineLockClosed size={15} /> : <HiOutlineLockOpen size={15} />}
+                        </button>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          style={{ padding: '6px 8px', color: 'var(--danger)' }}
+                          title="Supprimer"
+                          onClick={() => setDeleteTarget(u)}
+                        >
+                          <HiOutlineTrash size={15} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} style={{ padding: '56px 0', textAlign: 'center', color: 'var(--text-muted)' }}>
+                    Aucun membre trouvé.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Invitation Modal */}
+      {/* Invite Modal */}
       {showInviteModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
+          <div className="modal-content card animate-in" style={{ maxWidth: 480 }}>
             <div className="modal-header">
               <div>
                 <h2>Inviter un collaborateur</h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Envoyez une invitation pour rejoindre votre organisation.</p>
+                <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>Envoyez une invitation pour rejoindre votre organisation.</p>
               </div>
-              <button className="btn-close" onClick={() => setShowInviteModal(false)}>&times;</button>
+              <button className="btn btn-ghost" onClick={() => setShowInviteModal(false)}>✕</button>
             </div>
             <form onSubmit={handleInvite} className="modal-body flex flex-col gap-md">
               <div className="input-group">
-                <label className="label">Nom complet du membre</label>
-                <input 
-                  className="input" 
-                  value={inviteData.full_name} 
-                  onChange={e => setInviteData({...inviteData, full_name: e.target.value})}
-                  placeholder="Ex: Jean Dupont"
-                  required
-                />
+                <label>Nom complet *</label>
+                <input className="input" value={inviteData.full_name} onChange={e => setInviteData({ ...inviteData, full_name: e.target.value })} placeholder="Jean Dupont" required />
               </div>
               <div className="input-group">
-                <label className="label">Adresse email professionnelle</label>
+                <label>Email professionnel *</label>
                 <div style={{ position: 'relative' }}>
-                  <HiOutlineMail style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)', opacity: 0.7 }} />
-                  <input 
-                    className="input" 
-                    style={{ paddingLeft: 42 }}
-                    type="email"
-                    value={inviteData.email} 
-                    onChange={e => setInviteData({...inviteData, email: e.target.value})}
-                    placeholder="jean.dupont@entreprise.com"
-                    required
-                  />
+                  <HiOutlineMail style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
+                  <input className="input" style={{ paddingLeft: 38 }} type="email" value={inviteData.email} onChange={e => setInviteData({ ...inviteData, email: e.target.value })} placeholder="jean@entreprise.com" required />
                 </div>
               </div>
               <div className="input-group">
-                <label className="label">Rôle et Niveau d'accès</label>
-                <select 
-                  className="input" 
-                  value={inviteData.role} 
-                  onChange={e => setInviteData({...inviteData, role: e.target.value})}
-                >
+                <label>Rôle et niveau d&apos;accès</label>
+                <select className="input" value={inviteData.role} onChange={e => setInviteData({ ...inviteData, role: e.target.value })}>
                   <option value="employee">Employé (Consultation & Congés)</option>
                   <option value="manager">Manager (Approbation & Équipe)</option>
                   <option value="hr">RH (Paie & Gestion complète)</option>
                   <option value="admin">Administrateur (Configuration système)</option>
                 </select>
-                <div className="helper-text ml-xs" style={{ background: 'var(--bg-secondary)', padding: '10px 14px', borderRadius: 8, marginTop: 12, border: '1px solid var(--border)' }}>
-                  <p style={{ margin: 0, fontSize: '0.75rem', lineHeight: 1.4 }}>
-                    <HiOutlineShieldCheck style={{ verticalAlign: 'text-bottom', marginRight: 6, color: 'var(--primary)' }} />
-                    L'invité recevra un accès sécurisé avec les permissions liées à son rôle.
-                  </p>
-                </div>
               </div>
-              <div className="modal-footer mt-lg">
+              <div className="modal-footer mt-md">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowInviteModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? 'Envoi en cours...' : 'Envoyer l’invitation'}
+                  {submitting ? "Envoi..." : "Envoyer l'invitation"}
                 </button>
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Delete Confirm */}
+      {deleteTarget && (
+        <div className="modal-overlay">
+          <div className="modal-content card animate-in" style={{ maxWidth: 420 }}>
+            <div style={{ textAlign: 'center', padding: '8px 0 24px' }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <HiOutlineTrash size={22} style={{ color: 'var(--danger)' }} />
+              </div>
+              <h2 style={{ marginBottom: 8 }}>Supprimer le membre ?</h2>
+              <p style={{ color: 'var(--text-secondary)' }}>
+                <strong>{deleteTarget.full_name}</strong> sera définitivement retiré(e) de la plateforme.
+              </p>
+            </div>
+            <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
+              <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Annuler</button>
+              <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }} onClick={confirmDelete}>Oui, supprimer</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast */}
+      {toast.show && (
+        <div style={{ position: 'fixed', bottom: 28, right: 28, zIndex: 2000, padding: '14px 20px', borderRadius: 10, background: toast.type === 'success' ? 'var(--success)' : 'var(--danger)', color: '#fff', boxShadow: 'var(--shadow-xl)', display: 'flex', alignItems: 'center', gap: 10, minWidth: 260 }}>
+          {toast.type === 'success' ? <HiOutlineCheckCircle size={20} /> : <HiOutlineExclamationCircle size={20} />}
+          <span style={{ fontWeight: 500 }}>{toast.text}</span>
         </div>
       )}
     </div>
