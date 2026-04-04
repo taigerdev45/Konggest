@@ -294,7 +294,8 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         """
         from django.contrib.auth.models import User as DjangoUser
         from django.conf import settings
-        import requests as req_lib
+        import urllib.request
+        import json
         import random, string
 
         serializer = UserInviteSerializer(data=request.data)
@@ -325,31 +326,34 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
         if supabase_url and service_key:
             try:
-                sb_resp = req_lib.post(
-                    f"{supabase_url}/auth/v1/admin/users",
+                url = f"{supabase_url}/auth/v1/admin/users"
+                payload = json.dumps({
+                    "email": email,
+                    "password": temp_password,
+                    "email_confirm": True,
+                    "user_metadata": {
+                        "full_name": full_name,
+                        "role": role,
+                        "invited_by": request.user.email,
+                    }
+                }).encode('utf-8')
+                
+                req = urllib.request.Request(
+                    url, 
+                    data=payload,
                     headers={
                         "Authorization": f"Bearer {service_key}",
                         "apikey": service_key,
                         "Content-Type": "application/json",
                     },
-                    json={
-                        "email": email,
-                        "password": temp_password,
-                        "email_confirm": True,   # confirms email immediately
-                        "user_metadata": {
-                            "full_name": full_name,
-                            "role": role,
-                            "invited_by": request.user.email,
-                        }
-                    },
-                    timeout=10
+                    method="POST"
                 )
-                if sb_resp.status_code in (200, 201):
-                    supabase_uid = sb_resp.json().get('id')
-                    supabase_ok  = True
-                else:
-                    # If user already exists in Supabase, continue with Django creation
-                    supabase_uid = None
+                
+                with urllib.request.urlopen(req, timeout=10) as sb_resp:
+                    if sb_resp.status in (200, 201):
+                        resp_body = json.loads(sb_resp.read().decode('utf-8'))
+                        supabase_uid = resp_body.get('id')
+                        supabase_ok = True
             except Exception:
                 pass  # Supabase unavailable — fall through to Django-only creation
 

@@ -91,11 +91,9 @@ export default function EmployeeDetailPage() {
           margin: 12mm 14mm 12mm 14mm;
         }
         @media print {
-          /* Masquer tout le layout dashboard */
-          body > *:not(#emp-print-root) { display: none !important; }
-          #emp-print-root { display: block !important; }
+          /* Afficher uniquement la div d'impression, masquer le reste de la page */
           .no-print { display: none !important; }
-          .print-show { display: block !important; }
+          #emp-print-root { display: block !important; }
 
           /* Reset couleurs pour l'impression */
           * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
