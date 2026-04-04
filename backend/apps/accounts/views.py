@@ -7,7 +7,7 @@ from core.permissions import IsManager, IsSaaSAdmin
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AuditLogSerializer, OrganizationSerializer, StaffInviteSerializer
+from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AuditLogSerializer, OrganizationSerializer, StaffInviteSerializer, UserInviteSerializer
 from django.db.models import Count, Sum
 from .models import Organization, UserProfile, AuditLog, LoginAttempt
 
