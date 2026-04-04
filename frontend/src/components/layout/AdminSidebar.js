@@ -59,9 +59,15 @@ export default function AdminSidebar() {
   return (
     <>
       {isMobile && (
-        <button className={styles.mobileToggle} onClick={() => setMobileOpen(true)} aria-label="Menu">
-          <HiOutlineMenu />
-        </button>
+        <div className={styles.mobileTopNav}>
+          <div className={styles.mobileLogo}>
+            <img src="/logo.png" alt="Logo" width={24} height={24} />
+            <span className={styles.mobileBrand}>Konggest</span>
+          </div>
+          <button className={styles.mobileToggle} onClick={() => setMobileOpen(true)} aria-label="Menu">
+            <HiOutlineMenu />
+          </button>
+        </div>
       )}
 
       {isMobile && mobileOpen && (
