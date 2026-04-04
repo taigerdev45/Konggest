@@ -326,12 +326,10 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
         if supabase_url and service_key:
             try:
-                url = f"{supabase_url}/auth/v1/admin/users"
+                url = f"{supabase_url}/auth/v1/invite"
                 payload = json.dumps({
                     "email": email,
-                    "password": temp_password,
-                    "email_confirm": True,
-                    "user_metadata": {
+                    "data": {
                         "full_name": full_name,
                         "role": role,
                         "invited_by": request.user.email,

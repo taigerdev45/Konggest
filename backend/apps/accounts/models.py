@@ -38,7 +38,7 @@ class UserProfile(models.Model):
     """Extended user profile with role and organization."""
     ROLE_CHOICES = [
         ('admin', 'Administrateur'),
-        ('Rh', 'Ressources Humaines'),
+        ('hr', 'Ressources Humaines'),
         ('manager', 'Manager'),
         ('employee', 'Employé'),
         ('support', 'Support Technique'),
