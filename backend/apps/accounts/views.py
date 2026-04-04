@@ -405,6 +405,71 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         profile.save()
         return Response({'status': 'Profil activé'})
 
+    def perform_destroy(self, instance):
+        from apps.employees.models import ArchivedEmployee, Employee
+        user = instance.user
+
+        # Récupérer les infos d'employé si disponible
+        department = ""
+        seniority = ""
+        position = instance.get_role_display()
+        phone = instance.phone
+        
+        try:
+            employee = Employee.objects.get(user=user)
+            department = employee.department.name if employee.department else ""
+            position = employee.position.title if employee.position else position
+            phone = employee.phone or phone
+            seniority = f"{employee.seniority_years} ans"
+        except Employee.DoesNotExist:
+            pass
+
+        # Archiver l'utilisateur
+        ArchivedEmployee.objects.create(
+            organization=instance.organization,
+            full_name=f"{user.first_name} {user.last_name}".strip() or user.email,
+            email=user.email,
+            phone=phone,
+            position=position,
+            department=department,
+            seniority=seniority,
+            deleted_by=self.request.user.email
+        )
+
+        # Supprimer le user Supabase (optionnel, on utilise l'email pour chercher l'UID si on a config Supabase)
+        try:
+            from django.conf import settings
+            import urllib.request
+            import json
+            supabase_url = getattr(settings, 'SUPABASE_URL', '')
+            service_key  = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
+            if supabase_url and service_key:
+                # Get user list to match email (v1/admin/users)
+                req = urllib.request.Request(
+                    f"{supabase_url}/auth/v1/admin/users",
+                    headers={"Authorization": f"Bearer {service_key}", "apikey": service_key}
+                )
+                with urllib.request.urlopen(req, timeout=5) as resp:
+                    if resp.status == 200:
+                        users_data = json.loads(resp.read().decode('utf-8'))
+                        # users_data is usually a list under 'users'
+                        users = users_data.get('users', []) if isinstance(users_data, dict) else users_data
+                        for u in users:
+                            if u.get('email') == user.email:
+                                del_req = urllib.request.Request(
+                                    f"{supabase_url}/auth/v1/admin/users/{u.get('id')}",
+                                    method='DELETE',
+                                    headers={"Authorization": f"Bearer {service_key}", "apikey": service_key}
+                                )
+                                urllib.request.urlopen(del_req, timeout=5)
+                                break
+        except Exception as e:
+            import logging
+            logging.getLogger('django').error(f"Supabase delete user error: {e}")
+
+        # Supprimer complètement le User Django (ce qui supprime le profil en CASCADE)
+        user.delete()
+
 class PlatformStaffViewSet(viewsets.ModelViewSet):
     """Manage platform-level staff (SaaS Admins, Support, Commercial)."""
     permission_classes = [IsAuthenticated, IsSaaSAdmin]

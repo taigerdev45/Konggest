@@ -148,10 +148,10 @@ export default function OrganizationSettingsPage() {
   };
 
   const TABS = [
-    { id: 'departments', label: 'Départements', icon: <HiOutlineOfficeBuilding /> },
-    { id: 'locations', label: 'Lieux / Sites', icon: <HiOutlineMap /> },
-    { id: 'leaves', label: 'Types de Congés', icon: <HiOutlineCalendar /> },
-    { id: 'payroll', label: 'Périodes de Paie', icon: <HiOutlineCube /> },
+    { id: 'departments', label: 'Départements', singularLabel: 'Département', modalType: 'department', icon: <HiOutlineOfficeBuilding /> },
+    { id: 'locations', label: 'Lieux / Sites', singularLabel: 'Lieu / Site', modalType: 'location', icon: <HiOutlineMap /> },
+    { id: 'leaves', label: 'Types de Congés', singularLabel: 'Type de Congé', modalType: 'leaveType', icon: <HiOutlineCalendar /> },
+    { id: 'payroll', label: 'Périodes de Paie', singularLabel: 'Période de Paie', modalType: 'payrollPeriod', icon: <HiOutlineCube /> },
   ];
 
   return (
@@ -164,9 +164,9 @@ export default function OrganizationSettingsPage() {
         </div>
         <button 
           className="btn btn-primary" 
-          onClick={() => handleOpenModal(activeTab.slice(0, -1))}
+          onClick={() => handleOpenModal(TABS.find(t => t.id === activeTab).modalType)}
         >
-          <HiOutlinePlus /> Ajouter {TABS.find(t => t.id === activeTab).label.slice(0, -1)}
+          <HiOutlinePlus /> Ajouter {TABS.find(t => t.id === activeTab).singularLabel}
         </button>
       </div>
 

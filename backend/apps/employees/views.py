@@ -4,10 +4,11 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from core.permissions import IsHRManager, IsManager, IsSameTenant
 from core.cache import cache_response, invalidate_cache
-from .models import Employee, Department, Position, Location
+from .models import Employee, Department, Position, Location, ArchivedEmployee
 from .serializers import (
     EmployeeListSerializer, EmployeeDetailSerializer,
-    DepartmentSerializer, PositionSerializer, LocationSerializer
+    DepartmentSerializer, PositionSerializer, LocationSerializer,
+    ArchivedEmployeeSerializer
 )
 from apps.accounts.utils import log_action
 
@@ -77,11 +78,63 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         log_action(self.request.user, self.request.user.profile.organization, 'update', 'employee', emp.id, {'full_name': emp.full_name})
 
     def perform_destroy(self, instance):
+        from .models import ArchivedEmployee
         emp_id = instance.id
         emp_name = instance.full_name
+        org = instance.organization
+        
+        user_to_delete = instance.user
+
+        # Archiver l'employé
+        dep_name = instance.department.name if instance.department else ''
+        pos_title = instance.position.title if instance.position else ''
+        
+        ArchivedEmployee.objects.create(
+            organization=org,
+            full_name=emp_name,
+            email=instance.email,
+            phone=instance.phone,
+            position=pos_title,
+            department=dep_name,
+            seniority=f"{instance.seniority_years} ans",
+            deleted_by=self.request.user.email
+        )
+
         instance.delete()
+
+        # Supprimer le user lié s'il en a un
+        if user_to_delete:
+            try:
+                from django.conf import settings
+                import urllib.request
+                import json
+                supabase_url = getattr(settings, 'SUPABASE_URL', '')
+                service_key  = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
+                if supabase_url and service_key:
+                    req = urllib.request.Request(
+                        f"{supabase_url}/auth/v1/admin/users",
+                        headers={"Authorization": f"Bearer {service_key}", "apikey": service_key}
+                    )
+                    with urllib.request.urlopen(req, timeout=5) as resp:
+                        if resp.status == 200:
+                            users_data = json.loads(resp.read().decode('utf-8'))
+                            users = users_data.get('users', []) if isinstance(users_data, dict) else users_data
+                            for u in users:
+                                if u.get('email') == user_to_delete.email:
+                                    del_req = urllib.request.Request(
+                                        f"{supabase_url}/auth/v1/admin/users/{u.get('id')}",
+                                        method='DELETE',
+                                        headers={"Authorization": f"Bearer {service_key}", "apikey": service_key}
+                                    )
+                                    urllib.request.urlopen(del_req, timeout=5)
+                                    break
+            except Exception:
+                pass
+            user_to_delete.delete()
+
+        # Log & Cache
         invalidate_cache(self.request.tenant_id, 'employees')
-        log_action(self.request.user, self.request.user.profile.organization, 'delete', 'employee', emp_id, {'full_name': emp_name})
+        log_action(self.request.user, org, 'delete', 'employee', emp_id, {'full_name': emp_name})
 
     @action(detail=False, methods=['get'])
     def me(self, request):
@@ -207,3 +260,41 @@ class LocationViewSet(viewsets.ModelViewSet):
 
 # Import Count for stats action
 from django.db import models
+
+
+class ArchiveViewSet(viewsets.ReadOnlyModelViewSet):
+    """View archived (deleted) employees and users."""
+    serializer_class = ArchivedEmployeeSerializer
+    permission_classes = [IsManager, IsSameTenant]
+    filterset_fields = ['department', 'deleted_at']
+    search_fields = ['full_name', 'email', 'position', 'department']
+    ordering_fields = ['deleted_at', 'full_name']
+    ordering = ['-deleted_at']
+
+    def get_queryset(self):
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                return ArchivedEmployee.objects.none()
+        return ArchivedEmployee.objects.filter(organization_id=tenant_id)
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        """Get archive statistics."""
+        qs = self.get_queryset()
+        return Response({
+            'total_archived': qs.count(),
+            'by_department': list(
+                qs.exclude(department='')
+                .values('department')
+                .annotate(count=models.Count('id'))
+                .order_by('-count')
+            ),
+            'by_year': list(
+                qs.values('deleted_at__year')
+                .annotate(count=models.Count('id'))
+                .order_by('-deleted_at__year')
+            ),
+        })

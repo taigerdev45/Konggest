@@ -152,3 +152,23 @@ class Employee(models.Model):
         from dateutil.relativedelta import relativedelta
         delta = relativedelta(timezone.now().date(), self.hire_date)
         return delta.years
+
+
+class ArchivedEmployee(models.Model):
+    """Archive of deleted employees and users for record keeping."""
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='archived_employees')
+    full_name = models.CharField(max_length=200, verbose_name="Nom complet")
+    email = models.EmailField(verbose_name="Email")
+    phone = models.CharField(max_length=20, blank=True, verbose_name="Téléphone")
+    position = models.CharField(max_length=100, blank=True, verbose_name="Poste / Rôle")
+    department = models.CharField(max_length=100, blank=True, verbose_name="Département")
+    seniority = models.CharField(max_length=50, blank=True, verbose_name="Ancienneté / Durée")
+    deleted_at = models.DateTimeField(auto_now_add=True)
+    deleted_by = models.EmailField(blank=True, verbose_name="Supprimé par")
+
+    class Meta:
+        verbose_name = "Ancien Employé"
+        ordering = ['-deleted_at']
+
+    def __str__(self):
+        return f"{self.full_name} (Archivé)"
