@@ -13,7 +13,7 @@ import {
   HiOutlineCurrencyDollar, HiOutlineDocumentText, HiOutlineClock,
   HiOutlineBriefcase, HiOutlineChartBar, HiOutlineBell,
   HiOutlineCog, HiOutlineLogout, HiOutlineChevronLeft, HiOutlineMenu,
-  HiOutlineX, HiOutlineShieldCheck
+  HiOutlineX, HiOutlineShieldCheck, HiOutlineOfficeBuilding
 } from 'react-icons/hi';
 import styles from './Sidebar.module.css';
 
