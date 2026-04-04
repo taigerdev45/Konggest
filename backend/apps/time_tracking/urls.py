@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .models import TimeEntryViewSet, OvertimeViewSet
+from .views import TimeEntryViewSet, OvertimeViewSet
 
 router = DefaultRouter()
 router.register('entries', TimeEntryViewSet, basename='time-entries')

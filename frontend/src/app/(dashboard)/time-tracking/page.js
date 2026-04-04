@@ -22,6 +22,10 @@ export default function TimeTrackingPage() {
       setMe(meData);
     } catch (err) {
       console.error('Error fetching time tracking data:', err);
+      // Show user-friendly error
+      if (err.status === 401) {
+        alert('Session expirée. Veuillez vous reconnecter.');
+      }
     } finally {
       setLoading(false);
     }
@@ -31,15 +35,33 @@ export default function TimeTrackingPage() {
     fetchData();
   }, []);
 
-  const todayEntry = Array.isArray(entries) ? entries.find(e => e.date === new Date().toISOString().split('T')[0]) : null;
+  // Get today's date in local timezone (YYYY-MM-DD)
+  const getLocalDateString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const todayEntry = Array.isArray(entries) ? entries.find(e => e.date === getLocalDateString()) : null;
 
   const handlePointer = async () => {
-    if (!me) return alert('Profil employé non trouvé.');
+    if (!me) {
+      alert('Profil employé non trouvé. Veuillez vérifier votre profil.');
+      return;
+    }
+    if (!me.id) {
+      alert('ID employé manquant. Contactez votre administrateur.');
+      return;
+    }
     setSubmitting(true);
     try {
       const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0].substring(0, 5); // HH:mm
-      const dateStr = now.toISOString().split('T')[0];
+      // Format time as HH:mm in local timezone
+      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + 
+                      String(now.getMinutes()).padStart(2, '0');
+      const dateStr = getLocalDateString();
 
       if (!todayEntry) {
         // Clock In
@@ -61,7 +83,8 @@ export default function TimeTrackingPage() {
       fetchData();
     } catch (err) {
       console.error('Pointer failed:', err);
-      alert(err.error || 'Erreur lors du pointage.');
+      const errorMsg = err.response?.data?.error || err.error || 'Erreur lors du pointage.';
+      alert(errorMsg);
     } finally {
       setSubmitting(false);
     }

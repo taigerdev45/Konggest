@@ -94,17 +94,191 @@ class InterviewSerializer(serializers.ModelSerializer):
 
 
 # ─── Views ───
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import AllowAny
+from datetime import date
+
 class JobPostingViewSet(viewsets.ModelViewSet):
     serializer_class = JobPostingSerializer
     permission_classes = [IsHRManager]
     filterset_fields = ['status', 'contract_type']
     search_fields = ['title', 'department']
+    
+    def get_permissions(self):
+        """Allow public read access to published jobs."""
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
+    
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
         qs = JobPosting.objects.all()
-        return qs.filter(organization_id=tenant_id) if tenant_id else qs
+        if tenant_id:
+            qs = qs.filter(organization_id=tenant_id)
+        # For public access, only show published jobs
+        if not self.request.user or not self.request.user.is_authenticated:
+            qs = qs.filter(status='published', closes_at__gte=date.today())
+        return qs
+    
+    def create(self, request, *args, **kwargs):
+        """Create job with detailed error logging."""
+        import logging
+        logger = logging.getLogger('django')
+        
+        # Log initial pour confirmer que la méthode est appelée
+        logger.warning(f"=== JOB CREATE START === User: {request.user}")
+        logger.warning(f"Request tenant_id: {getattr(request, 'tenant_id', 'NOT SET')}")
+        if hasattr(request.user, 'profile'):
+            logger.warning(f"User profile org_id: {getattr(request.user.profile, 'organization_id', 'NOT SET')}")
+        else:
+            logger.warning(f"User has NO profile attribute")
+        
+        try:
+            return super().create(request, *args, **kwargs)
+        except Exception as e:
+            logger.error(f"Error creating job: {str(e)}", exc_info=True)
+            return Response(
+                {'error': f'Erreur création offre: {str(e)}'}, 
+                status=500
+            )
+        
     def perform_create(self, serializer):
-        serializer.save(organization_id=self.request.tenant_id)
+        """Create job posting with organization from user profile or tenant_id."""
+        import logging
+        logger = logging.getLogger('django')
+        
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        logger.warning(f"perform_create - tenant_id from request: {tenant_id}")
+        
+        # If tenant_id not set, try to get from user profile
+        if not tenant_id and hasattr(self.request.user, 'profile'):
+            tenant_id = getattr(self.request.user.profile, 'organization_id', None)
+            logger.warning(f"perform_create - tenant_id from profile: {tenant_id}")
+        
+        if not tenant_id:
+            logger.error("perform_create - No tenant_id found!")
+            raise serializers.ValidationError(
+                {'organization': 'Impossible de determiner l organisation. Verifiez votre profil.'}
+            )
+        
+        logger.warning(f"perform_create - Saving with organization_id: {tenant_id}")
+        serializer.save(organization_id=tenant_id)
+    
+    @action(detail=True, methods=['post'], permission_classes=[AllowAny])
+    def apply(self, request, pk=None):
+        """Public endpoint for candidates to apply to a job."""
+        job = self.get_object()
+        
+        # Check if job is still open
+        if job.status != 'published':
+            return Response({'error': 'Cette offre n\'est plus disponible'}, status=400)
+        if job.closes_at and job.closes_at < date.today():
+            return Response({'error': 'Cette offre est clôturée'}, status=400)
+        
+        # Validate required fields
+        required_fields = ['first_name', 'last_name', 'email']
+        for field in required_fields:
+            if not request.data.get(field):
+                return Response({'error': f'{field} est requis'}, status=400)
+        
+        # Create application
+        application = Application.objects.create(
+            job=job,
+            first_name=request.data.get('first_name'),
+            last_name=request.data.get('last_name'),
+            email=request.data.get('email'),
+            phone=request.data.get('phone', ''),
+            cover_letter=request.data.get('cover_letter', ''),
+            resume_url=request.data.get('resume_url', ''),
+            stage='new'
+        )
+        
+        return Response({
+            'message': 'Votre candidature a été soumise avec succès',
+            'application_id': application.id,
+            'job_title': job.title
+        }, status=201)
+
+
+class PublicJobSerializer(serializers.ModelSerializer):
+    """Public serializer - excludes sensitive fields."""
+    class Meta:
+        model = JobPosting
+        fields = ['id', 'title', 'department', 'location', 'contract_type', 
+                  'description', 'requirements', 'salary_range', 'published_at', 'closes_at']
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_job_list(request):
+    """Public endpoint to list all published jobs."""
+    # Filter by organization if provided in query params
+    org_id = request.query_params.get('org')
+    jobs = JobPosting.objects.filter(
+        status='published',
+        closes_at__gte=date.today()
+    )
+    if org_id:
+        jobs = jobs.filter(organization_id=org_id)
+    
+    serializer = PublicJobSerializer(jobs, many=True)
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def public_job_detail(request, pk):
+    """Public endpoint to view a specific job."""
+    try:
+        job = JobPosting.objects.get(
+            pk=pk, 
+            status='published',
+            closes_at__gte=date.today()
+        )
+        serializer = PublicJobSerializer(job)
+        return Response(serializer.data)
+    except JobPosting.DoesNotExist:
+        return Response({'error': 'Offre non trouvée'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def public_apply(request, job_id):
+    """Public endpoint to apply for a job."""
+    try:
+        job = JobPosting.objects.get(
+            pk=job_id,
+            status='published',
+            closes_at__gte=date.today()
+        )
+    except JobPosting.DoesNotExist:
+        return Response({'error': 'Offre non trouvée ou clôturée'}, status=404)
+    
+    # Validate required fields
+    required = ['first_name', 'last_name', 'email']
+    for field in required:
+        if not request.data.get(field):
+            return Response({'error': f'{field} est requis'}, status=400)
+    
+    # Create application
+    application = Application.objects.create(
+        job=job,
+        first_name=request.data.get('first_name'),
+        last_name=request.data.get('last_name'),
+        email=request.data.get('email'),
+        phone=request.data.get('phone', ''),
+        cover_letter=request.data.get('cover_letter', ''),
+        resume_url=request.data.get('resume_url', ''),
+        stage='new'
+    )
+    
+    return Response({
+        'message': 'Candidature soumise avec succès',
+        'application_id': application.id
+    }, status=201)
+
 
 class ApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationSerializer
