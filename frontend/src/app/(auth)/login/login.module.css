@@ -317,6 +317,7 @@
     padding: 32px 24px;
     max-width: 100%;
     background: none;
+    -webkit-backdrop-filter: none;
     backdrop-filter: none;
     border: none;
     box-shadow: none;

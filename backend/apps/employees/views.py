@@ -1,5 +1,5 @@
 """Konggest — Employees Views"""
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from core.permissions import IsHRManager, IsManager, IsSameTenant
@@ -140,7 +140,17 @@ class DepartmentViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(organization_id=self.request.tenant_id)
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                pass
+        
+        if not tenant_id:
+            raise serializers.ValidationError({"error": "Organisation non identifiée."})
+            
+        serializer.save(organization_id=tenant_id)
 
 
 class PositionViewSet(viewsets.ModelViewSet):
@@ -156,7 +166,17 @@ class PositionViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(organization_id=self.request.tenant_id)
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                pass
+        
+        if not tenant_id:
+            raise serializers.ValidationError({"error": "Organisation non identifiée."})
+
+        serializer.save(organization_id=tenant_id)
 
 
 class LocationViewSet(viewsets.ModelViewSet):
@@ -172,7 +192,17 @@ class LocationViewSet(viewsets.ModelViewSet):
         return qs
 
     def perform_create(self, serializer):
-        serializer.save(organization_id=self.request.tenant_id)
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                pass
+        
+        if not tenant_id:
+            raise serializers.ValidationError({"error": "Organisation non identifiée."})
+
+        serializer.save(organization_id=tenant_id)
 
 
 # Import Count for stats action

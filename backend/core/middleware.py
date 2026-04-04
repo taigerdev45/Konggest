@@ -44,6 +44,18 @@ class SecurityHeadersMiddleware(MiddlewareMixin):
         response['X-XSS-Protection'] = '1; mode=block'
         response['Cache-Control'] = 'no-store, no-cache, must-revalidate, private'
         response['Pragma'] = 'no-cache'
+        
+        # CSP to allow Supabase and Vercel tools
+        csp = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.vercel.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "img-src 'self' data: https://*.supabase.co https://*.vercel.com https://vercel.live; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "connect-src 'self' https://*.supabase.co https://*.vercel.com wss://*.pusher.com; "
+            "frame-src 'self' https://*.vercel.com;"
+        )
+        response['Content-Security-Policy'] = csp
         return response
 
 

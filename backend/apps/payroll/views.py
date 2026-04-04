@@ -41,7 +41,17 @@ class PayrollPeriodViewSet(viewsets.ModelViewSet):
         qs = PayrollPeriod.objects.all()
         return qs.filter(organization_id=tenant_id) if tenant_id else qs
     def perform_create(self, serializer):
-        serializer.save(organization_id=self.request.tenant_id)
+        tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                pass
+        
+        if not tenant_id:
+            raise serializers.ValidationError({"error": "Organisation non identifiée."})
+            
+        serializer.save(organization_id=tenant_id)
 
 
 class PayslipViewSet(viewsets.ModelViewSet):
