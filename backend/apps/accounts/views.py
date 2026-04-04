@@ -7,7 +7,7 @@ from core.permissions import IsManager, IsSaaSAdmin
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AuditLogSerializer, OrganizationSerializer
+from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AuditLogSerializer, OrganizationSerializer, StaffInviteSerializer
 from django.db.models import Count, Sum
 from .models import Organization, UserProfile, AuditLog, LoginAttempt
 
@@ -329,3 +329,101 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         profile.is_active = True
         profile.save()
         return Response({'status': 'Profil activé'})
+class PlatformStaffViewSet(viewsets.ModelViewSet):
+    """Manage platform-level staff (SaaS Admins, Support, Commercial)."""
+    permission_classes = [IsAuthenticated, IsSaaSAdmin]
+    serializer_class = UserProfileSerializer
+
+    def get_queryset(self):
+        from .models import SaaSAdmin
+        # Get users who have a SaaSAdmin record
+        saas_ids = SaaSAdmin.objects.values_list('user_id', flat=True)
+        return UserProfile.objects.filter(user_id__in=saas_ids).select_related('user')
+
+    @action(detail=False, methods=['post'], serializer_class=StaffInviteSerializer)
+    def invite(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        full_name = serializer.validated_data['full_name']
+        role_slug = serializer.validated_data['role'] # 'admin', 'support', or 'commercial'
+        
+        # 1. Prepare Supabase Admin Call
+        import requests
+        from django.conf import settings
+        import random
+        import string
+        
+        url = f"{getattr(settings, 'SUPABASE_URL', '')}/auth/v1/admin/users"
+        key = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
+        
+        if not key:
+            return Response({"error": "Supabase Service Role Key is not configured."}, status=500)
+            
+        headers = {
+            "Authorization": f"Bearer {key}",
+            "apikey": key,
+            "Content-Type": "application/json",
+        }
+        
+        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
+        
+        payload = {
+            "email": email,
+            "password": temp_password,
+            "email_confirm": True,
+            "user_metadata": {
+                "full_name": full_name,
+                "is_platform_admin": True,
+                "role": role_slug
+            }
+        }
+        
+        # 2. Create User in Supabase
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            if response.status_code not in [200, 201]:
+                return Response({
+                    "error": "Failed to create user in Supabase.",
+                    "details": response.json()
+                }, status=status.HTTP_400_BAD_REQUEST)
+                
+            sb_data = response.json()
+            sb_uuid = sb_data.get('id')
+            
+            # 3. Create/Update local Django objects
+            # (The sync trigger should handle this, but we do it here for immediate response)
+            from django.contrib.auth.models import User
+            from .models import SaaSAdmin, UserProfile
+            
+            user, _ = User.objects.get_or_create(
+                username=email,
+                defaults={
+                    'email': email,
+                    'first_name': full_name.split(' ')[0],
+                    'last_name': ' '.join(full_name.split(' ')[1:]) if ' ' in full_name else ''
+                }
+            )
+            
+            UserProfile.objects.get_or_create(
+                user=user,
+                defaults={'role': role_slug}
+            )
+            
+            SaaSAdmin.objects.get_or_create(
+                user=user,
+                defaults={
+                    'supabase_id': sb_uuid,
+                    'is_super_admin': (role_slug == 'admin')
+                }
+            )
+            
+            return Response({
+                "message": f"Utilisateur {email} créé avec succès sur la plateforme.",
+                "uuid": sb_uuid,
+                "temp_password": temp_password
+            }, status=status.HTTP_201_CREATED)
+            
+        except Exception as e:
+            return Response({"error": f"Internal error during invitation: {str(e)}"}, status=500)

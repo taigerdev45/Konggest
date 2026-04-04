@@ -134,6 +134,32 @@ class SupabaseJWTAuthentication(authentication.BaseAuthentication):
             )
             logger.info(f"Auto-created Django user '{email}' from Supabase JWT.")
 
+        # ----------------------------------------------------------------------
+        # SaaS ADMIN DETECTION & AUTO-LINK
+        # ----------------------------------------------------------------------
+        from apps.accounts.models import SaaSAdmin
+        user_metadata = payload.get('user_metadata', {})
+        is_platform_admin = user_metadata.get('is_platform_admin', False)
+        
+        # Check if already a SaaSAdmin or should be promoted
+        saas_admin = SaaSAdmin.objects.filter(user=user).first() or \
+                     SaaSAdmin.objects.filter(supabase_id=user_id).first()
+        
+        if (is_platform_admin or saas_admin) and not saas_admin:
+            # Auto-promote based on metadata
+            SaaSAdmin.objects.create(
+                user=user,
+                supabase_id=user_id,
+                is_super_admin=True
+            )
+            logger.info(f"Auto-promoted user '{email}' to SaaS Admin.")
+        elif saas_admin and not saas_admin.supabase_id:
+            # Update missing supabase_id on existing record
+            saas_admin.supabase_id = user_id
+            saas_admin.user = user # Ensure link is correct
+            saas_admin.save()
+        # ----------------------------------------------------------------------
+
         return (user, token)
 
     def authenticate_header(self, request):

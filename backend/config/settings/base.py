@@ -200,10 +200,10 @@ REST_FRAMEWORK = {
 # ─── JWT Configuration ───
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(
-        minutes=int(os.environ.get('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', 15))
+        minutes=config('JWT_ACCESS_TOKEN_LIFETIME_MINUTES', default=15, cast=int)
     ),
     'REFRESH_TOKEN_LIFETIME': timedelta(
-        days=int(os.environ.get('JWT_REFRESH_TOKEN_LIFETIME_DAYS', 7))
+        days=config('JWT_REFRESH_TOKEN_LIFETIME_DAYS', default=7, cast=int)
     ),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -217,8 +217,8 @@ SIMPLE_JWT = {
 }
 
 # ─── CORS ───
-CORS_ALLOWED_ORIGINS = os.environ.get(
-    'DJANGO_CORS_ALLOWED_ORIGINS', 'https://localhost'
+CORS_ALLOWED_ORIGINS = config(
+    'DJANGO_CORS_ALLOWED_ORIGINS', default='https://localhost'
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
@@ -240,10 +240,10 @@ CSRF_COOKIE_SAMESITE = 'Strict'
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 
 # ─── Supabase ───
-SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
-SUPABASE_ANON_KEY = os.environ.get('SUPABASE_ANON_KEY', '')
-SUPABASE_SERVICE_ROLE_KEY = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')
-SUPABASE_JWT_SECRET = os.environ.get('SUPABASE_JWT_SECRET', SUPABASE_ANON_KEY)
+SUPABASE_URL = config('SUPABASE_URL', default='')
+SUPABASE_ANON_KEY = config('SUPABASE_ANON_KEY', default='')
+SUPABASE_SERVICE_ROLE_KEY = config('SUPABASE_SERVICE_ROLE_KEY', default='')
+SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default=SUPABASE_ANON_KEY)
 
 # ─── Encryption ───
-ENCRYPTION_KEY = os.environ.get('ENCRYPTION_KEY', '0' * 32)
+ENCRYPTION_KEY = config('ENCRYPTION_KEY', default='0' * 32)

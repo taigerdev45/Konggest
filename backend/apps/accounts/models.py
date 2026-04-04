@@ -38,9 +38,11 @@ class UserProfile(models.Model):
     """Extended user profile with role and organization."""
     ROLE_CHOICES = [
         ('admin', 'Administrateur'),
-        ('hr', 'Ressources Humaines'),
+        ('Rh', 'Ressources Humaines'),
         ('manager', 'Manager'),
         ('employee', 'Employé'),
+        ('support', 'Support Technique'),
+        ('commercial', 'Agent Commercial'),
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
@@ -113,6 +115,7 @@ class LoginAttempt(models.Model):
 class SaaSAdmin(models.Model):
     """Platform-level administrators (SaaS owners)."""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='saas_admin')
+    supabase_id = models.UUIDField(unique=True, null=True, blank=True, verbose_name="UUID Supabase")
     is_super_admin = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

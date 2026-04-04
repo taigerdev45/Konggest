@@ -19,6 +19,10 @@ export default function DashboardLayout({ children }) {
     if (!loading && !user) {
       router.replace('/login');
     }
+    // Strict redirect for SaaS Admins to their specific area
+    if (!loading && user && user.profile?.is_saas_admin) {
+      router.replace('/staff');
+    }
   }, [user, loading, router]);
 
   if (loading) {

@@ -91,3 +91,19 @@ class UserInviteSerializer(serializers.Serializer):
         if User.objects.filter(email=value).exists():
             raise serializers.ValidationError("Cet utilisateur existe déjà.")
         return value
+
+
+class StaffInviteSerializer(serializers.Serializer):
+    """Serializer for inviting/creating platform-level staff."""
+    email = serializers.EmailField()
+    full_name = serializers.CharField(max_length=255)
+    role = serializers.ChoiceField(choices=[
+        ('admin', 'Super Administrateur'),
+        ('support', 'Support Technique'),
+        ('commercial', 'Agent Commercial'),
+    ], default='support')
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Cet utilisateur existe déjà dans le système.")
+        return value

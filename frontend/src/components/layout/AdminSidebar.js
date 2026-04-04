@@ -19,6 +19,7 @@ const ADMIN_NAV = [
   { path: '/staff', icon: HiOutlineChartBar, label: 'Dashboard', exact: true },
   { path: '/staff/organizations', icon: HiOutlineOfficeBuilding, label: 'Organisations' },
   { path: '/staff/users', icon: HiOutlineUsers, label: 'Utilisateurs' },
+  { path: '/staff/personnel', icon: HiOutlineShieldCheck, label: 'Gestion Personnel' },
   { path: '/staff/audit', icon: HiOutlineShieldCheck, label: 'Journal d\'Audit' },
   { path: '/staff/settings', icon: HiOutlineCog, label: 'Paramètres' },
 ];
