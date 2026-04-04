@@ -42,14 +42,23 @@ export default function EmployeesPage() {
     setLoading(true);
     setError(null);
     try {
-      const [empData, deptData, posData] = await Promise.all([
+      const resp = await Promise.allSettled([
         api.get('/employees/'),
         api.get('/departments/'),
         api.get('/employees/positions/'),
       ]);
-      setEmployees(empData);
-      setDepartments(deptData);
-      setPositions(posData);
+      
+      const empData = resp[0].status === 'fulfilled' ? resp[0].value : [];
+      const deptData = resp[1].status === 'fulfilled' ? resp[1].value : [];
+      const posData = resp[2].status === 'fulfilled' ? resp[2].value : [];
+
+      setEmployees(empData.results || empData || []);
+      setDepartments(deptData.results || deptData || []);
+      setPositions(posData.results || posData || []);
+      
+      if (resp.some(r => r.status === 'rejected')) {
+        console.warn('Some requests failed', resp);
+      }
     } catch (err) {
       console.error('Error fetching data:', err);
       setError(err.error || 'Erreur lors de la récupération des données.');
@@ -205,7 +214,7 @@ export default function EmployeesPage() {
                   <label>Département</label>
                   <select className="input" name="department" value={formData.department} onChange={handleInputChange}>
                     <option value="">Sélectionner un département...</option>
-                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    {Array.isArray(departments) && departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div className="input-group">

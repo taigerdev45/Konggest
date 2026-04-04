@@ -23,7 +23,7 @@ export default function UsersPage() {
     setLoading(true);
     try {
       const data = await api.get('/accounts/user-profiles/');
-      setUsers(data);
+      setUsers(data?.results || data || []);
     } catch (err) {
       console.error('Error fetching users:', err);
     } finally {

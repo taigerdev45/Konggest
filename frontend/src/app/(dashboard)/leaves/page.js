@@ -28,13 +28,18 @@ export default function LeavesPage() {
     setLoading(true);
     setError(null);
     try {
-      const [reqData, typesData, meData] = await Promise.all([
+      const resp = await Promise.allSettled([
         api.get('/leaves/requests/'),
         api.get('/leaves/types/'),
-        api.get('/employees/me/').catch(() => null), // If not an employee, might 404
+        api.get('/employees/me/'),
       ]);
-      setRequests(reqData);
-      setLeaveTypes(typesData);
+      
+      const reqData = resp[0].status === 'fulfilled' ? resp[0].value : [];
+      const typesData = resp[1].status === 'fulfilled' ? resp[1].value : [];
+      const meData = resp[2].status === 'fulfilled' ? resp[2].value : null;
+
+      setRequests(reqData.results || reqData || []);
+      setLeaveTypes(typesData.results || typesData || []);
       setMe(meData);
     } catch (err) {
       console.error('Error fetching leaves data:', err);

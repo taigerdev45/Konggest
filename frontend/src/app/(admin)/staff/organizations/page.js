@@ -17,7 +17,7 @@ export default function OrganizationsPage() {
     setLoading(true);
     try {
       const data = await api.get('/accounts/organizations/');
-      setOrgs(Array.isArray(data) ? data : []);
+      setOrgs(data?.results || data || []);
     } catch (err) {
       console.error('Error:', err);
     } finally {
