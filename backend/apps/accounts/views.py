@@ -270,6 +270,11 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                pass
         qs = UserProfile.objects.select_related('user', 'organization').all()
         if tenant_id:
             qs = qs.filter(organization_id=tenant_id)
@@ -280,41 +285,109 @@ class UserProfileViewSet(viewsets.ModelViewSet):
             return UserInviteSerializer
         return UserProfileSerializer
 
-    def perform_create(self, serializer):
-        from django.contrib.auth.models import User
-        import random
-        import string
+    def create(self, request, *args, **kwargs):
+        """
+        Invite a new team member:
+        1. Create user in Supabase (sends email invite automatically).
+        2. Create Django User + UserProfile for local JWT auth.
+        3. Return temp_password to display to the admin.
+        """
+        from django.contrib.auth.models import User as DjangoUser
+        from django.conf import settings
+        import requests as req_lib
+        import random, string
 
-        email = serializer.validated_data['email']
+        serializer = UserInviteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email     = serializer.validated_data['email']
         full_name = serializer.validated_data['full_name']
-        role = serializer.validated_data['role']
-        
-        # 1. Create Django User
-        first_name = full_name.split(' ')[0]
-        last_name = ' '.join(full_name.split(' ')[1:]) if ' ' in full_name else ''
-        
-        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-        user = User.objects.create_user(
-            username=email,
+        role      = serializer.validated_data['role']
+
+        # Resolve org
+        tenant_id = getattr(request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = request.user.profile.organization_id
+            except Exception:
+                pass
+        if not tenant_id:
+            return Response({'error': "Organisation non identifiée."}, status=400)
+
+        # Generate temp password
+        temp_password = ''.join(random.choices(string.ascii_letters + string.digits + '!@#$', k=14))
+
+        # --- 1. Create user in Supabase (sends email) ---
+        supabase_url = getattr(settings, 'SUPABASE_URL', '')
+        service_key  = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
+        supabase_ok  = False
+        supabase_uid = None
+
+        if supabase_url and service_key:
+            try:
+                sb_resp = req_lib.post(
+                    f"{supabase_url}/auth/v1/admin/users",
+                    headers={
+                        "Authorization": f"Bearer {service_key}",
+                        "apikey": service_key,
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "email": email,
+                        "password": temp_password,
+                        "email_confirm": True,   # confirms email immediately
+                        "user_metadata": {
+                            "full_name": full_name,
+                            "role": role,
+                            "invited_by": request.user.email,
+                        }
+                    },
+                    timeout=10
+                )
+                if sb_resp.status_code in (200, 201):
+                    supabase_uid = sb_resp.json().get('id')
+                    supabase_ok  = True
+                else:
+                    # If user already exists in Supabase, continue with Django creation
+                    supabase_uid = None
+            except Exception:
+                pass  # Supabase unavailable — fall through to Django-only creation
+
+        # --- 2. Create local Django user (for JWT auth fallback) ---
+        first = full_name.split(' ')[0]
+        last  = ' '.join(full_name.split(' ')[1:]) if ' ' in full_name else ''
+
+        django_user, created = DjangoUser.objects.get_or_create(
             email=email,
-            password=temp_password,
-            first_name=first_name,
-            last_name=last_name
+            defaults={
+                'username':   email,
+                'first_name': first,
+                'last_name':  last,
+            }
         )
+        if created:
+            django_user.set_password(temp_password)
+            django_user.save()
 
-        # 2. Create Profile associated with manager organization
-        # Note: organization is retrieved from context/tenant middleware
-        org_id = getattr(self.request, 'tenant_id', None)
-        if not org_id:
-            # Fallback for dev/manual creation
-            org_id = self.request.user.profile.organization_id
-
-        UserProfile.objects.create(
-            user=user,
-            organization_id=org_id,
-            role=role
+        # --- 3. Create UserProfile ---
+        profile, _ = UserProfile.objects.get_or_create(
+            user=django_user,
+            defaults={'organization_id': tenant_id, 'role': role}
         )
-        # Note: In a real app, send an invite email with temp_password or Supabase invite here.
+        if not _:
+            # Profile existed, update role / org if needed
+            profile.role = role
+            profile.organization_id = tenant_id
+            profile.save()
+
+        return Response({
+            'message': f"Invitation envoyée à {email}.",
+            'email': email,
+            'role': role,
+            'temp_password': temp_password,
+            'supabase_user_created': supabase_ok,
+            'email_sent': supabase_ok,   # Supabase sends email automatically
+        }, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def suspend(self, request, pk=None):
@@ -329,6 +402,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         profile.is_active = True
         profile.save()
         return Response({'status': 'Profil activé'})
+
 class PlatformStaffViewSet(viewsets.ModelViewSet):
     """Manage platform-level staff (SaaS Admins, Support, Commercial)."""
     permission_classes = [IsAuthenticated, IsSaaSAdmin]

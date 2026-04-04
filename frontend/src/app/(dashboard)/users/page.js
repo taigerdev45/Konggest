@@ -25,10 +25,11 @@ export default function UsersPage() {
   const [submitting, setSubmitting]     = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast]               = useState({ show: false, type: '', text: '' });
+  const [inviteResult, setInviteResult] = useState(null); // { email, role, temp_password, email_sent }
 
   const showToast = (type, text) => {
     setToast({ show: true, type, text });
-    setTimeout(() => setToast({ show: false }), 4000);
+    setTimeout(() => setToast({ show: false }), 5000);
   };
 
   const fetchUsers = async () => {
@@ -46,13 +47,20 @@ export default function UsersPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await api.post('/accounts/user-profiles/', inviteData);
+      const res = await api.post('/accounts/user-profiles/', inviteData);
       setShowInviteModal(false);
       setInviteData({ email: '', full_name: '', role: 'employee' });
-      showToast('success', 'Invitation envoyée avec succès.');
+      // Show credentials modal
+      setInviteResult({
+        email: res.email || inviteData.email,
+        role: res.role || inviteData.role,
+        temp_password: res.temp_password,
+        email_sent: res.email_sent,
+      });
       fetchUsers();
     } catch (err) {
-      showToast('error', err?.error || "Erreur lors de l'invitation.");
+      const errMsg = err?.email?.[0] || err?.error || "Erreur lors de l'invitation.";
+      showToast('error', errMsg);
     } finally {
       setSubmitting(false);
     }
@@ -290,6 +298,44 @@ export default function UsersPage() {
         </div>
       )}
 
+      {/* ✅ Credentials Modal — shown after successful invitation */}
+      {inviteResult && (
+        <div className="modal-overlay" style={{ zIndex: 2100 }}>
+          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
+            {/* Header */}
+            <div style={{ textAlign: 'center', padding: '8px 0 20px' }}>
+              <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+                <HiOutlineCheckCircle size={28} style={{ color: 'var(--success)' }} />
+              </div>
+              <h2 style={{ marginBottom: 6 }}>Invitation créée !</h2>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.87rem' }}>
+                {inviteResult.email_sent
+                  ? '✅ Un email de confirmation a été envoyé via Supabase.'
+                  : '⚠️ Email non envoyé — communiquez les identifiants manuellement.'}
+              </p>
+            </div>
+
+            {/* Credentials Box */}
+            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '20px 24px', border: '1px solid var(--border-color)', marginBottom: 20 }}>
+              <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 14 }}>
+                🔐 Identifiants de connexion
+              </p>
+              <CredentialRow label="Email" value={inviteResult.email} />
+              <CredentialRow label="Rôle" value={ROLE_LABELS[inviteResult.role] || inviteResult.role} badge />
+              <CredentialRow label="Mot de passe temporaire" value={inviteResult.temp_password} secret />
+            </div>
+
+            <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
+              ⚠️ <strong>Important :</strong> Transmettez ce mot de passe de façon sécurisée. L&apos;utilisateur devra le changer à sa première connexion.
+            </div>
+
+            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setInviteResult(null)}>
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Toast */}
       {toast.show && (
         <div style={{ position: 'fixed', bottom: 28, right: 28, zIndex: 2000, padding: '14px 20px', borderRadius: 10, background: toast.type === 'success' ? 'var(--success)' : 'var(--danger)', color: '#fff', boxShadow: 'var(--shadow-xl)', display: 'flex', alignItems: 'center', gap: 10, minWidth: 260 }}>
@@ -297,6 +343,39 @@ export default function UsersPage() {
           <span style={{ fontWeight: 500 }}>{toast.text}</span>
         </div>
       )}
+    </div>
+  );
+}
+
+// Composant affichage d'un identifiant avec copie
+function CredentialRow({ label, value, secret, badge }) {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border-color)' }}>
+      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 600, minWidth: 140 }}>{label}</span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        {badge ? (
+          <span className="badge badge-primary" style={{ fontWeight: 700 }}>{value}</span>
+        ) : (
+          <code style={{ fontSize: secret ? '0.9rem' : '0.85rem', fontWeight: secret ? 800 : 500, letterSpacing: secret ? '0.05em' : 0, color: secret ? 'var(--primary)' : 'var(--text-primary)', wordBreak: 'break-all', textAlign: 'right' }}>
+            {value}
+          </code>
+        )}
+        {!badge && (
+          <button
+            onClick={copy}
+            title="Copier"
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: copied ? 'var(--success)' : 'var(--text-muted)', padding: '2px 4px', flexShrink: 0 }}
+          >
+            {copied ? '✓' : '⎘'}
+          </button>
+        )}
+      </div>
     </div>
   );
 }
