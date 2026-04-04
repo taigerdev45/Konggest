@@ -1,11 +1,12 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import styles from './page.module.css';
 
-export default function CareersPage() {
+function CareersContent() {
   const searchParams = useSearchParams();
   const orgId = searchParams.get('org'); // Organization ID from URL
   
@@ -221,5 +222,14 @@ export default function CareersPage() {
         </Link>
       </footer>
     </div>
+  );
+}
+
+// Main export with Suspense boundary for useSearchParams
+export default function CareersPage() {
+  return (
+    <Suspense fallback={<div className={styles.loading}>Chargement...</div>}>
+      <CareersContent />
+    </Suspense>
   );
 }

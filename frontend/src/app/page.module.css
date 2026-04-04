@@ -320,3 +320,308 @@
     align-items: center;
   }
 }
+
+/* ===== ADDITIONAL MOBILE-FIRST IMPROVEMENTS ===== */
+
+/* Navbar Scrolled State */
+.navbarScrolled {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+/* Hero Badge */
+.heroBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255,255,255,0.2);
+  padding: 0.5rem 1rem;
+  border-radius: 50px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+/* Title Lines */
+.titleLine {
+  display: block;
+}
+
+.titleLineAccent {
+  background: linear-gradient(135deg, #ffd700 0%, #ffb700 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Stat Item */
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.statValue {
+  font-size: 2.5rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.statDivider {
+  width: 1px;
+  height: 50px;
+  background: rgba(255,255,255,0.3);
+}
+
+/* Section Badge */
+.sectionBadge {
+  display: inline-block;
+  background: rgba(102,126,234,0.1);
+  color: #667eea;
+  padding: 0.4rem 1rem;
+  border-radius: 50px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+}
+
+/* Section Header */
+.sectionHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+/* Feature Icon Wrapper */
+.featureIconWrapper {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  box-shadow: 0 8px 25px rgba(102,126,234,0.3);
+}
+
+.featureIcon {
+  font-size: 2rem;
+  margin-bottom: 0;
+}
+
+/* Button Ghost */
+.btnGhost {
+  color: #666;
+  background: transparent;
+  text-decoration: none;
+}
+
+.btnGhost:hover {
+  color: #667eea;
+}
+
+/* CTA Section */
+.ctaSection {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  padding: 5rem 2rem;
+  text-align: center;
+  color: white;
+}
+
+.ctaContent h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.ctaContent p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin-bottom: 2rem;
+}
+
+.btnCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.btnCta:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 35px rgba(102,126,234,0.4);
+}
+
+/* Footer Improvements */
+.footerContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logoIconFooter {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  margin-right: 0.5rem;
+}
+
+.logoTextFooter {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
+}
+
+/* Mobile Menu Button */
+.menuButton {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.menuLine {
+  width: 25px;
+  height: 2px;
+  background: #333;
+  transition: all 0.3s;
+}
+
+.navMobile {
+  display: none;
+}
+
+.navLinkMobile {
+  padding: 0.75rem 0;
+  color: #333;
+  text-decoration: none;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.btnPrimaryMobile, .btnGhostMobile {
+  text-align: center;
+  padding: 0.75rem;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.btnPrimaryMobile {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btnGhostMobile {
+  color: #666;
+}
+
+/* Enhanced Mobile Responsive */
+@media (max-width: 768px) {
+  .navbarContent {
+    width: 100%;
+  }
+  
+  .menuButton {
+    display: flex;
+  }
+  
+  .navLinksDesktop {
+    display: none;
+  }
+  
+  .navMobile {
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    z-index: 999;
+  }
+  
+  .hero {
+    padding-top: 8rem;
+  }
+  
+  .heroTitle {
+    font-size: 2.25rem;
+  }
+  
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+  
+  .heroStats {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .statDivider {
+    display: none;
+  }
+  
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+  
+  .ctaContent h2 {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    padding: 1rem;
+  }
+  
+  .hero {
+    padding: 7rem 1rem 3rem;
+  }
+  
+  .heroTitle {
+    font-size: 1.875rem;
+  }
+  
+  .btnHero, .btnGhostHero {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .features, .jobsSection {
+    padding: 3rem 1rem;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(102,126,234,0.3);
+  color: #1a1a2e;
+}

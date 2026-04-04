@@ -9,20 +9,22 @@ export default function LandingPage() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     fetchPublicJobs();
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const fetchPublicJobs = async () => {
     try {
       const response = await fetch('/api/recruitment/public/jobs/');
-      if (response.ok) {
-        const data = await response.json();
-        setJobs(data);
-      }
+      if (response.ok) setJobs(await response.json());
     } catch (error) {
-      console.error('Error fetching jobs:', error);
+      console.error('Error:', error);
     } finally {
       setLoading(false);
     }
@@ -30,21 +32,43 @@ export default function LandingPage() {
 
   return (
     <div className={styles.container}>
-      {/* Navigation */}
-      <nav className={styles.navbar}>
-        <div className={styles.logo}>
-          <span className={styles.logoIcon}>🎯</span>
-          <span className={styles.logoText}>Konggest</span>
+      {/* Navigation Mobile-First */}
+      <nav className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ''}`}>
+        <div className={styles.navbarContent}>
+          <Link href="/" className={styles.logo}>
+            <div className={styles.logoIcon}>K</div>
+            <span className={styles.logoText}>Konggest</span>
+          </Link>
+
+          <div className={styles.navLinksDesktop}>
+            <a href="#features" className={styles.navLink}>Fonctionnalités</a>
+            <a href="#jobs" className={styles.navLink}>Carrières</a>
+            {user ? (
+              <Link href="/dashboard" className={styles.btnPrimary}>Dashboard</Link>
+            ) : (
+              <>
+                <Link href="/login" className={styles.btnGhost}>Connexion</Link>
+                <Link href="/register" className={styles.btnPrimary}>Essai gratuit</Link>
+              </>
+            )}
+          </div>
+
+          <button className={styles.menuButton} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+            <span className={`${styles.menuLine} ${isMenuOpen ? styles.menuLineOpen : ''}`} />
+            <span className={`${styles.menuLine} ${isMenuOpen ? styles.menuLineOpen : ''}`} />
+            <span className={`${styles.menuLine} ${isMenuOpen ? styles.menuLineOpen : ''}`} />
+          </button>
         </div>
-        <div className={styles.navLinks}>
-          <a href="#features">Fonctionnalités</a>
-          <a href="#jobs">Offres</a>
+
+        <div className={`${styles.navMobile} ${isMenuOpen ? styles.navMobileOpen : ''}`}>
+          <a href="#features" className={styles.navLinkMobile}>Fonctionnalités</a>
+          <a href="#jobs" className={styles.navLinkMobile}>Carrières</a>
           {user ? (
-            <Link href="/dashboard" className={styles.btnPrimary}>Dashboard</Link>
+            <Link href="/dashboard" className={styles.btnPrimaryMobile}>Dashboard</Link>
           ) : (
             <>
-              <Link href="/login" className={styles.btnSecondary}>Connexion</Link>
-              <Link href="/register" className={styles.btnPrimary}>Essai gratuit</Link>
+              <Link href="/login" className={styles.btnGhostMobile}>Connexion</Link>
+              <Link href="/register" className={styles.btnPrimaryMobile}>Essai gratuit</Link>
             </>
           )}
         </div>
@@ -52,53 +76,106 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className={styles.hero}>
+        <div className={styles.heroBackground}>
+          <div className={styles.gradientOrb1} />
+          <div className={styles.gradientOrb2} />
+        </div>
+        
         <div className={styles.heroContent}>
+          <div className={styles.heroBadge}>
+            <span>✨</span>
+            <span>Nouveau: Recrutement intelligent</span>
+          </div>
+          
           <h1 className={styles.heroTitle}>
-            Gérez votre entreprise <span className={styles.highlight}>simplement</span>
+            <span className={styles.titleLine}>Gérez votre</span>
+            <span className={styles.titleLineAccent}>entreprise</span>
+            <span className={styles.titleLine}>autrement</span>
           </h1>
+          
           <p className={styles.heroSubtitle}>
-            Konggest est la solution SaaS tout-en-un pour la gestion RH, 
-            le recrutement, le pointage et la paie.
+            La plateforme tout-en-un qui révolutionne la gestion RH. 
+            Du recrutement à la paie, tout en un seul clic.
           </p>
+          
           <div className={styles.heroCta}>
-            <Link href={user ? "/dashboard" : "/register"} className={styles.btnLarge}>
-              {user ? 'Dashboard' : 'Commencer gratuitement'}
+            <Link href={user ? "/dashboard" : "/register"} className={styles.btnHero}>
+              {user ? 'Mon espace' : 'Démarrer gratuitement'}
+              <span>→</span>
             </Link>
-            <a href="#jobs" className={styles.btnOutlineLarge}>Voir les offres</a>
+            <a href="#features" className={styles.btnGhostHero}>
+              Découvrir
+            </a>
+          </div>
+
+          <div className={styles.heroStats}>
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>500+</span>
+              <span className={styles.statLabel}>Entreprises</span>
+            </div>
+            <div className={styles.statDivider} />
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>10k+</span>
+              <span className={styles.statLabel}>Employés</span>
+            </div>
+            <div className={styles.statDivider} />
+            <div className={styles.statItem}>
+              <span className={styles.statValue}>98%</span>
+              <span className={styles.statLabel}>Satisfaction</span>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Features */}
       <section id="features" className={styles.features}>
-        <h2 className={styles.sectionTitle}>Tout ce dont vous avez besoin</h2>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionBadge}>Fonctionnalités</span>
+          <h2 className={styles.sectionTitle}>Tout ce dont vous avez besoin</h2>
+        </div>
+
         <div className={styles.featuresGrid}>
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>👥</div>
+            <div className={styles.featureIconWrapper}>
+              <span className={styles.featureIcon}>👥</span>
+            </div>
             <h3>Gestion RH</h3>
             <p>Employés, contrats, congés et documents.</p>
           </div>
+
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>🎯</div>
-            <h3>Recrutement</h3>
-            <p>Offres, candidatures et entretiens.</p>
-          </div>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>⏱️</div>
+            <div className={styles.featureIconWrapper}>
+              <span className={styles.featureIcon}>⏱️</span>
+            </div>
             <h3>Pointage</h3>
             <p>Temps de travail et paie automatisée.</p>
           </div>
+
           <div className={styles.featureCard}>
-            <div className={styles.featureIcon}>📊</div>
+            <div className={styles.featureIconWrapper}>
+              <span className={styles.featureIcon}>🎯</span>
+            </div>
+            <h3>Recrutement</h3>
+            <p>Offres, candidatures et entretiens.</p>
+          </div>
+
+          <div className={styles.featureCard}>
+            <div className={styles.featureIconWrapper}>
+              <span className={styles.featureIcon}>📊</span>
+            </div>
             <h3>Rapports</h3>
             <p>Analyses et tableaux de bord.</p>
           </div>
         </div>
       </section>
 
-      {/* Job Offers */}
+      {/* Jobs */}
       <section id="jobs" className={styles.jobsSection}>
-        <h2 className={styles.sectionTitle}>Opportunités de carrière</h2>
+        <div className={styles.sectionHeader}>
+          <span className={styles.sectionBadge}>Carrières</span>
+          <h2 className={styles.sectionTitle}>Opportunités de carrière</h2>
+        </div>
+
         {loading ? (
           <div className={styles.loading}>Chargement...</div>
         ) : jobs.length === 0 ? (
@@ -115,7 +192,6 @@ export default function LandingPage() {
                 </div>
                 <div className={styles.jobMeta}>
                   <span>📍 {job.location || 'Remote'}</span>
-                  {job.salary_range && <span>💰 {job.salary_range}</span>}
                 </div>
                 <p className={styles.jobDescription}>
                   {job.description?.substring(0, 100)}...
@@ -125,8 +201,21 @@ export default function LandingPage() {
             ))}
           </div>
         )}
+
         <div className={styles.viewAllJobs}>
-          <Link href="/careers" className={styles.btnOutline}>Voir toutes les offres</Link>
+          <Link href="/careers" className={styles.btnOutline}>Voir toutes les offres →</Link>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className={styles.ctaSection}>
+        <div className={styles.ctaContent}>
+          <h2>Prêt à transformer votre gestion ?</h2>
+          <p>Rejoignez plus de 500 entreprises qui font confiance à Konggest</p>
+          <Link href={user ? "/dashboard" : "/register"} className={styles.btnCta}>
+            {user ? 'Mon espace' : 'Commencer gratuitement'}
+            <span>→</span>
+          </Link>
         </div>
       </section>
 
@@ -134,8 +223,8 @@ export default function LandingPage() {
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
-            <span className={styles.logoIcon}>🎯</span>
-            <span className={styles.logoText}>Konggest</span>
+            <span className={styles.logoIconFooter}>K</span>
+            <span className={styles.logoTextFooter}>Konggest</span>
           </div>
           <p>&copy; 2026 Konggest. Tous droits réservés.</p>
         </div>
