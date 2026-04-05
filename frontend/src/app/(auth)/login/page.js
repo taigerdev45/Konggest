@@ -15,7 +15,8 @@ import {
   HiOutlineOfficeBuilding,
   HiOutlineUser,
   HiOutlineExclamationCircle,
-  HiOutlineCheck
+  HiOutlineCheck,
+  HiOutlineArrowLeft
 } from 'react-icons/hi';
 import styles from './login.module.css';
 
@@ -89,6 +90,16 @@ export default function LoginPage() {
       <div className={styles.bgOrb2} />
 
       <div className={`${styles.card} ${isRegister ? styles.card_large : ''}`}>
+        {/* Back Button */}
+        <button
+          type="button"
+          className={styles.backBtn}
+          onClick={() => router.push('/')}
+        >
+          <HiOutlineArrowLeft size={18} />
+          Retour à l&apos;accueil
+        </button>
+
         {/* Logo Section */}
         <div className={styles.logoSection}>
           <div className={styles.logoIcon}>
