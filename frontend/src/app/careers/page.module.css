@@ -244,8 +244,30 @@
 
 /* Apply Button */
 .applyBtn {
-  composes: btn btn-primary;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   padding: 0.85rem 2rem;
+  border: none;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  outline: none;
+  white-space: nowrap;
+  user-select: none;
+  background: linear-gradient(135deg, var(--primary), #065F46);
+  color: white;
+  box-shadow: 0 4px 15px -3px var(--primary-glow);
+}
+
+.applyBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px var(--primary-glow);
+  filter: brightness(1.1);
 }
 
 /* Modal Modern */
