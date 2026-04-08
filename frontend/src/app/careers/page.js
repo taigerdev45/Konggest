@@ -4,6 +4,22 @@ import { Suspense } from 'react';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { 
+  HiOutlineLocationMarker, 
+  HiOutlineBriefcase, 
+  HiOutlineCurrencyDollar, 
+  HiOutlineCalendar, 
+  HiOutlineArrowLeft,
+  HiOutlineArrowRight,
+  HiOutlineCheckCircle,
+  HiOutlineX,
+  HiOutlinePaperAirplane,
+  HiOutlineIdentification,
+  HiOutlineMail,
+  HiOutlinePhone,
+  HiOutlineLink,
+  HiOutlineAnnotation
+} from 'react-icons/hi';
 import styles from './page.module.css';
 
 function CareersContent() {
@@ -100,68 +116,99 @@ function CareersContent() {
   return (
     <div className={styles.container}>
       <header className={styles.header}>
-        <h1>🎯 Offres d'Emploi</h1>
-        <p>Rejoignez notre équipe ! Découvrez nos postes ouverts et postulez en ligne.</p>
+        <div className={styles.headerContent}>
+          <Link href="/" className={styles.backHome}>
+            <HiOutlineArrowLeft /> Retour à l'accueil
+          </Link>
+          <h1>Carrières chez Konggest</h1>
+          <p>Rejoignez une équipe passionnée et aidez-nous à révolutionner la gestion des ressources humaines.</p>
+        </div>
       </header>
 
       {submitSuccess && (
         <div className={styles.success}>
-          ✅ Votre candidature a été soumise avec succès ! Nous vous contacterons bientôt.
+          <HiOutlineCheckCircle size={24} />
+          <span>Votre candidature a été soumise avec succès ! Nous vous contacterons bientôt.</span>
         </div>
       )}
 
       {showForm && selectedJob && (
-        <div className={styles.modal}>
+        <div className={styles.modal} onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
           <div className={styles.modalContent}>
+            <button className={styles.closeBtn} onClick={() => setShowForm(false)}>
+              <HiOutlineX />
+            </button>
             <h2>Postuler : {selectedJob.title}</h2>
             <form onSubmit={handleSubmit} className={styles.form}>
               <div className={styles.row}>
+                <div className={styles.inputWrapper}>
+                  <HiOutlineIdentification className={styles.inputIcon} />
+                  <input
+                    type="text"
+                    placeholder="Prénom *"
+                    required
+                    value={formData.first_name}
+                    onChange={(e) => setFormData({...formData, first_name: e.target.value})}
+                  />
+                </div>
+                <div className={styles.inputWrapper}>
+                  <HiOutlineIdentification className={styles.inputIcon} />
+                  <input
+                    type="text"
+                    placeholder="Nom *"
+                    required
+                    value={formData.last_name}
+                    onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                  />
+                </div>
+              </div>
+              <div className={styles.inputWrapper}>
+                <HiOutlineMail className={styles.inputIcon} />
                 <input
-                  type="text"
-                  placeholder="Prénom *"
+                  type="email"
+                  placeholder="Email *"
                   required
-                  value={formData.first_name}
-                  onChange={(e) => setFormData({...formData, first_name: e.target.value})}
-                />
-                <input
-                  type="text"
-                  placeholder="Nom *"
-                  required
-                  value={formData.last_name}
-                  onChange={(e) => setFormData({...formData, last_name: e.target.value})}
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
                 />
               </div>
-              <input
-                type="email"
-                placeholder="Email *"
-                required
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-              />
-              <input
-                type="tel"
-                placeholder="Téléphone"
-                value={formData.phone}
-                onChange={(e) => setFormData({...formData, phone: e.target.value})}
-              />
-              <input
-                type="url"
-                placeholder="Lien CV (URL)"
-                value={formData.resume_url}
-                onChange={(e) => setFormData({...formData, resume_url: e.target.value})}
-              />
-              <textarea
-                placeholder="Lettre de motivation"
-                rows={4}
-                value={formData.cover_letter}
-                onChange={(e) => setFormData({...formData, cover_letter: e.target.value})}
-              />
+              <div className={styles.inputWrapper}>
+                <HiOutlinePhone className={styles.inputIcon} />
+                <input
+                  type="tel"
+                  placeholder="Téléphone"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                />
+              </div>
+              <div className={styles.inputWrapper}>
+                <HiOutlineLink className={styles.inputIcon} />
+                <input
+                  type="url"
+                  placeholder="Lien CV (Google Drive, Dropbox, etc.)"
+                  value={formData.resume_url}
+                  onChange={(e) => setFormData({...formData, resume_url: e.target.value})}
+                />
+              </div>
+              <div className={styles.inputWrapper}>
+                <HiOutlineAnnotation className={styles.inputIcon} style={{ top: '1.25rem' }} />
+                <textarea
+                  placeholder="Parlez-nous de vous..."
+                  rows={4}
+                  value={formData.cover_letter}
+                  onChange={(e) => setFormData({...formData, cover_letter: e.target.value})}
+                />
+              </div>
               <div className={styles.formActions}>
                 <button type="button" onClick={() => setShowForm(false)} className={styles.cancel}>
                   Annuler
                 </button>
                 <button type="submit" disabled={submitting} className={styles.submit}>
-                  {submitting ? 'Envoi...' : 'Postuler'}
+                  {submitting ? 'Envoi...' : (
+                    <>
+                      Envoyer ma candidature <HiOutlinePaperAirplane style={{ transform: 'rotate(45deg)' }} />
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -174,7 +221,7 @@ function CareersContent() {
           <div className={styles.noJobs}>
             <p>Aucune offre d'emploi disponible pour le moment.</p>
             <Link href="/" className={styles.backLink}>
-              ← Retour à l'accueil
+              <HiOutlineArrowLeft /> Retour à l'accueil
             </Link>
           </div>
         ) : (
@@ -186,9 +233,9 @@ function CareersContent() {
               </div>
               
               <div className={styles.jobMeta}>
-                <span>📍 {job.location || 'Non spécifié'}</span>
-                <span>🏢 {job.department || 'Non spécifié'}</span>
-                {job.salary_range && <span>💰 {job.salary_range}</span>}
+                <span><HiOutlineLocationMarker /> {job.location || 'Remote'}</span>
+                <span><HiOutlineBriefcase /> {job.department || 'RH'}</span>
+                {job.salary_range && <span><HiOutlineCurrencyDollar /> {job.salary_range}</span>}
               </div>
 
               <p className={styles.description}>{job.description}</p>
@@ -202,13 +249,13 @@ function CareersContent() {
 
               <div className={styles.jobFooter}>
                 <span className={styles.date}>
-                  Clôture : {job.closes_at ? new Date(job.closes_at).toLocaleDateString('fr-FR') : 'Non définie'}
+                  <HiOutlineCalendar /> Clôture : {job.closes_at ? new Date(job.closes_at).toLocaleDateString('fr-FR') : 'Non définie'}
                 </span>
                 <button 
                   onClick={() => handleApply(job)} 
                   className={styles.applyBtn}
                 >
-                  Postuler
+                  Postuler maintenant
                 </button>
               </div>
             </div>
@@ -218,7 +265,7 @@ function CareersContent() {
 
       <footer className={styles.footer}>
         <Link href="/login" className={styles.adminLink}>
-          Espace Administrateur →
+          Espace Administrateur <HiOutlineArrowRight />
         </Link>
       </footer>
     </div>

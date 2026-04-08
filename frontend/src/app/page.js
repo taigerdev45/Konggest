@@ -3,6 +3,15 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { 
+  HiOutlineUsers, 
+  HiOutlineClock, 
+  HiOutlineTarget, 
+  HiOutlineChartBar,
+  HiOutlineArrowRight,
+  HiOutlineLocationMarker,
+  HiOutlineBriefcase
+} from 'react-icons/hi';
 import styles from './page.module.css';
 
 export default function LandingPage() {
@@ -41,8 +50,8 @@ export default function LandingPage() {
           </Link>
 
           <div className={styles.navLinksDesktop}>
-            <a href="#features" className={styles.navLink}>Fonctionnalités</a>
-            <a href="#jobs" className={styles.navLink}>Carrières</a>
+            <a href="#features">Fonctionnalités</a>
+            <a href="#jobs">Carrières</a>
             {user ? (
               <Link href="/dashboard" className={styles.btnPrimary}>Dashboard</Link>
             ) : (
@@ -61,14 +70,14 @@ export default function LandingPage() {
         </div>
 
         <div className={`${styles.navMobile} ${isMenuOpen ? styles.navMobileOpen : ''}`}>
-          <a href="#features" className={styles.navLinkMobile}>Fonctionnalités</a>
-          <a href="#jobs" className={styles.navLinkMobile}>Carrières</a>
+          <Link href="#features" className={styles.navLinkMobile} onClick={() => setIsMenuOpen(false)}>Fonctionnalités</Link>
+          <Link href="#jobs" className={styles.navLinkMobile} onClick={() => setIsMenuOpen(false)}>Carrières</Link>
           {user ? (
-            <Link href="/dashboard" className={styles.btnPrimaryMobile}>Dashboard</Link>
+            <Link href="/dashboard" className={styles.btnPrimaryMobile} onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
           ) : (
             <>
-              <Link href="/login" className={styles.btnGhostMobile}>Connexion</Link>
-              <Link href="/register" className={styles.btnPrimaryMobile}>Essai gratuit</Link>
+              <Link href="/login" className={styles.btnGhostMobile} onClick={() => setIsMenuOpen(false)}>Connexion</Link>
+              <Link href="/register" className={styles.btnPrimaryMobile} onClick={() => setIsMenuOpen(false)}>Essai gratuit</Link>
             </>
           )}
         </div>
@@ -113,12 +122,10 @@ export default function LandingPage() {
               <span className={styles.statValue}>500+</span>
               <span className={styles.statLabel}>Entreprises</span>
             </div>
-            <div className={styles.statDivider} />
             <div className={styles.statItem}>
               <span className={styles.statValue}>10k+</span>
               <span className={styles.statLabel}>Employés</span>
             </div>
-            <div className={styles.statDivider} />
             <div className={styles.statItem}>
               <span className={styles.statValue}>98%</span>
               <span className={styles.statLabel}>Satisfaction</span>
@@ -137,7 +144,7 @@ export default function LandingPage() {
         <div className={styles.featuresGrid}>
           <div className={styles.featureCard}>
             <div className={styles.featureIconWrapper}>
-              <span className={styles.featureIcon}>👥</span>
+              <HiOutlineUsers className={styles.featureIcon} />
             </div>
             <h3>Gestion RH</h3>
             <p>Employés, contrats, congés et documents.</p>
@@ -145,7 +152,7 @@ export default function LandingPage() {
 
           <div className={styles.featureCard}>
             <div className={styles.featureIconWrapper}>
-              <span className={styles.featureIcon}>⏱️</span>
+              <HiOutlineClock className={styles.featureIcon} />
             </div>
             <h3>Pointage</h3>
             <p>Temps de travail et paie automatisée.</p>
@@ -153,7 +160,7 @@ export default function LandingPage() {
 
           <div className={styles.featureCard}>
             <div className={styles.featureIconWrapper}>
-              <span className={styles.featureIcon}>🎯</span>
+              <HiOutlineTarget className={styles.featureIcon} />
             </div>
             <h3>Recrutement</h3>
             <p>Offres, candidatures et entretiens.</p>
@@ -161,7 +168,7 @@ export default function LandingPage() {
 
           <div className={styles.featureCard}>
             <div className={styles.featureIconWrapper}>
-              <span className={styles.featureIcon}>📊</span>
+              <HiOutlineChartBar className={styles.featureIcon} />
             </div>
             <h3>Rapports</h3>
             <p>Analyses et tableaux de bord.</p>
@@ -191,19 +198,24 @@ export default function LandingPage() {
                   <span className={styles.contractBadge}>{job.contract_type}</span>
                 </div>
                 <div className={styles.jobMeta}>
-                  <span>📍 {job.location || 'Remote'}</span>
+                  <span><HiOutlineLocationMarker /> {job.location || 'Remote'}</span>
+                  <span><HiOutlineBriefcase /> {job.department || 'RH'}</span>
                 </div>
                 <p className={styles.jobDescription}>
-                  {job.description?.substring(0, 100)}...
+                  {job.description?.substring(0, 120)}...
                 </p>
-                <Link href="/careers" className={styles.applyLink}>Postuler →</Link>
+                <Link href="/careers" className={styles.applyLink}>
+                  Postuler <HiOutlineArrowRight />
+                </Link>
               </div>
             ))}
           </div>
         )}
 
         <div className={styles.viewAllJobs}>
-          <Link href="/careers" className={styles.btnOutline}>Voir toutes les offres →</Link>
+          <Link href="/careers" className={styles.btnOutline}>
+            Voir toutes les offres <HiOutlineArrowRight />
+          </Link>
         </div>
       </section>
 
@@ -211,10 +223,10 @@ export default function LandingPage() {
       <section className={styles.ctaSection}>
         <div className={styles.ctaContent}>
           <h2>Prêt à transformer votre gestion ?</h2>
-          <p>Rejoignez plus de 500 entreprises qui font confiance à Konggest</p>
+          <p>Rejoignez plus de 500 entreprises qui font confiance à Konggest pour leur transformation numérique.</p>
           <Link href={user ? "/dashboard" : "/register"} className={styles.btnCta}>
             {user ? 'Mon espace' : 'Commencer gratuitement'}
-            <span>→</span>
+            <HiOutlineArrowRight />
           </Link>
         </div>
       </section>
@@ -223,10 +235,10 @@ export default function LandingPage() {
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
-            <span className={styles.logoIconFooter}>K</span>
-            <span className={styles.logoTextFooter}>Konggest</span>
+            <div className={styles.logoIconFooter}>K</div>
+            <h3 className={styles.logoTextFooter}>Konggest</h3>
           </div>
-          <p>&copy; 2026 Konggest. Tous droits réservés.</p>
+          <p>&copy; {new Date().getFullYear()} Konggest. Tous droits réservés.</p>
         </div>
       </footer>
     </div>
