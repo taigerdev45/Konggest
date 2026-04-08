@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { 
   HiOutlineUsers, 
   HiOutlineClock, 
-  HiOutlineTarget, 
+  HiOutlineSearch, 
   HiOutlineChartBar,
   HiOutlineArrowRight,
   HiOutlineLocationMarker,
@@ -160,7 +160,7 @@ export default function LandingPage() {
 
           <div className={styles.featureCard}>
             <div className={styles.featureIconWrapper}>
-              <HiOutlineTarget className={styles.featureIcon} />
+              <HiOutlineSearch className={styles.featureIcon} />
             </div>
             <h3>Recrutement</h3>
             <p>Offres, candidatures et entretiens.</p>
