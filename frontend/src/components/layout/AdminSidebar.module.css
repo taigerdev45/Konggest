@@ -5,12 +5,12 @@
 .sidebar {
   position: fixed;
   top: 0;
+  bottom: 0;
   left: 0;
   width: 260px;
-  height: 100vh;
   background: rgba(20, 15, 38, 0.85);
-  backdrop-filter: blur(30px);
   -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
   display: flex;
   flex-direction: column;
   z-index: 100;

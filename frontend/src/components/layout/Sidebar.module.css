@@ -6,12 +6,12 @@
 .sidebar {
   position: fixed;
   top: 0;
+  bottom: 0;
   left: 0;
   width: var(--sidebar-width);
-  height: 100vh;
   background: var(--glass-bg-solid);
-  backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
   border-right: 1px solid var(--glass-border);
   display: flex;
   flex-direction: column;
