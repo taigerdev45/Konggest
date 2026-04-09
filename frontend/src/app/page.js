@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   HiOutlineUsers, 
@@ -20,12 +21,41 @@ export default function LandingPage() {
   const [loading, setLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  
+  // Refs for scroll animations
+  const revealRefs = useRef([]);
+  revealRefs.current = [];
+
+  const addToRefs = (el) => {
+    if (el && !revealRefs.current.includes(el)) {
+      revealRefs.current.push(el);
+    }
+  };
 
   useEffect(() => {
     fetchPublicJobs();
     const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Intersection Observer for reveal animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+        }
+      });
+    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+    revealRefs.current.forEach((ref) => {
+      observer.observe(ref);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      revealRefs.current.forEach((ref) => {
+        if(ref) observer.unobserve(ref);
+      });
+    };
   }, []);
 
   const fetchPublicJobs = async () => {
@@ -45,7 +75,9 @@ export default function LandingPage() {
       <nav className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ''}`}>
         <div className={styles.navbarContent}>
           <Link href="/" className={styles.logo}>
-            <div className={styles.logoIcon}>K</div>
+            <div className={styles.logoIcon}>
+              <img src="/logo.png" alt="Konggest Logo" />
+            </div>
             <span className={styles.logoText}>Konggest</span>
           </Link>
 
@@ -84,7 +116,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className={styles.hero}>
+      <section className={`${styles.hero} reveal-up`} ref={addToRefs}>
         <div className={styles.heroBackground}>
           <div className={styles.gradientOrb1} />
           <div className={styles.gradientOrb2} />
@@ -135,7 +167,7 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section id="features" className={styles.features}>
+      <section id="features" className={`${styles.features} reveal-up`} ref={addToRefs}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionBadge}>Fonctionnalités</span>
           <h2 className={styles.sectionTitle}>Tout ce dont vous avez besoin</h2>
@@ -177,7 +209,7 @@ export default function LandingPage() {
       </section>
 
       {/* Jobs */}
-      <section id="jobs" className={styles.jobsSection}>
+      <section id="jobs" className={`${styles.jobsSection} reveal-up`} ref={addToRefs}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionBadge}>Carrières</span>
           <h2 className={styles.sectionTitle}>Opportunités de carrière</h2>
@@ -220,7 +252,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className={styles.ctaSection}>
+      <section className={`${styles.ctaSection} reveal-up`} ref={addToRefs}>
         <div className={styles.ctaContent}>
           <h2>Prêt à transformer votre gestion ?</h2>
           <p>Rejoignez plus de 500 entreprises qui font confiance à Konggest pour leur transformation numérique.</p>
@@ -235,7 +267,9 @@ export default function LandingPage() {
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
-            <div className={styles.logoIconFooter}>K</div>
+            <div className={styles.logoIconFooter}>
+              <img src="/logo.png" alt="Konggest Logo" />
+            </div>
             <h3 className={styles.logoTextFooter}>Konggest</h3>
           </div>
           <p>&copy; {new Date().getFullYear()} Konggest. Tous droits réservés.</p>
