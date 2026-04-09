@@ -60,7 +60,7 @@ export default function LandingPage() {
 
   const fetchPublicJobs = async () => {
     try {
-      const response = await fetch('/api/recruitment/public/jobs/');
+      const response = await fetch('/api/recruitment/public/jobs');
       if (response.ok) setJobs(await response.json());
     } catch (error) {
       console.error('Error:', error);

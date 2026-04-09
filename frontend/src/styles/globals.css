@@ -281,9 +281,9 @@ textarea.input {
 }
 
 .card:hover {
-  border-color: var(--border-light);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  border-color: var(--primary-light);
+  box-shadow: var(--shadow-xl), var(--glass-glow);
+  transform: translateY(-4px);
 }
 
 .card-glass {
@@ -328,9 +328,10 @@ textarea.input {
 .stat-card.red::before { background: var(--danger); }
 
 .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-xl);
-  border-color: var(--border-light);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: var(--shadow-xl), 0 10px 40px var(--primary-glow);
+  border-color: var(--primary-light);
+  z-index: 10;
 }
 
 .stat-icon {
