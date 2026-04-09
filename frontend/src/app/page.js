@@ -1,8 +1,11 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+/**
+ * Konggest — Public Landing Page
+ * Ultra-premium design with dynamic animations, gradients, and responsive layout.
+ */
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   HiOutlineUsers, 
@@ -11,7 +14,9 @@ import {
   HiOutlineChartBar,
   HiOutlineArrowRight,
   HiOutlineLocationMarker,
-  HiOutlineBriefcase
+  HiOutlineBriefcase,
+  HiOutlineShieldCheck,
+  HiOutlineDocumentText
 } from 'react-icons/hi';
 import styles from './page.module.css';
 
@@ -26,34 +31,36 @@ export default function LandingPage() {
   const revealRefs = useRef([]);
   revealRefs.current = [];
 
-  const addToRefs = (el) => {
+  const addToRefs = useCallback((el) => {
     if (el && !revealRefs.current.includes(el)) {
       revealRefs.current.push(el);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPublicJobs();
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
 
-    // Intersection Observer for reveal animations
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    // IntersectionObserver for reveal animations
     const observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
         if (entry.isIntersecting) {
           entry.target.classList.add('is-visible');
         }
       });
-    }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
 
-    revealRefs.current.forEach((ref) => {
-      observer.observe(ref);
+    // Observe after a microtask to ensure all refs are collected
+    requestAnimationFrame(() => {
+      revealRefs.current.forEach((ref) => observer.observe(ref));
     });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       revealRefs.current.forEach((ref) => {
-        if(ref) observer.unobserve(ref);
+        if (ref) observer.unobserve(ref);
       });
     };
   }, []);
@@ -69,9 +76,32 @@ export default function LandingPage() {
     }
   };
 
+  const features = [
+    {
+      icon: HiOutlineUsers,
+      title: 'Gestion RH Complète',
+      desc: 'Centralisez employés, contrats, congés et documents dans un seul espace intelligent.',
+    },
+    {
+      icon: HiOutlineClock,
+      title: 'Pointage & Paie',
+      desc: 'Automatisez le suivi du temps de travail et le calcul de la paie en temps réel.',
+    },
+    {
+      icon: HiOutlineSearch,
+      title: 'Recrutement Intelligent',
+      desc: 'Publiez des offres, gérez les candidatures et planifiez les entretiens facilement.',
+    },
+    {
+      icon: HiOutlineChartBar,
+      title: 'Tableaux de Bord',
+      desc: 'Visualisez les KPI de votre entreprise avec des rapports interactifs précis.',
+    },
+  ];
+
   return (
     <div className={styles.container}>
-      {/* Navigation Mobile-First */}
+      {/* ═══ NAVIGATION ═══ */}
       <nav className={`${styles.navbar} ${scrolled ? styles.navbarScrolled : ''}`}>
         <div className={styles.navbarContent}>
           <Link href="/" className={styles.logo}>
@@ -94,16 +124,17 @@ export default function LandingPage() {
             )}
           </div>
 
-          <button className={styles.menuButton} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+          <button className={styles.menuButton} onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Menu">
             <span className={`${styles.menuLine} ${isMenuOpen ? styles.menuLineOpen : ''}`} />
             <span className={`${styles.menuLine} ${isMenuOpen ? styles.menuLineOpen : ''}`} />
             <span className={`${styles.menuLine} ${isMenuOpen ? styles.menuLineOpen : ''}`} />
           </button>
         </div>
 
+        {/* Mobile Nav */}
         <div className={`${styles.navMobile} ${isMenuOpen ? styles.navMobileOpen : ''}`}>
-          <Link href="#features" className={styles.navLinkMobile} onClick={() => setIsMenuOpen(false)}>Fonctionnalités</Link>
-          <Link href="#jobs" className={styles.navLinkMobile} onClick={() => setIsMenuOpen(false)}>Carrières</Link>
+          <a href="#features" className={styles.navLinkMobile} onClick={() => setIsMenuOpen(false)}>Fonctionnalités</a>
+          <a href="#jobs" className={styles.navLinkMobile} onClick={() => setIsMenuOpen(false)}>Carrières</a>
           {user ? (
             <Link href="/dashboard" className={styles.btnPrimaryMobile} onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
           ) : (
@@ -115,8 +146,8 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className={`${styles.hero} reveal-up`} ref={addToRefs}>
+      {/* ═══ HERO ═══ */}
+      <section className={styles.hero}>
         <div className={styles.heroBackground}>
           <div className={styles.gradientOrb1} />
           <div className={styles.gradientOrb2} />
@@ -125,17 +156,17 @@ export default function LandingPage() {
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
             <span>✨</span>
-            <span>Nouveau: Recrutement intelligent</span>
+            <span>Plateforme RH #1 au Gabon</span>
           </div>
           
           <h1 className={styles.heroTitle}>
             <span className={styles.titleLine}>Gérez votre</span>
-            <span className={styles.titleLineAccent}>entreprise</span>
-            <span className={styles.titleLine}>autrement</span>
+            <span className={styles.titleLineAccent}>Capital Humain</span>
+            <span className={styles.titleLine}>sans effort</span>
           </h1>
           
           <p className={styles.heroSubtitle}>
-            La plateforme tout-en-un qui révolutionne la gestion RH. 
+            La plateforme SaaS tout-en-un qui simplifie la gestion RH. 
             Du recrutement à la paie, tout en un seul clic.
           </p>
           
@@ -145,7 +176,7 @@ export default function LandingPage() {
               <span>→</span>
             </Link>
             <a href="#features" className={styles.btnGhostHero}>
-              Découvrir
+              Découvrir la plateforme
             </a>
           </div>
 
@@ -166,49 +197,31 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features */}
+      {/* ═══ FEATURES ═══ */}
       <section id="features" className={`${styles.features} reveal-up`} ref={addToRefs}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionBadge}>Fonctionnalités</span>
-          <h2 className={styles.sectionTitle}>Tout ce dont vous avez besoin</h2>
+          <h2 className={styles.sectionTitle}>Tout ce dont votre entreprise a besoin</h2>
         </div>
 
         <div className={styles.featuresGrid}>
-          <div className={styles.featureCard}>
-            <div className={styles.featureIconWrapper}>
-              <HiOutlineUsers className={styles.featureIcon} />
+          {features.map((feat, idx) => (
+            <div 
+              key={idx} 
+              className={`${styles.featureCard} reveal-up ${styles[`delay-${idx + 1}`]}`} 
+              ref={addToRefs}
+            >
+              <div className={styles.featureIconWrapper}>
+                <feat.icon className={styles.featureIcon} />
+              </div>
+              <h3>{feat.title}</h3>
+              <p>{feat.desc}</p>
             </div>
-            <h3>Gestion RH</h3>
-            <p>Employés, contrats, congés et documents.</p>
-          </div>
-
-          <div className={styles.featureCard}>
-            <div className={styles.featureIconWrapper}>
-              <HiOutlineClock className={styles.featureIcon} />
-            </div>
-            <h3>Pointage</h3>
-            <p>Temps de travail et paie automatisée.</p>
-          </div>
-
-          <div className={styles.featureCard}>
-            <div className={styles.featureIconWrapper}>
-              <HiOutlineSearch className={styles.featureIcon} />
-            </div>
-            <h3>Recrutement</h3>
-            <p>Offres, candidatures et entretiens.</p>
-          </div>
-
-          <div className={styles.featureCard}>
-            <div className={styles.featureIconWrapper}>
-              <HiOutlineChartBar className={styles.featureIcon} />
-            </div>
-            <h3>Rapports</h3>
-            <p>Analyses et tableaux de bord.</p>
-          </div>
+          ))}
         </div>
       </section>
 
-      {/* Jobs */}
+      {/* ═══ JOBS ═══ */}
       <section id="jobs" className={`${styles.jobsSection} reveal-up`} ref={addToRefs}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionBadge}>Carrières</span>
@@ -223,8 +236,12 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className={styles.jobsGrid}>
-            {jobs.slice(0, 6).map((job) => (
-              <div key={job.id} className={styles.jobCard}>
+            {jobs.slice(0, 6).map((job, idx) => (
+              <div 
+                key={job.id} 
+                className={`${styles.jobCard} reveal-up ${styles[`delay-${(idx % 4) + 1}`]}`} 
+                ref={addToRefs}
+              >
                 <div className={styles.jobHeader}>
                   <h3>{job.title}</h3>
                   <span className={styles.contractBadge}>{job.contract_type}</span>
@@ -251,11 +268,11 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* ═══ CTA ═══ */}
       <section className={`${styles.ctaSection} reveal-up`} ref={addToRefs}>
         <div className={styles.ctaContent}>
-          <h2>Prêt à transformer votre gestion ?</h2>
-          <p>Rejoignez plus de 500 entreprises qui font confiance à Konggest pour leur transformation numérique.</p>
+          <h2>Prêt à transformer votre gestion RH ?</h2>
+          <p>Rejoignez plus de 500 entreprises qui font confiance à Konggest pour leur transformation numérique au Gabon.</p>
           <Link href={user ? "/dashboard" : "/register"} className={styles.btnCta}>
             {user ? 'Mon espace' : 'Commencer gratuitement'}
             <HiOutlineArrowRight />
@@ -263,7 +280,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* ═══ FOOTER ═══ */}
       <footer className={styles.footer}>
         <div className={styles.footerContent}>
           <div className={styles.footerBrand}>
