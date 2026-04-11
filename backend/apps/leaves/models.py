@@ -33,6 +33,7 @@ class LeaveRequest(models.Model):
     ]
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests')
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name='leave_requests', null=True)
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE)
     start_date = models.DateField(verbose_name="Date de début")
     end_date = models.DateField(verbose_name="Date de fin")
@@ -51,6 +52,7 @@ class LeaveRequest(models.Model):
         indexes = [
             models.Index(fields=['employee', '-start_date']),
             models.Index(fields=['status']),
+            models.Index(fields=['organization', 'status'], name='leave_org_status_idx'),
         ]
 
     def __str__(self):

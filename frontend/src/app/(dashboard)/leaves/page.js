@@ -8,6 +8,7 @@ import {
 } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
 
 const STATUS = {
   pending:   { label: 'En attente', cls: 'badge-warning' },
@@ -57,7 +58,38 @@ export default function LeavesPage() {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { 
+    fetchData(); 
+    
+    // L4: Realtime Listener
+    const tenantId = user?.profile?.organization_id;
+    if (tenantId) {
+      const channel = supabase.channel(`public:konggest_public_leaves`)
+        .on(
+          'broadcast',
+          { event: 'leave.approved' },
+          (payload) => {
+            if (payload.payload.employee_id === me?.id || ['manager', 'hr', 'admin'].includes(user?.profile?.role)) {
+              showToast('success', 'Une demande de congé a été approuvée (Realtime)');
+              fetchData();
+            }
+          }
+        )
+        .on(
+          'broadcast',
+          { event: 'leave.rejected' },
+          (payload) => {
+            if (payload.payload.employee_id === me?.id || ['manager', 'hr', 'admin'].includes(user?.profile?.role)) {
+              showToast('error', 'Une demande de congé a été refusée (Realtime)');
+              fetchData();
+            }
+          }
+        )
+        .subscribe();
+      
+      return () => { supabase.removeChannel(channel); };
+    }
+  }, [user, me?.id]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
