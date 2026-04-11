@@ -10,21 +10,33 @@ export default function TimeTrackingPage() {
   const [me, setMe] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
+  const [toast, setToast] = useState({ show: false, type: '', text: '' });
+  const [statsData, setStatsData] = useState(null);
+
+  const showToast = (type, text) => {
+    setToast({ show: true, type, text });
+    setTimeout(() => setToast({ show: false }), 4000);
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [entriesData, meData] = await Promise.all([
-        api.get('/time-tracking/entries/'),
+      const [entriesData, meData, statsRes] = await Promise.all([
+        api.get('/time-tracking/entries/').then(res => res.results || res),
         api.get('/employees/me/').catch(() => null),
+        api.get('/time-tracking/entries/stats/').catch(() => null),
       ]);
       const entriesArr = Array.isArray(entriesData) ? entriesData : [];
       setEntries(entriesArr);
       setMe(meData);
+      setStatsData(statsRes);
     } catch (err) {
       console.error('Error fetching time tracking data:', err);
       // Show user-friendly error
       if (err.status === 401) {
-        alert('Session expirée. Veuillez vous reconnecter.');
+        showToast('error', 'Session expirée. Veuillez vous reconnecter.');
+      } else {
+        showToast('error', 'Erreur lors du chargement des données.');
       }
     } finally {
       setLoading(false);
@@ -47,59 +59,37 @@ export default function TimeTrackingPage() {
   const todayEntry = Array.isArray(entries) ? entries.find(e => e.date === getLocalDateString()) : null;
 
   const handlePointer = async () => {
-    if (!me) {
-      alert('Profil employé non trouvé. Veuillez vérifier votre profil.');
-      return;
-    }
-    if (!me.id) {
-      alert('ID employé manquant. Contactez votre administrateur.');
+    if (!me?.id) {
+      showToast('error', 'Profil employé non trouvé. Veuillez vérifier votre profil.');
       return;
     }
     setSubmitting(true);
     try {
-      const now = new Date();
-      // Format time as HH:mm in local timezone
-      const timeStr = String(now.getHours()).padStart(2, '0') + ':' + 
-                      String(now.getMinutes()).padStart(2, '0');
-      const dateStr = getLocalDateString();
-
-      if (!todayEntry) {
-        // Clock In
-        await api.post('/time-tracking/entries/', {
-          employee: me.id,
-          date: dateStr,
-          check_in: timeStr,
-        });
-        alert('Arrivée enregistrée à ' + timeStr);
-      } else if (!todayEntry.check_out) {
-        // Clock Out
-        await api.patch(`/time-tracking/entries/${todayEntry.id}/`, {
-          check_out: timeStr,
-        });
-        alert('Départ enregistré à ' + timeStr);
-      } else {
-        alert('Vous avez déjà terminé votre journée.');
-      }
+      const res = await api.post('/time-tracking/entries/toggle/');
+      showToast('success', res.message || 'Pointage enregistré avec succès');
       fetchData();
     } catch (err) {
       console.error('Pointer failed:', err);
-      const errorMsg = err.response?.data?.error || err.error || 'Erreur lors du pointage.';
-      alert(errorMsg);
+      const errorMsg = err.response?.data?.error || err.response?.data?.message || err.error || 'Erreur lors du pointage.';
+      showToast('error', errorMsg);
     } finally {
       setSubmitting(false);
     }
   };
 
   const stats = {
-    presence: '96.8%', // Mocked for now or calculate from history
-    average: (Array.isArray(entries) && entries.length > 0)
-      ? (entries.reduce((acc, e) => acc + (parseFloat(e.worked_hours) || 0), 0) / entries.length).toFixed(2) + 'h'
-      : '0h',
-    overtime: '34h', // Mocked
+    presence: statsData?.today?.presence_rate || '0%',
+    average: statsData?.month?.avg_daily_hours || '0h',
+    overtime: statsData?.month?.total_overtime_hours || '0h',
   };
 
   return (
     <div className="animate-in">
+      {toast.show && (
+        <div className={`toast toast-${toast.type} fixed top-4 right-4 z-50 p-4 rounded shadow-lg text-white ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-500'}`}>
+          {toast.text}
+        </div>
+      )}
       <div className="page-header">
         <div>
           <h1>Suivi du Temps</h1>

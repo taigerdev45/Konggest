@@ -58,3 +58,22 @@ def calculate_seniority_leave_bonus(seniority_years):
     if seniority_years >= 10: return 2
     if seniority_years >= 5: return 1
     return 0
+
+
+# ─── Time Tracking / Attendance (AT14) ───
+
+# Heure de début de travail standard (HH:MM — détection retard)
+WORK_START_HOUR = '09:00'
+
+# Durée journée standard en heures (base calcul heures supplémentaires)
+STANDARD_DAILY_HOURS = 8
+
+# Délai de tolérance retard en minutes avant génération d'alerte anomalie
+LATE_THRESHOLD_MINUTES = 15
+
+# AT15 : Rétention logs time_entries avant archivage/suppression (en jours)
+# 14 mois = conformité Code du Travail gabonais (conservation 1 an minimum)
+TIME_ENTRY_RETENTION_DAYS = 14 * 30  # ~420 jours
+
+# AT3 : Rétention des sessions QR quotidiennes avant nettoyage
+QR_SESSION_RETENTION_DAYS = 14
