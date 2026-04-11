@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { path: '/payroll', icon: HiOutlineCurrencyDollar, label: 'Paie', roles: ['admin', 'hr', 'employee'] },
   { path: '/documents', icon: HiOutlineDocumentText, label: 'Documents', roles: ['admin', 'hr', 'employee'] },
   { path: '/time-tracking', icon: HiOutlineClock, label: 'Pointage', roles: ['admin', 'hr', 'manager', 'employee'] },
+  { path: '/planning', icon: HiOutlineCalendar, label: 'Planning RH', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/recruitment', icon: HiOutlineBriefcase, label: 'Recrutement', roles: ['admin', 'hr'] },
   { path: '/performance', icon: HiOutlineChartBar, label: 'Performance', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/settings/organization', icon: HiOutlineOfficeBuilding, label: 'Organisation', roles: ['admin', 'hr'] },

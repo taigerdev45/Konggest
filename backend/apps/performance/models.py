@@ -22,6 +22,11 @@ class PerformanceReview(models.Model):
     class Meta:
         verbose_name = "Évaluation"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['employee', 'status']),
+            models.Index(fields=['reviewer']),
+            models.Index(fields=['period']),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.period}"
@@ -44,46 +49,13 @@ class Objective(models.Model):
     class Meta:
         verbose_name = "Objectif"
         ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['employee', 'status']),
+            models.Index(fields=['review']),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name}: {self.title}"
 
 
-# ─── Serializers ───
-class ObjectiveSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Objective
-        fields = ['id', 'review', 'employee', 'title', 'description', 'due_date',
-                  'progress', 'status', 'created_at']
 
-class PerformanceReviewSerializer(serializers.ModelSerializer):
-    employee_name = serializers.CharField(source='employee.full_name', read_only=True)
-    reviewer_name = serializers.SerializerMethodField()
-    objectives = ObjectiveSerializer(many=True, read_only=True)
-    class Meta:
-        model = PerformanceReview
-        fields = ['id', 'employee', 'employee_name', 'reviewer', 'reviewer_name', 'period',
-                  'overall_rating', 'strengths', 'improvements', 'comments', 'status',
-                  'review_date', 'objectives', 'created_at']
-    def get_reviewer_name(self, obj):
-        return obj.reviewer.full_name if obj.reviewer else None
-
-
-# ─── Views ───
-class PerformanceReviewViewSet(viewsets.ModelViewSet):
-    serializer_class = PerformanceReviewSerializer
-    permission_classes = [IsManager]
-    filterset_fields = ['employee', 'status']
-    def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
-        qs = PerformanceReview.objects.select_related('employee', 'reviewer').prefetch_related('objectives')
-        return qs.filter(employee__organization_id=tenant_id) if tenant_id else qs
-
-class ObjectiveViewSet(viewsets.ModelViewSet):
-    serializer_class = ObjectiveSerializer
-    permission_classes = [IsManager]
-    filterset_fields = ['employee', 'status']
-    def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
-        qs = Objective.objects.select_related('employee')
-        return qs.filter(employee__organization_id=tenant_id) if tenant_id else qs

@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'apps.performance',
     'apps.notifications',
     'apps.expenses',
+    'apps.planning',
 ]
 
 # ─── Middleware (Security-first order) ───

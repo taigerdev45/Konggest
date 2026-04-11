@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye, HiOutlineTrendingUp, HiOutlineCheck } from 'react-icons/hi';
+import { useState, useEffect, useCallback } from 'react';
+import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye, HiOutlineTrendingUp, HiOutlineCheck, HiOutlineBell } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 
 const TH = { padding: '13px 18px', textAlign: 'left', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', whiteSpace: 'nowrap', background: 'var(--bg-secondary)', borderBottom: '2px solid var(--border-color)' };
 const TD = { padding: '13px 18px', verticalAlign: 'middle', borderBottom: '1px solid var(--border-color)' };
@@ -24,21 +25,27 @@ export default function PayrollPage() {
   const [selectedPayslip, setSelectedPayslip] = useState(null);
   const [genData, setGenData] = useState({ period: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
 
-  const fetchData = async () => {
+  const showToast = (text, type = 'info') => {
+    setToast({ show: true, text, type });
+    setTimeout(() => setToast({ show: false, text: '' }), 5000);
+  };
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [payslipData, periodData] = await Promise.all([
         api.get('/payroll/payslips/'),
         api.get('/payroll/periods/'),
       ]);
-      const payslipsArr = Array.isArray(payslipData) ? payslipData : [];
-      const periodsArr = Array.isArray(periodData) ? periodData : [];
-      
+      // Support responses paginated (results[]) or plain array
+      const payslipsArr = Array.isArray(payslipData) ? payslipData : (payslipData?.results || []);
+      const periodsArr = Array.isArray(periodData) ? periodData : (periodData?.results || []);
+
       setPayslips(payslipsArr);
       setPeriods(periodsArr);
-      
-      // Calculate summary stats
+
       if (payslipsArr.length > 0) {
         const totalGross = payslipsArr.reduce((acc, p) => acc + parseFloat(p.gross_salary || 0), 0);
         const totalDeductions = payslipsArr.reduce((acc, p) => acc + parseFloat(p.total_deductions || 0), 0);
@@ -51,23 +58,27 @@ export default function PayrollPage() {
       }
     } catch (err) {
       console.error('Error fetching payroll data:', err);
+      showToast('Erreur lors du chargement des données.', 'error');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
-    if (!genData.period) return alert('Veuillez sélectionner une période.');
+    if (!genData.period) return showToast('Veuillez sélectionner une période.', 'error');
     setSubmitting(true);
     try {
-      const res = await api.post('/payroll/payslips/generate/', genData);
-      alert(res.status || 'Génération terminée.');
+      // API délègue maintenant à Celery → réponse 202 immédiate
+      await api.post('/payroll/payslips/generate_for_period/', { period_id: parseInt(genData.period) });
+      showToast('Génération lancée en arrière-plan. Les fiches apparaîtront dans quelques instants.', 'success');
       setShowGenModal(false);
-      fetchData();
+      // Rafraîchissement différé (Celery prend quelques secondes)
+      setTimeout(() => fetchData(), 4000);
     } catch (err) {
       console.error('Generation failed:', err);
-      alert(err.error || 'Erreur lors de la génération.');
+      const msg = err?.response?.data?.error || err?.error || 'Erreur lors de la génération.';
+      showToast(msg, 'error');
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +86,20 @@ export default function PayrollPage() {
 
   useEffect(() => {
     fetchData();
-  }, []);
+
+    // Supabase Realtime — Écoute les changements de statut des fiches de paie
+    const tenant_id = localStorage.getItem('tenant_id') || '*';
+    const channel = supabase.channel(`payroll:${tenant_id}`)
+      .on('broadcast', { event: 'payslip.status_changed' }, (payload) => {
+        const { employee_name, status, period } = payload.payload;
+        const statusLabel = status === 'paid' ? 'payée ✓' : 'validée';
+        showToast(`Fiche ${period} de ${employee_name} ${statusLabel}`, 'success');
+        fetchData();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData]);
 
   const formatCurrency = (val) => {
     return new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(val) + ' FCFA';
@@ -85,6 +109,20 @@ export default function PayrollPage() {
 
   return (
     <div>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div style={{
+          position: 'fixed', top: 76, right: 20, zIndex: 9999,
+          background: toast.type === 'error' ? '#dc2626' : '#059669',
+          color: 'white', padding: '12px 20px', borderRadius: 10,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)', display: 'flex',
+          alignItems: 'center', gap: 10, maxWidth: 400, fontSize: '0.9rem',
+          animation: 'slideIn 0.3s ease'
+        }}>
+          <HiOutlineBell size={18} />
+          <span>{toast.text}</span>
+        </div>
+      )}
       <div className="page-header">
         <div>
           <h1>Gestion de la Paie</h1>

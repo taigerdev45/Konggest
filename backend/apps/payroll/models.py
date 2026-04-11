@@ -15,6 +15,10 @@ class PayrollPeriod(models.Model):
     class Meta:
         verbose_name = "Période de Paie"
         ordering = ['-start_date']
+        indexes = [
+            models.Index(fields=['organization', 'start_date']),
+            models.Index(fields=['is_closed']),
+        ]
 
     def __str__(self):
         return self.name
@@ -37,6 +41,10 @@ class Payslip(models.Model):
         verbose_name = "Fiche de Paie"
         unique_together = ['employee', 'period']
         ordering = ['-period__start_date']
+        indexes = [
+            models.Index(fields=['employee', 'status']),
+            models.Index(fields=['period', 'status']),
+        ]
 
     def __str__(self):
         return f"{self.employee.full_name} - {self.period.name}"
