@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'apps.recruitment',
     'apps.performance',
     'apps.notifications',
+    'apps.expenses',
 ]
 
 # ─── Middleware (Security-first order) ───

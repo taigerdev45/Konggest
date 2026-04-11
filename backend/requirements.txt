@@ -25,6 +25,9 @@ bleach==6.1.0
 # ─── Supabase ───
 supabase==2.3.4
 
+# ─── Background Tasks ───
+celery==5.3.6
+
 # ─── Utilities ───
 python-decouple==3.8
 Pillow==10.2.0
