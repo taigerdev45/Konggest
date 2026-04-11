@@ -2,25 +2,32 @@
 
 /**
  * Konggest — Dashboard Page
- * KPI stats, charts, and quick overview.
+ * KPIs RH temps réel depuis /api/analytics/kpis/
+ *
+ * CORRECTIONS APPLIQUÉES (2026-04-11) :
+ * - [P0] Suppression de TOUTES les valeurs hardcodées/mock :
+ *     mass_salary: '452M FCFA'     → Payslip.aggregate(Sum(net_salary)) réel
+ *     open_positions: 8             → JobPosting.filter(status='published').count() réel
+ *     taux de présence: 96.8%      → TimeEntry / jours_théoriques réel
+ *     congés restants: 18.5j       → quota légal gabonais - jours pris réel
+ *     candidatures: 23             → Application.exclude(hired/rejected).count() réel
+ *     RECENT_ACTIVITY_MOCK         → AuditLog réel (8 dernières entrées)
+ * - [P1] Endpoint unique /api/analytics/kpis/ remplace 6 appels disparates
+ * - [P2] Supabase Realtime : écoute kpi:{tenant_id} pour mise à jour auto
+ * - [P3] Toast natif sur changements critiques
  */
-import { useState, useEffect } from 'react';
+
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   HiOutlineUsers, HiOutlineCalendar,
   HiOutlineCurrencyDollar, HiOutlineBriefcase,
   HiOutlineClipboardCheck, HiOutlineTrendingUp,
+  HiOutlineBell, HiOutlineDocumentReport,
 } from 'react-icons/hi';
 import api from '@/lib/api';
+import { supabase } from '@/lib/supabaseClient';
 import styles from './dashboard.module.css';
-
-const RECENT_ACTIVITY_MOCK = [
-  { action: 'Nouvel employé ajouté', detail: 'Thomas Moreau — Dev Frontend', time: 'Il y a 2h' },
-  { action: 'Congé approuvé', detail: 'Pierre Durand — 1 jour maladie', time: 'Il y a 3h' },
-  { action: 'Fiche de paie générée', detail: 'Mars 2026 — 147 employés', time: 'Il y a 5h' },
-  { action: 'Entretien planifié', detail: 'Claire Dubois — Développeur', time: 'Il y a 1j' },
-  { action: 'Document uploadé', detail: 'Contrat CDI — Thomas Moreau', time: 'Il y a 1j' },
-];
 
 const STATUS_MAP = {
   pending: { label: 'En attente', class: 'badge-warning' },
@@ -28,54 +35,118 @@ const STATUS_MAP = {
   rejected: { label: 'Refusé', class: 'badge-danger' },
 };
 
+const formatCurrency = (val) =>
+  val > 0
+    ? new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(Math.round(val)) + ' FCFA'
+    : '—';
+
+const formatRate = (val) =>
+  typeof val === 'number' ? `${val.toFixed(1)}%` : '—';
+
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [stats, setStats] = useState({
-    total: 0,
-    active: 0,
-    on_leave: 0,
-    turnover_rate: 0,
-    expat_ratio: 0,
-    mass_salary: '0 FCFA',
-    open_positions: 0,
-  });
+  const [kpis, setKpis] = useState(null);
   const [recentLeaves, setRecentLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [statsData, leavesData] = await Promise.all([
-          api.get('/employees/stats/'),
-          api.get('/leaves/requests/'),
-        ]);
-        
-        setStats({
-          ...statsData,
-          mass_salary: '452M FCFA', // Mock for now, requires total sum in API
-          open_positions: 8,
-        });
-        setRecentLeaves(Array.isArray(leavesData) ? leavesData.slice(0, 5) : []);
-      } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchDashboardData();
+  const showToast = (text, type = 'info') => {
+    setToast({ show: true, text, type });
+    setTimeout(() => setToast({ show: false, text: '' }), 5000);
+  };
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      // 1 seul appel backend agrégé (remplace 6+ appels disparates)
+      const [kpiData, leavesData] = await Promise.all([
+        api.get('/analytics/kpis/'),
+        api.get('/leaves/requests/'),
+      ]);
+      setKpis(kpiData);
+      setRecentLeaves(
+        Array.isArray(leavesData)
+          ? leavesData.slice(0, 5)
+          : (leavesData?.results || []).slice(0, 5)
+      );
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      showToast('Erreur lors du chargement des KPIs.', 'error');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
+  useEffect(() => {
+    fetchData();
+
+    // Supabase Realtime — écoute les mutations critiques (paie, employés, congés)
+    const tenant_id = localStorage.getItem('tenant_id') || '';
+    if (!tenant_id) return;
+
+    const channel = supabase.channel(`kpi:${tenant_id}`)
+      .on('broadcast', { event: 'kpi.refresh' }, (payload) => {
+        const { reason } = payload.payload || {};
+        showToast(reason || 'KPIs mis à jour', 'info');
+        fetchData();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchData]);
+
+  const e = kpis?.employees || {};
+  const p = kpis?.payroll || {};
+  const a = kpis?.attendance || {};
+  const r = kpis?.recruitment || {};
+
   const STATS_CARDS = [
-    { label: 'Employés actifs', value: stats.active.toString(), change: 'Cible : 100%', icon: HiOutlineUsers, color: 'purple' },
-    { label: 'En congé / Absence', value: stats.on_leave.toString(), change: 'Aujourd\'hui', icon: HiOutlineCalendar, color: 'cyan' },
-    { label: 'Turnover Global', value: `${stats.turnover_rate}%`, change: 'Annuel est.', icon: HiOutlineTrendingUp, color: 'orange' },
-    { label: 'Ratio Expatriés', value: `${stats.expat_ratio}%`, change: 'Gabonisation', icon: HiOutlineBriefcase, color: 'green' },
+    {
+      label: 'Employés actifs',
+      value: loading ? '…' : (e.active ?? '—').toString(),
+      change: `Total : ${e.total ?? '—'}`,
+      icon: HiOutlineUsers, color: 'purple',
+    },
+    {
+      label: 'En congé / Absence',
+      value: loading ? '…' : (e.on_leave ?? '—').toString(),
+      change: 'Aujourd\'hui',
+      icon: HiOutlineCalendar, color: 'cyan',
+    },
+    {
+      label: 'Turnover Global',
+      value: loading ? '…' : formatRate(e.turnover_rate),
+      change: 'Annuel estimé',
+      icon: HiOutlineTrendingUp, color: 'orange',
+    },
+    {
+      label: 'Ratio Expatriés',
+      value: loading ? '…' : formatRate(e.expat_ratio),
+      change: 'Gabonisation',
+      icon: HiOutlineBriefcase, color: 'green',
+    },
   ];
 
   const greeting = getGreeting();
+  const recentActivity = kpis?.recent_activity || [];
 
   return (
     <div className={styles.dashboard}>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div style={{
+          position: 'fixed', top: 76, right: 20, zIndex: 9999,
+          background: toast.type === 'error' ? '#dc2626' : '#0284c7',
+          color: 'white', padding: '12px 20px', borderRadius: 10,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+          display: 'flex', alignItems: 'center', gap: 10,
+          maxWidth: 380, fontSize: '0.88rem',
+        }}>
+          <HiOutlineBell size={18} />
+          <span>{toast.text}</span>
+        </div>
+      )}
+
       {/* Welcome */}
       <div className={styles.welcome}>
         <div>
@@ -151,48 +222,76 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Activité Récente — RÉELLE depuis AuditLog (plus de mock) */}
         <div className="card animate-in delay-4">
           <div className="flex items-center justify-between mb-md">
             <h3>Activité récente</h3>
             <HiOutlineClipboardCheck style={{ color: 'var(--text-muted)' }} />
           </div>
           <div className={styles.activityList}>
-            {RECENT_ACTIVITY_MOCK.map((act, i) => (
-              <div key={i} className={`${styles.activityItem} animate-in`} style={{ animationDelay: `${0.1 * i}s` }}>
-                <div className={styles.activityDot} />
-                <div className={styles.activityContent}>
-                  <span className={styles.activityAction}>{act.action}</span>
-                  <span className={styles.activityDetail}>{act.detail}</span>
+            {loading ? (
+              [...Array(4)].map((_, i) => (
+                <div key={i} className={styles.activityItem} style={{ opacity: 0.4 }}>
+                  <div className={styles.activityDot} />
+                  <div className={styles.activityContent}>
+                    <span className={styles.activityAction}>Chargement…</span>
+                  </div>
                 </div>
-                <span className={styles.activityTime}>{act.time}</span>
-              </div>
-            ))}
+              ))
+            ) : recentActivity.length > 0 ? (
+              recentActivity.map((act, i) => (
+                <div key={i} className={`${styles.activityItem} animate-in`} style={{ animationDelay: `${0.1 * i}s` }}>
+                  <div className={styles.activityDot} />
+                  <div className={styles.activityContent}>
+                    <span className={styles.activityAction}>{act.action}</span>
+                    <span className={styles.activityDetail}>{act.detail}</span>
+                  </div>
+                  <span className={styles.activityTime}>{act.time}</span>
+                </div>
+              ))
+            ) : (
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Aucune activité récente</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Quick Stats Bar */}
+      {/* Quick Stats Bar — DONNÉES RÉELLES (plus de valeurs hardcodées) */}
       <div className={styles.quickStats}>
         <div className={`card-glass ${styles.quickStat}`}>
           <HiOutlineTrendingUp className={styles.quickIcon} style={{ color: 'var(--success)' }} />
           <div>
-            <span className={styles.quickValue}>96.8%</span>
+            <span className={styles.quickValue}>
+              {loading ? '…' : formatRate(a.rate)}
+            </span>
             <span className={styles.quickLabel}>Taux de présence</span>
           </div>
         </div>
         <div className={`card-glass ${styles.quickStat}`}>
           <HiOutlineCalendar className={styles.quickIcon} style={{ color: 'var(--primary-light)' }} />
           <div>
-            <span className={styles.quickValue}>18.5j</span>
+            <span className={styles.quickValue}>
+              {loading ? '…' : `${a.avg_leave_remaining ?? '—'}j`}
+            </span>
             <span className={styles.quickLabel}>Congés moy. restants</span>
           </div>
         </div>
         <div className={`card-glass ${styles.quickStat}`}>
           <HiOutlineUsers className={styles.quickIcon} style={{ color: 'var(--accent-light)' }} />
           <div>
-            <span className={styles.quickValue}>23</span>
+            <span className={styles.quickValue}>
+              {loading ? '…' : (r.active_applications ?? '—')}
+            </span>
             <span className={styles.quickLabel}>Candidatures actives</span>
+          </div>
+        </div>
+        <div className={`card-glass ${styles.quickStat}`}>
+          <HiOutlineCurrencyDollar className={styles.quickIcon} style={{ color: 'var(--warning)' }} />
+          <div>
+            <span className={styles.quickValue}>
+              {loading ? '…' : (p.mass_salary > 0 ? formatCurrency(p.mass_salary) : '—')}
+            </span>
+            <span className={styles.quickLabel}>Masse salariale nette</span>
           </div>
         </div>
       </div>

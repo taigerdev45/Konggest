@@ -48,7 +48,9 @@ INSTALLED_APPS = [
     'apps.notifications',
     'apps.expenses',
     'apps.planning',
+    'apps.analytics',
 ]
+
 
 # ─── Middleware (Security-first order) ───
 MIDDLEWARE = [
