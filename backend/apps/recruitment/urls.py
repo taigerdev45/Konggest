@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .models import (
+from .views import (
     JobPostingViewSet, ApplicationViewSet, InterviewViewSet,
     public_job_list, public_job_detail, public_apply
 )
