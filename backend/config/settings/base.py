@@ -251,3 +251,27 @@ SUPABASE_JWT_SECRET = config('SUPABASE_JWT_SECRET', default=SUPABASE_ANON_KEY)
 
 # ─── Encryption ───
 ENCRYPTION_KEY = config('ENCRYPTION_KEY', default='0' * 32)
+
+# ─── Celery (Background Tasks) ───
+CELERY_BROKER_URL = config('REDIS_URL', default='redis://localhost:6379/1')
+CELERY_RESULT_BACKEND = config('REDIS_URL', default='redis://localhost:6379/1')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+
+# ─── Email (SMTP) ───
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Konggest <noreply@konggest.com>')
+
+# ─── PWA / Web Push (VAPID) ───
+VAPID_PUBLIC_KEY = config('VAPID_PUBLIC_KEY', default='')
+VAPID_PRIVATE_KEY = config('VAPID_PRIVATE_KEY', default='')
+VAPID_ADMIN_EMAIL = config('VAPID_ADMIN_EMAIL', default='admin@konggest.com')
