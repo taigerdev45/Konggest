@@ -229,3 +229,13 @@ class PlatformStaffViewSet(viewsets.ModelViewSet):
             }, status=201)
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+
+
+class PublicPartnerView(APIView):
+    """Public list of organizations marked as trusted partners."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        partners = Organization.objects.filter(is_trusted_partner=True, is_active=True)
+        serializer = OrganizationSerializer(partners, many=True)
+        return Response(serializer.data)

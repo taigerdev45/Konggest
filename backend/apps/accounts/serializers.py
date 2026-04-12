@@ -14,7 +14,7 @@ class OrganizationSerializer(serializers.ModelSerializer):
             'id', 'name', 'slug', 'sector', 'logo', 'plan', 
             'subscription_status', 'max_employees', 'employees_count',
             'activated_modules', 'address', 'phone', 'email', 
-            'website', 'is_active', 'created_at'
+            'website', 'is_active', 'is_trusted_partner', 'created_at'
         ]
         read_only_fields = ['id', 'slug', 'created_at', 'employees_count']
 

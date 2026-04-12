@@ -22,5 +22,6 @@ urlpatterns = [
     path('refresh/', TokenRefreshView.as_view(), name='auth-refresh'),
     path('profile/', ProfileView.as_view(), name='auth-profile'),
     path('staff-stats/', StaffDashboardView.as_view(), name='staff-stats'),
+    path('public-partners/', PublicPartnerView.as_view(), name='public-partners'),
     path('', include(router.urls)),
 ]

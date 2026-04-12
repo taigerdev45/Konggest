@@ -22,6 +22,7 @@ import styles from './page.module.css';
 export default function LandingPage() {
   const { user } = useAuth();
   const [jobs, setJobs] = useState([]);
+  const [partners, setPartners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
   
@@ -36,6 +37,7 @@ export default function LandingPage() {
 
   useEffect(() => {
     fetchPublicJobs();
+    fetchPublicPartners();
 
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -70,6 +72,15 @@ export default function LandingPage() {
       console.error('Error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchPublicPartners = async () => {
+    try {
+      const response = await fetch('/api/accounts/public-partners/');
+      if (response.ok) setPartners(await response.json());
+    } catch (error) {
+      console.error('Partners Error:', error);
     }
   };
 
@@ -153,11 +164,21 @@ export default function LandingPage() {
       <section className={styles.trustSection}>
         <p className={styles.trustTitle}>Ils nous font confiance pour leur gestion quotidienne</p>
         <div className={styles.trustLogos}>
-          <span>COMILOG</span>
-          <span>SETRAG</span>
-          <span>BGFIBank</span>
-          <span>TotalEnergies</span>
-          <span>Eramet</span>
+          {partners.length > 0 ? (
+            partners.map((partner, idx) => (
+              <span key={idx} className={styles.partnerName}>
+                {partner.name?.toUpperCase()}
+              </span>
+            ))
+          ) : (
+            <>
+              <span>COMILOG</span>
+              <span>SETRAG</span>
+              <span>BGFIBank</span>
+              <span>TotalEnergies</span>
+              <span>ERAMET</span>
+            </>
+          )}
         </div>
       </section>
 

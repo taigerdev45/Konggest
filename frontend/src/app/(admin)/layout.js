@@ -35,9 +35,6 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className={styles.layout}>
-      {/* SaaS Admin Specific Background */}
-      <div className="bg-mesh" style={{ opacity: 0.5, filter: 'hue-rotate(240deg) brightness(0.6)' }} />
-      
       <AdminSidebar />
       <main className={styles.main}>
         <div className="animate-in">

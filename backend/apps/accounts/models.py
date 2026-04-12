@@ -42,6 +42,7 @@ class Organization(models.Model):
     website = models.URLField(blank=True)
     
     is_active = models.BooleanField(default=True)
+    is_trusted_partner = models.BooleanField(default=False, verbose_name="Partenaire de confiance")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

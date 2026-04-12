@@ -75,11 +75,11 @@ export default function AdminSidebar() {
       )}
 
       <aside className={`${styles.sidebar} ${isMobile ? styles.mobile : ''} ${mobileOpen ? styles.mobileOpen : ''}`}>
-        {/* Header */}
+        {/* Header / Brand */}
         <div className={styles.header}>
           <div className={styles.logoArea}>
             <div className={styles.logoIcon}>
-              <img src="/logo.png" alt="Logo" />
+              <img src="/logo.png" alt="Konggest Logo" />
             </div>
             <div className={styles.logoText}>
               <span className={styles.brand}>Konggest</span>
@@ -93,7 +93,7 @@ export default function AdminSidebar() {
           )}
         </div>
 
-        {/* Navigation */}
+        {/* Navigation Section */}
         <nav className={styles.nav}>
           <span className={styles.sectionLabel}>SYSTEM CONTROL</span>
           {ADMIN_NAV.map((item) => {
@@ -119,7 +119,7 @@ export default function AdminSidebar() {
           </Link>
         </nav>
 
-        {/* User */}
+        {/* Staff User Section */}
         <div className={styles.userSection}>
           <div className={styles.avatar}>{initials}</div>
           <div className={styles.userInfo}>

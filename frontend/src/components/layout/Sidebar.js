@@ -97,10 +97,10 @@ export default function Sidebar() {
       )}
 
       <aside className={`${styles.sidebar} ${collapsed && !isMobile ? styles.collapsed : ''} ${isMobile ? styles.mobile : ''} ${mobileOpen ? styles.mobileOpen : ''}`}>
-        {/* Logo */}
+        {/* Logo Section */}
         <div className={styles.logo}>
           <div className={styles.logoIcon}>
-            <img src="/logo.png" alt="Logo" />
+            <img src="/logo.png" alt="Konggest Logo" />
           </div>
           {(!collapsed || isMobile) && <span className={styles.logoText}>Konggest</span>}
 
@@ -115,7 +115,7 @@ export default function Sidebar() {
           )}
         </div>
 
-        {/* Navigation */}
+        {/* Navigation Section */}
         <nav className={styles.nav}>
           <div className={styles.navSection}>
             {(!collapsed || isMobile) && <span className={styles.sectionLabel}>MENU PRINCIPAL</span>}
@@ -137,7 +137,7 @@ export default function Sidebar() {
           </div>
 
           <div className={styles.navSection}>
-            {(!collapsed || isMobile) && <span className={styles.sectionLabel}>SYSTÈME</span>}
+            {(!collapsed || isMobile) && <span className={styles.sectionLabel}>SYSTÈME ET PARAMÈTRES</span>}
             {filteredBottomItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.path);
@@ -156,7 +156,7 @@ export default function Sidebar() {
           </div>
         </nav>
 
-        {/* User Profile */}
+        {/* User Section (Refined for Dark Theme) */}
         <div className={styles.userSection}>
           <div className={styles.userAvatar}>{initials}</div>
           {(!collapsed || isMobile) && (

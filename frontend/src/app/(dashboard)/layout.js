@@ -37,9 +37,6 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className={styles.layout}>
-      {/* Dynamic Background */}
-      <div className="bg-mesh" />
-      
       <Sidebar />
       <Header />
       
