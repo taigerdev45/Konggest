@@ -15,15 +15,37 @@ export default function ShiftCard({ shift }) {
 
   const style = {
     transform: CSS.Translate.toString(transform),
-    opacity: isDragging ? 0.3 : 1,
+    opacity: isDragging ? 0.4 : 1,
     zIndex: isDragging ? 1000 : 1,
   };
 
   // Determine color based on time
   const startHour = parseInt(shift.start_time.split(':')[0]);
-  let colorClass = 'bg-blue-100 text-blue-800 border-blue-200'; // Day
-  if (startHour >= 18 || startHour < 6) colorClass = 'bg-indigo-900/10 text-indigo-900 border-indigo-200'; // Night/Evening
-  if (startHour >= 6 && startHour < 10) colorClass = 'bg-emerald-100 text-emerald-800 border-emerald-200'; // Morning
+  let theme = {
+    bg: 'bg-blue-50/50',
+    border: 'border-blue-100',
+    text: 'text-blue-700',
+    dot: 'bg-blue-500',
+    label: 'Journée'
+  };
+
+  if (startHour >= 18 || startHour < 6) {
+    theme = {
+      bg: 'bg-indigo-50/50',
+      border: 'border-indigo-100',
+      text: 'text-indigo-700',
+      dot: 'bg-indigo-500',
+      label: 'Nuit'
+    };
+  } else if (startHour >= 6 && startHour < 10) {
+    theme = {
+      bg: 'bg-emerald-50/50',
+      border: 'border-emerald-100',
+      text: 'text-emerald-700',
+      dot: 'bg-emerald-500',
+      label: 'Matin'
+    };
+  }
 
   return (
     <div
@@ -31,16 +53,25 @@ export default function ShiftCard({ shift }) {
       style={style}
       {...listeners}
       {...attributes}
-      className={`p-2 rounded-lg text-[10px] font-bold border shadow-sm cursor-grab active:cursor-grabbing transition-all hover:shadow-md ${colorClass} ${isDragging ? 'scale-105 rotate-2 shadow-xl ring-2 ring-blue-400' : ''}`}
+      className={`relative p-2.5 rounded-2xl border-2 transition-all duration-300 cursor-grab active:cursor-grabbing hover:shadow-lg ${theme.bg} ${theme.border} ${theme.text} ${
+        isDragging ? 'shadow-2xl ring-4 ring-blue-500/10 scale-105 rotate-1' : 'shadow-sm'
+      }`}
     >
-      <div className="flex items-center gap-1">
-        <HiOutlineClock size={10} className="shrink-0" />
-        <span>{shift.start_time.substring(0, 5)} - {shift.end_time.substring(0, 5)}</span>
+      <div className="flex items-center justify-between mb-1.5 px-0.5">
+        <div className={`w-1.5 h-1.5 rounded-full ${theme.dot}`}></div>
+        <span className="text-[8px] font-black uppercase tracking-widest opacity-60">{theme.label}</span>
       </div>
+      
+      <div className="flex items-center gap-1.5">
+        <HiOutlineClock size={12} className="opacity-70" />
+        <span className="text-[10px] font-black tracking-tight tracking-[-0.02em]">
+            {shift.start_time.substring(0, 5)} — {shift.end_time.substring(0, 5)}
+        </span>
+      </div>
+
       {shift.status === 'draft' && (
-        <div className="mt-1 flex items-center gap-1 opacity-70 italic text-[9px]">
-            <span className="w-1 h-1 rounded-full bg-current"></span>
-            Brouillon
+        <div className="mt-2 flex items-center justify-center py-1 bg-white/40 rounded-lg">
+            <span className="text-[7px] font-black uppercase tracking-[0.2em] opacity-60">Brouillon</span>
         </div>
       )}
     </div>

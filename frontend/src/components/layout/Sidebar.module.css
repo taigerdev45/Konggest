@@ -19,20 +19,21 @@
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 }
 
-/* Background Logo Branding - Subtle */
-.sidebar::before {
+/* Watermark Branding - Bottom Subtle */
+.sidebar::after {
   content: '';
   position: absolute;
-  top: 10%;
-  right: -50px;
-  width: 300px;
-  height: 300px;
+  bottom: 80px;
+  right: -60px;
+  width: 250px;
+  height: 250px;
   background: url('/logo.png') no-repeat center;
   background-size: contain;
-  opacity: 0.02; /* Extremely subtle to ensure readability */
-  filter: grayscale(1) brightness(2);
+  opacity: 0.01; /* Minimalist watermark */
+  filter: grayscale(1);
   pointer-events: none;
   z-index: -1;
+  transform: rotate(-15deg);
 }
 
 .sidebar.collapsed {
@@ -237,7 +238,8 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   z-index: 99;
 }
 

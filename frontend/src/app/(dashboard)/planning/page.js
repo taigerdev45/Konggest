@@ -184,178 +184,210 @@ export default function PlanningPage() {
   );
 
   return (
-    <div className="max-w-full p-8 animate-in bg-white min-h-full">
+    <div className="min-h-full flex flex-col bg-[#FDFDFF]">
       {toast.show && (
-        <div className={`fixed bottom-8 right-8 z-50 p-4 rounded-2xl shadow-2xl flex items-center gap-3 text-white animate-in slide-in-from-right-10 ${toast.type === 'error' ? 'bg-red-500' : 'bg-gray-900 border border-white/10'}`}>
+        <div className={`fixed bottom-8 right-8 z-[100] px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-3 text-white animate-in slide-in-from-right-10 backdrop-blur-md ${toast.type === 'error' ? 'bg-red-500/95' : 'bg-gray-900/95 border border-white/10 ring-1 ring-white/20'}`}>
           <HiOutlineCalendar className="text-xl text-blue-400" />
-          <span className="font-bold text-sm tracking-tight">{toast.text}</span>
+          <span className="font-black text-xs uppercase tracking-widest">{toast.text}</span>
         </div>
       )}
 
-      <div className="flex justify-between items-end mb-10">
-        <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Planning</h1>
-          <p className="text-gray-500 font-medium mt-1">Gérez les rotations d'équipes et les shifts par glisser-déposer.</p>
+      {/* Page Header */}
+      <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 md:pb-10 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6">
+        <div className="animate-in slide-in-from-left-4 duration-700">
+          <div className="flex items-center gap-3 mb-2">
+             <div className="w-8 h-1 bg-blue-600 rounded-full"></div>
+             <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Rotations & Shifts</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-3">
+            Planning RH
+          </h1>
+          <p className="text-gray-400 font-medium text-sm md:text-base max-w-lg">
+            Orchestrez vos équipes avec une vue panoramique et agile.
+          </p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={handleExport} className="btn bg-gray-50 text-gray-700 font-bold border border-gray-200 px-6 py-3 rounded-2xl flex items-center gap-2 hover:bg-gray-100 transition shadow-sm">
+        <div className="flex gap-3 animate-in slide-in-from-right-4 duration-700">
+          <button 
+            onClick={handleExport} 
+            className="flex-1 md:flex-none btn bg-white text-gray-900 border border-gray-100 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition shadow-sm flex items-center gap-2"
+          >
             <HiOutlinePrinter size={18} /> Export PDF
           </button>
-          <button onClick={() => setShowModal(true)} className="btn bg-blue-600 text-white font-bold px-6 py-3 rounded-2xl shadow-lg shadow-blue-200 hover:bg-blue-700 flex items-center gap-2 transition">
-            <HiOutlinePlus size={18} /> Assigner Shift
+          <button 
+            onClick={() => setShowModal(true)} 
+            className="flex-1 md:flex-none btn bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-500/20 ring-1 ring-blue-400/50 flex items-center gap-2"
+          >
+            <HiOutlinePlus size={18} /> Assigner
           </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/50 overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b bg-gray-50/50 backdrop-blur-sm">
-          <button 
-            onClick={() => {
-              const prev = new Date(currentWeekStart);
-              prev.setDate(prev.getDate() - 7);
-              setCurrentWeekStart(prev);
-            }}
-            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-900"
-          >
-            ←
-          </button>
-          <div className="text-center">
-            <span className="block text-[10px] uppercase font-black text-blue-500 tracking-widest mb-1">Période Actuelle</span>
-            <span className="text-lg font-black text-gray-900 leading-none">
-                {currentWeekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} — {(() => {
-                    const end = new Date(currentWeekStart);
-                    end.setDate(end.getDate() + 6);
-                    return end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-                })()}
-            </span>
+      <div className="px-6 md:px-12 pb-12 flex-1 flex flex-col">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-gray-200/40 overflow-hidden flex flex-col flex-1">
+          {/* Week Selector */}
+          <div className="flex flex-col sm:flex-row items-center justify-between p-6 md:p-8 border-b bg-gray-50/30 gap-4">
+            <button 
+                onClick={() => {
+                const prev = new Date(currentWeekStart);
+                prev.setDate(prev.getDate() - 7);
+                setCurrentWeekStart(prev);
+                }}
+                className="w-12 h-12 flex items-center justify-center bg-white border border-gray-100 rounded-2xl hover:bg-gray-50 transition text-gray-400 hover:text-blue-600 shadow-sm"
+            >
+                <span className="text-xl font-bold">←</span>
+            </button>
+            <div className="text-center group">
+                <span className="block text-[10px] uppercase font-black text-blue-500 tracking-[0.4em] mb-2 transition-transform group-hover:scale-110">Période Active</span>
+                <span className="text-xl md:text-2xl font-black text-gray-900 tracking-tight leading-none bg-gradient-to-r from-gray-900 to-gray-500 bg-clip-text text-transparent">
+                    {currentWeekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} — {(() => {
+                        const end = new Date(currentWeekStart);
+                        end.setDate(end.getDate() + 6);
+                        return end.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+                    })()}
+                </span>
+            </div>
+            <button 
+                onClick={() => {
+                const next = new Date(currentWeekStart);
+                next.setDate(next.getDate() + 7);
+                setCurrentWeekStart(next);
+                }}
+                className="w-12 h-12 flex items-center justify-center bg-white border border-gray-100 rounded-2xl hover:bg-gray-50 transition text-gray-400 hover:text-blue-600 shadow-sm"
+            >
+                <span className="text-xl font-bold">→</span>
+            </button>
           </div>
-          <button 
-            onClick={() => {
-              const next = new Date(currentWeekStart);
-              next.setDate(next.getDate() + 7);
-              setCurrentWeekStart(next);
-            }}
-            className="w-10 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-xl hover:bg-gray-100 transition text-gray-400 hover:text-gray-900"
-          >
-            →
-          </button>
-        </div>
 
-        <div className="overflow-x-auto">
-          <DndContext
-            sensors={sensors}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-          >
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="p-6 border-r min-w-[280px] text-left">
-                    <div className="flex items-center gap-2 text-gray-400 uppercase text-[10px] font-black tracking-widest">
-                        <HiOutlineUserGroup /> Staff de l'Organisation
-                    </div>
-                  </th>
-                  {days.map((d, i) => (
-                    <th key={i} className={`p-4 border-r ${d.toDateString() === new Date().toDateString() ? 'bg-blue-50/30' : ''}`}>
-                      <div className="block text-[10px] uppercase font-black text-gray-400 tracking-wider mb-1">
-                        {d.toLocaleDateString('fr-FR', { weekday: 'long' })}
+          <div className="flex-1 overflow-auto custom-scrollbar">
+            <DndContext
+              sensors={sensors}
+              onDragStart={handleDragStart}
+              onDragEnd={handleDragEnd}
+            >
+              <table className="w-full border-collapse">
+                <thead className="sticky top-0 z-20">
+                  <tr className="bg-white">
+                    <th className="p-6 md:p-8 border-r border-b border-gray-50 min-w-[300px] text-left">
+                      <div className="flex items-center gap-3 text-slate-400 uppercase text-[10px] font-black tracking-[0.2em] mb-1">
+                          <HiOutlineUserGroup size={14} className="text-blue-500" /> Collaborateurs
                       </div>
-                      <div className={`text-sm font-black ${d.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'}`}>
-                        {d.getDate()} {d.toLocaleDateString('fr-FR', { month: 'short' })}
-                      </div>
+                      <div className="text-xs font-bold text-slate-300">Organisation Active</div>
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {employees.map(emp => (
-                  <tr key={emp.id} className="border-b group hover:bg-gray-50/50 transition-colors">
-                    <td className="p-4 text-left border-r bg-white/50">
-                      <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center font-bold shadow-md shadow-blue-100">
-                           {emp.first_name[0]}{emp.last_name[0]}
-                         </div>
-                         <div className="min-w-0">
-                           <p className="font-bold text-gray-900 truncate uppercase tracking-tighter text-xs">{emp.first_name} {emp.last_name}</p>
-                           <p className="text-[10px] text-blue-500 font-black uppercase tracking-widest leading-none mt-1 opacity-70">
-                                {emp.department_name || 'Personnel'}
-                            </p>
-                         </div>
-                      </div>
-                    </td>
-                    {days.map((d, i) => {
-                      const dayStr = d.toISOString().split('T')[0];
-                      const s = schedules.find(sched => sched.employee === emp.id && sched.date === dayStr);
-                      return (
-                        <PlanningCell 
-                            key={i} 
-                            day={dayStr} 
-                            employeeId={emp.id} 
-                            shift={s} 
-                            onAdd={handleQuickAdd}
-                        />
-                      );
-                    })}
+                    {days.map((d, i) => (
+                      <th key={i} className={`p-4 md:p-6 border-r border-b border-gray-50 min-w-[160px] text-center ${d.toDateString() === new Date().toDateString() ? 'bg-blue-50/20' : ''}`}>
+                        <div className="block text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1.5 leading-none">
+                          {d.toLocaleDateString('fr-FR', { weekday: 'short' })}
+                        </div>
+                        <div className={`text-base md:text-lg font-black tracking-tighter leading-none ${d.toDateString() === new Date().toDateString() ? 'text-blue-600' : 'text-gray-900'}`}>
+                          {d.getDate()} <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{d.toLocaleDateString('fr-FR', { month: 'short' })}</span>
+                        </div>
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {employees.map(emp => (
+                    <tr key={emp.id} className="group hover:bg-slate-50/50 transition-all duration-300">
+                      <td className="p-6 md:p-8 text-left border-r border-b border-gray-50 bg-white group-hover:bg-slate-50 transition-all">
+                        <div className="flex items-center gap-4">
+                           <div className="w-12 h-12 rounded-[1.25rem] bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 flex items-center justify-center font-black shadow-sm border border-white group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all duration-500">
+                             {emp.first_name[0]}{emp.last_name[0]}
+                           </div>
+                           <div className="min-w-0">
+                             <p className="font-black text-gray-900 truncate uppercase tracking-tighter text-sm leading-tight mb-1">{emp.first_name} {emp.last_name}</p>
+                             <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <p className="text-[9px] text-blue-500 font-black uppercase tracking-[0.15em] opacity-70">
+                                    {emp.department_name || 'Général'}
+                                </p>
+                             </div>
+                           </div>
+                        </div>
+                      </td>
+                      {days.map((d, i) => {
+                        const dayStr = d.toISOString().split('T')[0];
+                        const s = schedules.find(sched => sched.employee === emp.id && sched.date === dayStr);
+                        return (
+                          <PlanningCell 
+                              key={i} 
+                              day={dayStr} 
+                              employeeId={emp.id} 
+                              shift={s} 
+                              onAdd={handleQuickAdd}
+                          />
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
 
-            <DragOverlay dropAnimation={{
-                sideEffects: defaultDropAnimationSideEffects({
-                    styles: {
-                        active: {
-                            opacity: '0.5',
-                        },
-                    },
-                }),
-            }}>
-              {activeShift ? (
-                <div className="rotate-3 scale-105 pointer-events-none w-[120px]">
-                  <ShiftCard shift={activeShift} />
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
+              <DragOverlay dropAnimation={{
+                  sideEffects: defaultDropAnimationSideEffects({
+                      styles: {
+                          active: {
+                              opacity: '0.4',
+                          },
+                      },
+                  }),
+              }}>
+                {activeShift ? (
+                  <div className="rotate-3 scale-110 pointer-events-none w-[140px] z-[1000]">
+                    <ShiftCard shift={activeShift} />
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </div>
         </div>
       </div>
 
       {showModal && (
-         <div className="fixed inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-8 relative shadow-2xl animate-in zoom-in-95 duration-200">
-            <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tight">Assignation de Shift</h2>
-            <p className="text-gray-500 text-sm mb-8 font-medium">Définissez l'horaire pour vos collaborateurs.</p>
+         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
+          <div className="bg-white rounded-[3rem] max-w-xl w-full p-8 md:p-12 relative shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20">
+            <div className="absolute top-8 right-8">
+                <button onClick={() => setShowModal(false)} className="w-10 h-10 rounded-2xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center font-bold">×</button>
+            </div>
             
-            <form onSubmit={handleBulkSubmit} className="space-y-6">
-               <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-[10px] uppercase font-black text-gray-400 mb-2 tracking-widest">Collaborateurs</label>
-                        <select multiple className="w-full border border-gray-200 rounded-xl p-3 h-32 focus:ring-2 focus:ring-blue-500 outline-none transition" onChange={e => setSelectedEmployees(Array.from(e.target.selectedOptions, option => option.value))}>
+            <div className="mb-10">
+                <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-1 bg-blue-600 rounded-full"></div>
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Opérationnel</span>
+                </div>
+                <h2 className="text-3xl font-black text-gray-900 tracking-tighter">Assignation Mobile</h2>
+                <p className="text-slate-400 text-sm font-medium mt-1">Configurez les horaires de vos ressources.</p>
+            </div>
+            
+            <form onSubmit={handleBulkSubmit} className="space-y-8">
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="flex flex-col">
+                        <label className="block text-[10px] uppercase font-black text-slate-400 mb-3 tracking-[0.2em] ml-1">Collaborateurs</label>
+                        <select multiple className="w-full border-2 border-slate-50 bg-slate-50/50 rounded-3xl p-4 h-44 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm custom-scrollbar" onChange={e => setSelectedEmployees(Array.from(e.target.selectedOptions, option => option.value))}>
                             {employees.map(emp => (
-                            <option key={emp.id} value={emp.id}>{emp.first_name} {emp.last_name}</option>
+                                <option key={emp.id} value={emp.id} className="py-2 px-1 rounded-xl mb-1">{emp.first_name} {emp.last_name}</option>
                             ))}
                         </select>
                     </div>
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                         <div>
-                            <label className="block text-[10px] uppercase font-black text-gray-400 mb-2 tracking-widest">Date</label>
-                            <input type="date" required value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition font-bold text-sm" />
+                            <label className="block text-[10px] uppercase font-black text-slate-400 mb-3 tracking-[0.2em] ml-1">Date d'effet</label>
+                            <input type="date" required value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className="w-full border-2 border-slate-50 bg-slate-50/50 rounded-2xl p-4 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-black text-sm text-slate-600" />
                         </div>
                         <div>
-                            <label className="block text-[10px] uppercase font-black text-gray-400 mb-2 tracking-widest">Template Shift</label>
-                            <select required value={selectedTemplate} onChange={e => setSelectedTemplate(e.target.value)} className="w-full border border-gray-200 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 outline-none transition font-bold text-sm">
-                                <option value="">Choisir un horaire</option>
+                            <label className="block text-[10px] uppercase font-black text-slate-400 mb-3 tracking-[0.2em] ml-1">Type de Shift</label>
+                            <select required value={selectedTemplate} onChange={e => setSelectedTemplate(e.target.value)} className="w-full border-2 border-slate-50 bg-slate-50/50 rounded-2xl p-4 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-black text-sm text-slate-600">
+                                <option value="">Choisir un créneau</option>
                                 {templates.map(t => (
-                                <option key={t.id} value={t.id}>{t.name} ({t.start_time} - {t.end_time})</option>
+                                <option key={t.id} value={t.id}>{t.name} • {t.start_time.substring(0,5)} - {t.end_time.substring(0,5)}</option>
                                 ))}
                             </select>
                         </div>
                     </div>
                </div>
                
-               <div className="flex justify-end pt-4 gap-3">
-                  <button type="button" onClick={() => setShowModal(false)} className="px-6 py-3 font-bold text-gray-400 hover:text-gray-600 transition">Annuler</button>
-                  <button type="submit" className="bg-blue-600 text-white font-black px-8 py-3 rounded-2xl shadow-xl shadow-blue-200 hover:bg-blue-700 transition">Confirmer l'Assignation</button>
+               <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+                  <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 font-black text-[10px] uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">Ignorer</button>
+                  <button type="submit" className="bg-blue-600 text-white font-black px-10 py-4 rounded-[1.5rem] shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all hover:-translate-y-1 text-[11px] uppercase tracking-widest ring-1 ring-blue-400">Confirmer l'Assignation</button>
                </div>
             </form>
           </div>

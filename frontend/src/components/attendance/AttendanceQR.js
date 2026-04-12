@@ -37,100 +37,115 @@ export default function AttendanceQR({ organizationName }) {
   };
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-      <div className="p-6 border-b bg-gray-50 flex justify-between items-center">
+    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-gray-200/40 overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-700">
+      <div className="p-8 md:p-10 border-b bg-gray-50/30 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <HiOutlineQrcode className="text-blue-600" /> Station de Pointage QR
+          <div className="flex items-center gap-2 mb-2">
+            <div className="w-6 h-1 bg-blue-600 rounded-full"></div>
+            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Opérationnel</span>
+          </div>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tighter flex items-center gap-3">
+            <HiOutlineQrcode className="text-blue-500" /> Station de Pointage QR
           </h2>
-          <p className="text-sm text-gray-500 mt-1">Générez un QR Code fixe pour vos locaux (valide 60 jours).</p>
+          <p className="text-sm text-gray-400 font-medium mt-1">Générez un point d'accès fixe pour vos locaux (60 jours).</p>
         </div>
-        <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
+        
+        <div className="flex flex-col sm:flex-row items-center gap-6 w-full md:w-auto bg-white p-4 rounded-3xl border border-gray-100 shadow-sm">
+            <label className="flex items-center gap-3 text-[10px] font-black uppercase tracking-widest text-gray-400 cursor-pointer hover:text-blue-600 transition-colors">
                 <input 
                     type="checkbox" 
                     checked={isLongTerm} 
                     onChange={(e) => setIsLongTerm(e.target.checked)}
-                    className="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                    className="w-5 h-5 text-blue-600 rounded-xl border-2 border-gray-100 focus:ring-blue-500/20 transition-all checked:bg-blue-600"
                 />
                 Long terme (60j)
             </label>
             <button 
                 onClick={generateStationQR} 
                 disabled={isLoading}
-                className="btn bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2 shadow-sm"
+                className="w-full sm:w-auto btn bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-500/20 ring-1 ring-blue-400/50 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-                {isLoading ? 'Génération...' : 'Générer QR'}
+                {isLoading ? 'Génération...' : 'Générer Point d\'Accès'}
             </button>
         </div>
       </div>
 
-      <div className="p-10 flex flex-col items-center justify-center">
+      <div className="p-10 md:p-20 flex flex-col items-center justify-center bg-gradient-to-b from-transparent to-slate-50/30">
         {token ? (
           <>
-            <div className="p-8 bg-white border-4 border-gray-100 rounded-3xl shadow-xl mb-8 print:shadow-none print:border-none print:p-0">
+            <div className="p-10 md:p-12 bg-white border border-gray-100 rounded-[3rem] shadow-2xl mb-10 transition-transform hover:scale-[1.02] duration-500 print:shadow-none print:border-none print:p-0">
                 <QRCodeCanvas 
                     value={token} 
-                    size={280} 
+                    size={320} 
                     level="H" 
                     includeMargin={true}
                     imageSettings={{
                         src: "/logo.png",
                         x: undefined, y: undefined,
-                        height: 50, width: 50,
+                        height: 60, width: 60,
                         excavate: true,
                     }}
                 />
             </div>
             
-            <div className="text-center max-w-md print:hidden">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold mb-4">
-                <HiOutlineShieldCheck /> PRÊT POUR POINTAGE
+            <div className="text-center max-w-md print:hidden animate-in fade-in duration-1000">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-sm border border-emerald-100">
+                <HiOutlineShieldCheck size={14} /> Certificat Actif
               </div>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{organizationName}</h3>
-              <p className="text-sm text-gray-500 mb-6 flex items-center justify-center gap-1">
-                <HiOutlineClock /> Expire le : {new Date(validity).toLocaleDateString('fr-FR', {
+              <h3 className="text-2xl font-black text-gray-900 tracking-tighter mb-2 uppercase">{organizationName}</h3>
+              <p className="text-sm text-gray-400 font-medium mb-10 flex items-center justify-center gap-2">
+                <HiOutlineClock className="text-blue-500" /> 
+                Expire le : <span className="text-gray-900 font-bold">{new Date(validity).toLocaleDateString('fr-FR', {
                   day: 'numeric', month: 'long', year: 'numeric'
-                })}
+                })}</span>
               </p>
               
               <button 
                 onClick={handlePrint}
-                className="btn border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 px-8 py-3 rounded-xl flex items-center gap-2 transition font-semibold"
+                className="group btn bg-white text-gray-900 border border-gray-100 px-10 py-4 rounded-[1.5rem] flex items-center gap-3 transition-all hover:shadow-xl hover:-translate-y-1 font-black text-[10px] uppercase tracking-widest"
               >
-                <HiOutlinePrinter /> Imprimer pour Affichage (A4)
+                <HiOutlinePrinter size={18} className="group-hover:text-blue-500 transition-colors" /> 
+                Imprimer Affichage A4
               </button>
             </div>
 
-            {/* Print-only section for A4 optimization */}
-            <div className="hidden print:flex fixed inset-0 bg-white z-[9999] flex-col items-center justify-center text-center p-20">
-                <div className="mb-12">
-                    <img src="/logo.png" alt="Logo" className="w-24 h-24 mx-auto mb-4" />
-                    <h1 className="text-5xl font-black text-gray-900 tracking-tight uppercase">STATION DE POINTAGE</h1>
-                    <p className="text-2xl text-gray-600 mt-2">{organizationName}</p>
-                </div>
-                
-                <div className="p-12 border-[20px] border-gray-900 rounded-[60px]">
-                    <QRCodeCanvas value={token} size={600} level="H" includeMargin={false} />
+            {/* Print-only section for A4 optimization (Highly Professional) */}
+            <div className="hidden print:flex fixed inset-0 bg-white z-[9999] flex-col items-center justify-between text-center p-20 font-sans">
+                <div className="w-full flex justify-between items-center opacity-40">
+                    <img src="/logo.png" alt="Logo" className="w-16 h-16" />
+                    <span className="font-black text-sm tracking-widest">KONGGEST ELITE SaaS • {new Date().getFullYear()}</span>
                 </div>
 
-                <div className="mt-20 space-y-4">
-                    <p className="text-3xl font-bold text-gray-800">Scannez ce code pour marquer votre présence</p>
-                    <p className="text-xl text-gray-400">Propulsé par Konggest Elite SaaS</p>
+                <div className="flex flex-col items-center">
+                    <div className="mb-14">
+                        <h1 className="text-6xl font-black text-gray-900 tracking-tighter uppercase mb-4">STATION DE POINTAGE</h1>
+                        <div className="w-24 h-2 bg-blue-600 mx-auto rounded-full mb-6"></div>
+                        <p className="text-3xl text-gray-500 font-medium">{organizationName}</p>
+                    </div>
+                    
+                    <div className="p-16 border-[16px] border-gray-900 rounded-[80px] shadow-2xl">
+                        <QRCodeCanvas value={token} size={650} level="H" includeMargin={false} />
+                    </div>
+
+                    <div className="mt-20 space-y-6">
+                        <p className="text-4xl font-black text-gray-900 tracking-tight uppercase">Scannez pour valider votre présence</p>
+                        <p className="text-2xl text-gray-400 font-medium">Ouvrez votre espace employé et utilisez le scanner intégré.</p>
+                    </div>
                 </div>
-                
-                <div className="absolute bottom-10 left-0 right-0 text-sm text-gray-300">
-                    ID Session: {token.substring(0, 12)}... | Expire le: {validity}
+
+                <div className="w-full pt-10 border-t border-gray-200 flex justify-between text-[12px] font-black text-gray-300 uppercase tracking-widest">
+                    <span>ID: {token.substring(0, 16)}</span>
+                    <span>EXPIRATION : {new Date(validity).toLocaleDateString()}</span>
                 </div>
             </div>
           </>
         ) : (
-          <div className="text-center py-20 bg-gray-50 rounded-2xl w-full border-2 border-dashed border-gray-200">
-            <div className="w-20 h-20 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-400">
-              <HiOutlineQrcode size={40} />
+          <div className="text-center py-24 bg-gray-50/50 rounded-[3rem] w-full border-2 border-dashed border-gray-100 group">
+            <div className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center mx-auto mb-6 text-gray-200 shadow-sm border border-gray-50 group-hover:scale-110 transition-transform duration-500">
+              <HiOutlineQrcode size={48} />
             </div>
-            <h3 className="text-lg font-bold text-gray-400">Aucun QR Code généré</h3>
-            <p className="text-sm text-gray-400 max-w-xs mx-auto mt-2">Cliquez sur le bouton ci-dessus pour créer le point de scan permanent de votre entreprise.</p>
+            <h3 className="text-xl font-black text-gray-900 tracking-tighter mb-2 uppercase">Aucun QR Code Actif</h3>
+            <p className="text-sm text-gray-400 font-medium max-w-xs mx-auto">Cliquez sur le bouton pour initialiser la station de pointage permanente de votre organisation.</p>
           </div>
         )}
       </div>
@@ -141,7 +156,7 @@ export default function AttendanceQR({ organizationName }) {
           .print-section, .print-section * { visibility: visible; }
           .print\:hidden { display: none !important; }
           .print\:flex { display: flex !important; }
-          @page { size: auto; margin: 0; }
+          @page { size: A4; margin: 0; }
         }
       `}</style>
     </div>

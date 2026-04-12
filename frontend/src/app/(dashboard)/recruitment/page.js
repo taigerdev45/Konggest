@@ -131,35 +131,48 @@ export default function RecruitmentDashboard() {
   );
 
   return (
-    <div className="max-w-full h-full flex flex-col bg-white">
+    <div className="min-h-full flex flex-col bg-[#FDFDFF]">
       {toast.show && (
-        <div className="fixed bottom-8 right-8 z-50 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-5 border border-white/10">
-          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+        <div className="fixed bottom-8 right-8 z-[100] bg-gray-900/95 backdrop-blur-md text-white px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-5 border border-white/10 ring-1 ring-white/20">
+          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20">
             <HiOutlineUserAdd className="text-xl" />
           </div>
           <div>
-            <p className="text-sm font-bold">Nouvelle de Konggest</p>
-            <p className="text-xs text-gray-400">{toast.text}</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-blue-400 mb-0.5">Notification Elite</p>
+            <p className="text-sm font-bold opacity-90">{toast.text}</p>
           </div>
         </div>
       )}
 
-      <div className="px-8 pt-8 pb-6 flex justify-between items-end">
-        <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Recrutement</h1>
-          <p className="text-gray-500 font-medium mt-1">Gérez vos talents par glisser-déposer.</p>
+      {/* Page Header */}
+      <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 md:pb-10 flex flex-col md:flex-row md:justify-between md:items-end gap-6">
+        <div className="animate-in slide-in-from-left-4 duration-700">
+          <div className="flex items-center gap-3 mb-2">
+             <div className="w-8 h-1 bg-blue-600 rounded-full"></div>
+             <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Gestion Talents</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-3">
+            Recrutement
+          </h1>
+          <p className="text-gray-400 font-medium text-sm md:text-base max-w-md">
+            Pilotez votre pipeline de recrutement avec une précision chirurgicale.
+          </p>
         </div>
-        <div className="flex gap-3">
-          <button onClick={fetchApplications} className="btn bg-gray-50 text-gray-700 border border-gray-200 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-100 transition shadow-sm">
+        <div className="flex gap-3 animate-in slide-in-from-right-4 duration-700">
+          <button 
+            onClick={fetchApplications} 
+            className="flex-1 md:flex-none btn bg-white text-gray-900 border border-gray-100 px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition shadow-sm"
+          >
             Rafraîchir
           </button>
-          <button className="btn bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+          <button className="flex-1 md:flex-none btn bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-500/20 ring-1 ring-blue-400/50">
             Nouveau Candidat
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-x-auto px-8 pb-8 flex gap-6 items-start scroll-smooth">
+      {/* Kanban Board */}
+      <div className="flex-1 overflow-x-auto px-6 md:px-12 pb-12 flex gap-8 items-start scroll-smooth custom-scrollbar">
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
@@ -168,23 +181,24 @@ export default function RecruitmentDashboard() {
           onDragEnd={handleDragEnd}
         >
           {STAGES.map(stage => (
-            <KanbanColumn 
-              key={stage.id} 
-              stage={stage} 
-              applications={applications.filter(a => a.stage === stage.id)} 
-            />
+            <div key={stage.id} className="animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                <KanbanColumn 
+                stage={stage} 
+                applications={applications.filter(a => a.stage === stage.id)} 
+                />
+            </div>
           ))}
 
           <DragOverlay>
             {activeId ? (
-              <div className="rotate-3 cursor-grabbing scale-105 transition-transform">
+              <div className="rotate-3 cursor-grabbing scale-105 transition-transform z-50">
                 <CandidateCard app={activeApp} />
               </div>
             ) : null}
           </DragOverlay>
         </DndContext>
         
-        {/* Fill space at the end */}
+        {/* Visual Spacer */}
         <div className="min-w-[40px] h-full" />
       </div>
     </div>

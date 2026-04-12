@@ -2,37 +2,36 @@
 
 import { useDroppable } from '@dnd-kit/core';
 import ShiftCard from './ShiftCard';
-import { HiOutlinePlus } from 'react-icons/hi';
+import { HiOutlinePlusSmall } from 'react-icons/hi2';
 
 export default function PlanningCell({ day, employeeId, shift, onAdd }) {
-  const cellId = `cell-${employeeId}-${day}`;
-  const { setNodeRef, isOver } = useDroppable({
-    id: cellId,
-    data: {
-      employeeId,
-      day,
-    },
+  const { isOver, setNodeRef } = useDroppable({
+    id: `cell-${employeeId}-${day}`,
+    data: { day, employeeId },
   });
 
   return (
-    <td 
+    <td
       ref={setNodeRef}
-      className={`p-1.5 border-r relative min-h-[60px] transition-colors duration-150 ${isOver ? 'bg-blue-50 ring-2 ring-inset ring-blue-300' : ''}`}
+      className={`relative p-2 h-24 min-w-[160px] border-r border-b border-gray-50 transition-all duration-300 group/cell ${
+        isOver ? 'bg-blue-50/50 ring-2 ring-blue-500/20 ring-inset' : 'bg-transparent'
+      }`}
     >
-      <div className="flex flex-col gap-1 min-h-[44px]">
-        {shift ? (
-          <ShiftCard shift={shift} />
-        ) : (
-          <div className="flex-1 flex items-center justify-center group">
-            <button 
-              onClick={() => onAdd(employeeId, day)}
-              className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full bg-gray-100 text-gray-400 hover:bg-blue-600 hover:text-white"
-            >
-              <HiOutlinePlus size={12} />
-            </button>
+      {shift ? (
+        <div className="h-full animate-in fade-in zoom-in-95 duration-300">
+            <ShiftCard shift={shift} />
+        </div>
+      ) : (
+        <button
+          onClick={() => onAdd(employeeId, day)}
+          className="absolute inset-2 flex items-center justify-center rounded-2xl border-2 border-dashed border-slate-100 opacity-0 group-hover/cell:opacity-100 hover:border-blue-400 hover:bg-blue-50/50 hover:scale-[0.98] transition-all duration-300 overflow-hidden"
+        >
+          <div className="flex flex-col items-center gap-1">
+            <HiOutlinePlusSmall className="text-blue-500 text-xl" />
+            <span className="text-[8px] font-black uppercase tracking-widest text-blue-400">Shift</span>
           </div>
-        )}
-      </div>
+        </button>
+      )}
     </td>
   );
 }
