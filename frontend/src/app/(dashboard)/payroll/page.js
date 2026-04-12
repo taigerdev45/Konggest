@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye, HiOutlineTrendingUp, HiOutlineCheck, HiOutlineBell } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 
 const TH = { padding: '13px 18px', textAlign: 'left', fontSize: '0.76rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', whiteSpace: 'nowrap', background: 'var(--bg-secondary)', borderBottom: '2px solid var(--border-color)' };
 const TD = { padding: '13px 18px', verticalAlign: 'middle', borderBottom: '1px solid var(--border-color)' };

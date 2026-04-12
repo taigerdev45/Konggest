@@ -26,7 +26,7 @@ import {
   HiOutlineBell, HiOutlineDocumentReport,
 } from 'react-icons/hi';
 import api from '@/lib/api';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 import styles from './dashboard.module.css';
 
 const STATUS_MAP = {

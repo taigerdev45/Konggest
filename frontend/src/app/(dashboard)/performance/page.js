@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { HiOutlineChartBar, HiOutlinePlus, HiOutlineRefresh, HiOutlineStar, HiOutlineCheckCircle, HiOutlineBell } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/lib/supabase';
 
 export default function PerformancePage() {
   const { user } = useAuth();
