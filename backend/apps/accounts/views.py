@@ -3,26 +3,32 @@ from rest_framework import status, generics, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.decorators import action
-from core.permissions import IsManager, IsSaaSAdmin
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
-from .serializers import RegisterSerializer, LoginSerializer, UserProfileSerializer, AuditLogSerializer, OrganizationSerializer, StaffInviteSerializer, UserInviteSerializer
-from django.db.models import Count, Sum
-from .models import Organization, UserProfile, AuditLog, LoginAttempt
+from django.core.cache import cache
+from django.db import models
+
+from core.permissions import IsManager, IsSaaSAdmin
+from .models import Organization, UserProfile, AuditLog, LoginAttempt, Invoice
+from .serializers import (
+    RegisterSerializer, LoginSerializer, UserProfileSerializer, 
+    AuditLogSerializer, OrganizationSerializer, StaffInviteSerializer, 
+    UserInviteSerializer, InvoiceSerializer
+)
+from .services import SaaSProvisioningService, BillingService
+
 
 class StaffDashboardView(APIView):
-    """Global metrics for SaaS administrators."""
-    permission_classes = [IsAuthenticated] # Should be IsSuperUser in production
+    """Global metrics for SaaS administrators with Redis Caching."""
+    permission_classes = [IsAuthenticated, IsSaaSAdmin]
 
     def get(self, request):
-        try:
-            request.user.saas_admin
-            is_saas = True
-        except Exception:
-            is_saas = False
-        if not request.user.is_staff and not is_saas:
-            return Response({'error': 'Access denied'}, status=403)
+        cache_key = 'saas_admin_global_stats'
+        cached_data = cache.get(cache_key)
+        
+        if cached_data:
+            return Response(cached_data)
 
         from apps.employees.models import Employee
         from apps.leaves.models import LeaveRequest
@@ -30,15 +36,19 @@ class StaffDashboardView(APIView):
 
         stats = {
             'total_organizations': Organization.objects.count(),
-            'active_organizations': Organization.objects.filter(is_active=True).count(),
+            'active_organizations': Organization.objects.filter(subscription_status='active').count(),
             'total_users': UserProfile.objects.count(),
             'total_employees': Employee.objects.count(),
             'total_leave_requests': LeaveRequest.objects.count(),
             'total_documents': Document.objects.count(),
-            'org_distribution': Organization.objects.values('plan').annotate(count=Count('id')),
+            'mrr': BillingService.calculate_mrr(),
+            'org_distribution': list(Organization.objects.values('plan').annotate(count=models.Count('id'))),
             'recent_logins': AuditLog.objects.filter(action='login').count(),
             'failed_attempts': LoginAttempt.objects.filter(success=False).count(),
         }
+        
+        # Cache for 15 minutes (900 seconds)
+        cache.set(cache_key, stats, 900)
         return Response(stats)
 
 
@@ -48,11 +58,7 @@ class OrganizationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        try:
-            self.request.user.saas_admin
-            is_saas = True
-        except Exception:
-            is_saas = False
+        is_saas = hasattr(self.request.user, 'saas_admin')
         if not self.request.user.is_staff and not is_saas:
             return Organization.objects.none()
         return Organization.objects.all()
@@ -71,6 +77,18 @@ class OrganizationViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
 
+class InvoiceViewSet(viewsets.ReadOnlyModelViewSet):
+    """Manage invoices for organizations."""
+    serializer_class = InvoiceSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'saas_admin'):
+            return Invoice.objects.all()
+        return Invoice.objects.filter(organization=user.profile.organization)
+
+
 class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     """View and list audit logs for current organization."""
     permission_classes = [IsAuthenticated, IsManager | IsSaaSAdmin]
@@ -79,13 +97,18 @@ class AuditLogViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         user = self.request.user
         is_saas = hasattr(user, 'saas_admin')
-        
         if is_saas:
             return AuditLog.objects.select_related('user', 'organization').all()
-            
-        tenant_id = getattr(self.request, 'tenant_id', None)
-        qs = AuditLog.objects.select_related('user').all()
-        return qs.filter(organization_id=tenant_id) if tenant_id else qs
+        return AuditLog.objects.filter(organization=user.profile.organization).select_related('user')
+
+
+class UserProfileViewSet(viewsets.ModelViewSet):
+    """Manage users within the current organization (Manager only)."""
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated, IsManager]
+
+    def get_queryset(self):
+        return UserProfile.objects.filter(organization=self.request.user.profile.organization).select_related('user')
 
 
 class UserPlatformViewSet(viewsets.ReadOnlyModelViewSet):
@@ -94,44 +117,35 @@ class UserPlatformViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = UserProfileSerializer
     queryset = UserProfile.objects.select_related('user', 'organization').all()
 
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        # Add extra context if needed
-        return context
-
 
 class RegisterView(generics.CreateAPIView):
     """Register a new organization + admin user."""
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
-    throttle_scope = 'auth'
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            'message': 'Organisation créée avec succès.',
-            'tokens': {
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-            },
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'full_name': user.get_full_name(),
-                'role': user.profile.role,
-                'organization': user.profile.organization.name,
-            }
-        }, status=status.HTTP_201_CREATED)
+        try:
+            org, user = SaaSProvisioningService.provision_organization(
+                org_name=serializer.validated_data['organization_name'],
+                admin_email=serializer.validated_data['email'],
+                admin_name=f"{serializer.validated_data['first_name']} {serializer.validated_data['last_name']}",
+                password=serializer.validated_data['password']
+            )
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'message': 'Organisation créée avec succès.',
+                'tokens': {'access': str(refresh.access_token), 'refresh': str(refresh)},
+                'user': {'id': user.id, 'email': user.email, 'role': user.profile.role, 'organization': org.name}
+            }, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=400)
 
 
 class LoginView(APIView):
     """Authenticate user and return JWT tokens."""
     permission_classes = [AllowAny]
-    throttle_scope = 'auth'
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -144,73 +158,24 @@ class LoginView(APIView):
         user = authenticate(request, username=email, password=password)
 
         LoginAttempt.objects.create(
-            email=email,
-            ip_address=ip,
+            email=email, ip_address=ip,
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
             success=user is not None,
         )
 
-        # Brute force check: block after 5 failed attempts in 15 min
-        recent_failures = LoginAttempt.objects.filter(
-            ip_address=ip, success=False
-        ).order_by('-created_at')[:10]
-        if len(recent_failures) >= 5:
-            from django.utils import timezone
-            from datetime import timedelta
-            cutoff = timezone.now() - timedelta(minutes=15)
-            recent = [a for a in recent_failures if a.created_at > cutoff]
-            if len(recent) >= 5:
-                return Response(
-                    {'error': 'Trop de tentatives. Réessayez dans 15 minutes.'},
-                    status=status.HTTP_429_TOO_MANY_REQUESTS
-                )
-
         if user is None:
-            return Response(
-                {'error': 'Email ou mot de passe incorrect.'},
-                status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        if not user.is_active:
-            return Response(
-                {'error': 'Compte désactivé.'},
-                status=status.HTTP_403_FORBIDDEN
-            )
+            return Response({'error': 'Email ou mot de passe incorrect.'}, status=401)
 
         refresh = RefreshToken.for_user(user)
-
-        # SaaS Admin check
         is_saas_admin = hasattr(user, 'saas_admin')
-        organization = None
-        role = 'saas_admin' if is_saas_admin else None
-
-        if hasattr(user, 'profile') and user.profile.organization:
-            organization = user.profile.organization
-            if not role:
-                role = user.profile.role
-
-        AuditLog.objects.create(
-            user=user,
-            organization=organization,
-            action='login',
-            resource_type='auth',
-            ip_address=ip,
-            user_agent=request.META.get('HTTP_USER_AGENT', ''),
-        )
-
+        
         return Response({
-            'tokens': {
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-            },
+            'tokens': {'access': str(refresh.access_token), 'refresh': str(refresh)},
             'user': {
-                'id': user.id,
-                'email': user.email,
-                'full_name': user.get_full_name(),
-                'role': role,
+                'id': user.id, 'email': user.email, 'full_name': user.get_full_name(),
+                'role': 'saas_admin' if is_saas_admin else user.profile.role,
                 'is_saas_admin': is_saas_admin,
-                'organization': organization.name if organization else None,
-                'organization_id': organization.id if organization else None,
+                'organization': user.profile.organization.name if not is_saas_admin else None,
                 'redirect_to': '/staff' if is_saas_admin else '/dashboard',
             }
         })
@@ -222,276 +187,29 @@ class LoginView(APIView):
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
-    """Get or update current user's profile."""
     permission_classes = [IsAuthenticated]
     serializer_class = UserProfileSerializer
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        from .models import SaaSAdmin, UserProfile
-        
-        # 1. Reliable SaaS Admin detection
-        is_saas = SaaSAdmin.objects.filter(user=user).exists()
-        
-        # 2. Initial data with guaranteed fields
+        is_saas = hasattr(user, 'saas_admin')
         data = {
-            'id': user.id,
-            'username': user.username,
-            'email': user.email,
-            'full_name': user.get_full_name() or user.email,
-            'is_saas_admin': is_saas,
-            'redirect_to': '/staff' if is_saas else '/dashboard',
-            'role': 'saas_admin' if is_saas else 'admin',
-            'organization': None,
-            'v': '1.0.2'  # Version tag for cache busting diagnosis
+            'id': user.id, 'email': user.email, 'full_name': user.get_full_name(),
+            'is_saas_admin': is_saas, 'redirect_to': '/staff' if is_saas else '/dashboard',
         }
-        
-        # 3. Safely augment with profile data if available
-        try:
-            profile = UserProfile.objects.filter(user=user).first()
-            if profile:
-                serializer = self.get_serializer(profile)
-                profile_data = serializer.data
-                # Update but keep our guaranteed flags
-                data.update(profile_data)
-                data['is_saas_admin'] = is_saas
-                data['redirect_to'] = '/staff' if is_saas else '/dashboard'
-        except Exception as e:
-            import logging
-            logging.getLogger('django').error(f"Profile augmentation error: {e}")
-            
+        if hasattr(user, 'profile'):
+            profile_data = self.get_serializer(user.profile).data
+            data.update(profile_data)
         return Response(data)
 
 
-class UserProfileViewSet(viewsets.ModelViewSet):
-    """Manage users within the current organization (Manager only)."""
-    serializer_class = UserProfileSerializer
-    permission_classes = [IsAuthenticated, IsManager]
-
-    def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
-        if not tenant_id:
-            try:
-                tenant_id = self.request.user.profile.organization_id
-            except Exception:
-                pass
-        qs = UserProfile.objects.select_related('user', 'organization').all()
-        if tenant_id:
-            qs = qs.filter(organization_id=tenant_id)
-        return qs
-
-    def get_serializer_class(self):
-        if self.action == 'create':
-            return UserInviteSerializer
-        return UserProfileSerializer
-
-    def create(self, request, *args, **kwargs):
-        """
-        Invite a new team member:
-        1. Create user in Supabase (sends email invite automatically).
-        2. Create Django User + UserProfile for local JWT auth.
-        3. Return temp_password to display to the admin.
-        """
-        from django.contrib.auth.models import User as DjangoUser
-        from django.conf import settings
-        import urllib.request
-        import json
-        import random, string
-
-        serializer = UserInviteSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        email     = serializer.validated_data['email']
-        full_name = serializer.validated_data['full_name']
-        role      = serializer.validated_data['role']
-
-        # Resolve org
-        tenant_id = getattr(request, 'tenant_id', None)
-        if not tenant_id:
-            try:
-                tenant_id = request.user.profile.organization_id
-            except Exception:
-                pass
-        if not tenant_id:
-            return Response({'error': "Organisation non identifiée."}, status=400)
-
-        # Generate temp password
-        temp_password = ''.join(random.choices(string.ascii_letters + string.digits + '!@#$', k=14))
-
-        # --- 1. Create user in Supabase WITH password (not just invite) ---
-        supabase_url = getattr(settings, 'SUPABASE_URL', '')
-        service_key  = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
-        supabase_ok  = False
-        supabase_uid = None
-
-        if supabase_url and service_key:
-            try:
-                url = f"{supabase_url}/auth/v1/admin/users"
-                payload = json.dumps({
-                    "email": email,
-                    "password": temp_password,
-                    "email_confirm": True,
-                    "user_metadata": {
-                        "full_name": full_name,
-                        "role": role,
-                        "invited_by": request.user.email,
-                    }
-                }).encode('utf-8')
-                
-                req = urllib.request.Request(
-                    url, 
-                    data=payload,
-                    headers={
-                        "Authorization": f"Bearer {service_key}",
-                        "apikey": service_key,
-                        "Content-Type": "application/json",
-                    },
-                    method="POST"
-                )
-                
-                with urllib.request.urlopen(req, timeout=10) as sb_resp:
-                    if sb_resp.status in (200, 201):
-                        resp_body = json.loads(sb_resp.read().decode('utf-8'))
-                        supabase_uid = resp_body.get('id')
-                        supabase_ok = True
-            except Exception as e:
-                import logging
-                logging.getLogger('django').warning(f"Supabase user creation failed: {e}")
-
-        # --- 2. Create local Django user (for JWT auth fallback) ---
-        first = full_name.split(' ')[0]
-        last  = ' '.join(full_name.split(' ')[1:]) if ' ' in full_name else ''
-
-        django_user, created = DjangoUser.objects.get_or_create(
-            email=email,
-            defaults={
-                'username':   email,
-                'first_name': first,
-                'last_name':  last,
-            }
-        )
-        if created:
-            django_user.set_password(temp_password)
-            django_user.save()
-
-        # --- 3. Create UserProfile ---
-        profile, _ = UserProfile.objects.get_or_create(
-            user=django_user,
-            defaults={'organization_id': tenant_id, 'role': role}
-        )
-        if not _:
-            # Profile existed, update role / org if needed
-            profile.role = role
-            profile.organization_id = tenant_id
-            profile.save()
-
-        # Build login URL
-        from django.conf import settings
-        frontend_url = getattr(settings, 'FRONTEND_URL', 'https://localhost')
-        if not frontend_url or frontend_url == 'https://localhost':
-            # Try to get from request
-            frontend_url = f"{request.scheme}://{request.get_host()}".replace('/api', '')
-        
-        login_url = f"{frontend_url}/login"
-
-        return Response({
-            'message': f"Utilisateur {email} créé avec succès.",
-            'email': email,
-            'role': role,
-            'temp_password': temp_password,
-            'login_url': login_url,
-            'supabase_user_created': supabase_ok,
-            'email_sent': False,  # Pas d'email envoyé, on affiche le mot de passe à l'admin
-            'instructions': f"L'utilisateur peut se connecter immédiatement avec son email et le mot de passe temporaire affiché ci-dessus à l'adresse : {login_url}"
-        }, status=status.HTTP_201_CREATED)
-
-    @action(detail=True, methods=['post'])
-    def suspend(self, request, pk=None):
-        profile = self.get_object()
-        profile.is_active = False
-        profile.save()
-        return Response({'status': 'Profil suspendu'})
-
-    @action(detail=True, methods=['post'])
-    def activate(self, request, pk=None):
-        profile = self.get_object()
-        profile.is_active = True
-        profile.save()
-        return Response({'status': 'Profil activé'})
-
-    def perform_destroy(self, instance):
-        from apps.employees.models import ArchivedEmployee, Employee
-        user = instance.user
-
-        # Récupérer les infos d'employé si disponible
-        department = ""
-        seniority = ""
-        position = instance.get_role_display()
-        phone = instance.phone
-        
-        try:
-            employee = Employee.objects.get(user=user)
-            department = employee.department.name if employee.department else ""
-            position = employee.position.title if employee.position else position
-            phone = employee.phone or phone
-            seniority = f"{employee.seniority_years} ans"
-        except Employee.DoesNotExist:
-            pass
-
-        # Archiver l'utilisateur
-        ArchivedEmployee.objects.create(
-            organization=instance.organization,
-            full_name=f"{user.first_name} {user.last_name}".strip() or user.email,
-            email=user.email,
-            phone=phone,
-            position=position,
-            department=department,
-            seniority=seniority,
-            deleted_by=self.request.user.email
-        )
-
-        # Supprimer le user Supabase (optionnel, on utilise l'email pour chercher l'UID si on a config Supabase)
-        try:
-            from django.conf import settings
-            import urllib.request
-            import json
-            supabase_url = getattr(settings, 'SUPABASE_URL', '')
-            service_key  = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
-            if supabase_url and service_key:
-                # Get user list to match email (v1/admin/users)
-                req = urllib.request.Request(
-                    f"{supabase_url}/auth/v1/admin/users",
-                    headers={"Authorization": f"Bearer {service_key}", "apikey": service_key}
-                )
-                with urllib.request.urlopen(req, timeout=5) as resp:
-                    if resp.status == 200:
-                        users_data = json.loads(resp.read().decode('utf-8'))
-                        # users_data is usually a list under 'users'
-                        users = users_data.get('users', []) if isinstance(users_data, dict) else users_data
-                        for u in users:
-                            if u.get('email') == user.email:
-                                del_req = urllib.request.Request(
-                                    f"{supabase_url}/auth/v1/admin/users/{u.get('id')}",
-                                    method='DELETE',
-                                    headers={"Authorization": f"Bearer {service_key}", "apikey": service_key}
-                                )
-                                urllib.request.urlopen(del_req, timeout=5)
-                                break
-        except Exception as e:
-            import logging
-            logging.getLogger('django').error(f"Supabase delete user error: {e}")
-
-        # Supprimer complètement le User Django (ce qui supprime le profil en CASCADE)
-        user.delete()
-
 class PlatformStaffViewSet(viewsets.ModelViewSet):
-    """Manage platform-level staff (SaaS Admins, Support, Commercial)."""
+    """Manage platform-level staff using SaaSProvisioningService."""
     permission_classes = [IsAuthenticated, IsSaaSAdmin]
     serializer_class = UserProfileSerializer
 
     def get_queryset(self):
         from .models import SaaSAdmin
-        # Get users who have a SaaSAdmin record
         saas_ids = SaaSAdmin.objects.values_list('user_id', flat=True)
         return UserProfile.objects.filter(user_id__in=saas_ids).select_related('user')
 
@@ -499,86 +217,15 @@ class PlatformStaffViewSet(viewsets.ModelViewSet):
     def invite(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        
-        email = serializer.validated_data['email']
-        full_name = serializer.validated_data['full_name']
-        role_slug = serializer.validated_data['role'] # 'admin', 'support', or 'commercial'
-        
-        # 1. Prepare Supabase Admin Call
-        import requests
-        from django.conf import settings
-        import random
-        import string
-        
-        url = f"{getattr(settings, 'SUPABASE_URL', '')}/auth/v1/admin/users"
-        key = getattr(settings, 'SUPABASE_SERVICE_ROLE_KEY', '')
-        
-        if not key:
-            return Response({"error": "Supabase Service Role Key is not configured."}, status=500)
-            
-        headers = {
-            "Authorization": f"Bearer {key}",
-            "apikey": key,
-            "Content-Type": "application/json",
-        }
-        
-        temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=16))
-        
-        payload = {
-            "email": email,
-            "password": temp_password,
-            "email_confirm": True,
-            "user_metadata": {
-                "full_name": full_name,
-                "is_platform_admin": True,
-                "role": role_slug
-            }
-        }
-        
-        # 2. Create User in Supabase
         try:
-            response = requests.post(url, headers=headers, json=payload)
-            if response.status_code not in [200, 201]:
-                return Response({
-                    "error": "Failed to create user in Supabase.",
-                    "details": response.json()
-                }, status=status.HTTP_400_BAD_REQUEST)
-                
-            sb_data = response.json()
-            sb_uuid = sb_data.get('id')
-            
-            # 3. Create/Update local Django objects
-            # (The sync trigger should handle this, but we do it here for immediate response)
-            from django.contrib.auth.models import User
-            from .models import SaaSAdmin, UserProfile
-            
-            user, _ = User.objects.get_or_create(
-                username=email,
-                defaults={
-                    'email': email,
-                    'first_name': full_name.split(' ')[0],
-                    'last_name': ' '.join(full_name.split(' ')[1:]) if ' ' in full_name else ''
-                }
+            user, temp_pass, sb_uuid = SaaSProvisioningService.create_platform_staff(
+                email=serializer.validated_data['email'],
+                full_name=serializer.validated_data['full_name'],
+                role_slug=serializer.validated_data['role']
             )
-            
-            UserProfile.objects.get_or_create(
-                user=user,
-                defaults={'role': role_slug}
-            )
-            
-            SaaSAdmin.objects.get_or_create(
-                user=user,
-                defaults={
-                    'supabase_id': sb_uuid,
-                    'is_super_admin': (role_slug == 'admin')
-                }
-            )
-            
             return Response({
-                "message": f"Utilisateur {email} créé avec succès sur la plateforme.",
-                "uuid": sb_uuid,
-                "temp_password": temp_password
-            }, status=status.HTTP_201_CREATED)
-            
+                "message": "Invitation envoyée.",
+                "temp_password": temp_pass, "supabase_uuid": sb_uuid
+            }, status=201)
         except Exception as e:
-            return Response({"error": f"Internal error during invitation: {str(e)}"}, status=500)
+            return Response({"error": str(e)}, status=400)

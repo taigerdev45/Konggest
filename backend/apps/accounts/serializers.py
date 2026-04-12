@@ -2,15 +2,34 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
-from .models import Organization, UserProfile, AuditLog
+from .models import Organization, UserProfile, AuditLog, Invoice
 
 
 class OrganizationSerializer(serializers.ModelSerializer):
+    employees_count = serializers.IntegerField(read_only=True)
+    
     class Meta:
         model = Organization
-        fields = ['id', 'name', 'slug', 'sector', 'logo', 'plan', 'address',
-                  'phone', 'email', 'website', 'is_active', 'created_at']
-        read_only_fields = ['id', 'slug', 'created_at']
+        fields = [
+            'id', 'name', 'slug', 'sector', 'logo', 'plan', 
+            'subscription_status', 'max_employees', 'employees_count',
+            'activated_modules', 'address', 'phone', 'email', 
+            'website', 'is_active', 'created_at'
+        ]
+        read_only_fields = ['id', 'slug', 'created_at', 'employees_count']
+
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    organization_name = serializers.CharField(source='organization.name', read_only=True)
+    
+    class Meta:
+        model = Invoice
+        fields = [
+            'id', 'organization', 'organization_name', 'invoice_number',
+            'amount', 'currency', 'status', 'period_start', 'period_end',
+            'due_date', 'file_url', 'created_at', 'paid_at'
+        ]
+        read_only_fields = ['id', 'created_at']
 
 
 class AuditLogSerializer(serializers.ModelSerializer):
@@ -58,23 +77,6 @@ class RegisterSerializer(serializers.Serializer):
             raise serializers.ValidationError({"password_confirm": "Les mots de passe ne correspondent pas."})
         return attrs
 
-    def create(self, validated_data):
-        from django.utils.text import slugify
-        org = Organization.objects.create(
-            name=validated_data['organization_name'],
-            slug=slugify(validated_data['organization_name']),
-            sector=validated_data.get('sector', ''),
-        )
-        user = User.objects.create_user(
-            username=validated_data['email'],
-            email=validated_data['email'],
-            password=validated_data['password'],
-            first_name=validated_data['first_name'],
-            last_name=validated_data['last_name'],
-        )
-        UserProfile.objects.create(user=user, organization=org, role='admin')
-        return user
-
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -82,7 +84,6 @@ class LoginSerializer(serializers.Serializer):
 
 
 class UserInviteSerializer(serializers.Serializer):
-    """Serializer for inviting/creating a new user in an organization."""
     email = serializers.EmailField()
     full_name = serializers.CharField(max_length=255)
     role = serializers.ChoiceField(choices=UserProfile.ROLE_CHOICES, default='employee')
@@ -94,7 +95,6 @@ class UserInviteSerializer(serializers.Serializer):
 
 
 class StaffInviteSerializer(serializers.Serializer):
-    """Serializer for inviting/creating platform-level staff."""
     email = serializers.EmailField()
     full_name = serializers.CharField(max_length=255)
     role = serializers.ChoiceField(choices=[
