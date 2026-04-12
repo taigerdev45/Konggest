@@ -149,11 +149,10 @@ export default function LandingPage() {
       {/* ═══ HERO ═══ */}
       <section className={styles.hero}>
         <div className={styles.heroBackground}>
-          <div className={styles.gradientOrb1} />
-          <div className={styles.gradientOrb2} />
+          <div className="bg-mesh" style={{ opacity: 0.4 }} />
         </div>
         
-        <div className={styles.heroContent}>
+        <div className={`${styles.heroContent} animate-in`}>
           <div className={styles.heroBadge}>
             <span>✨</span>
             <span>Plateforme RH #1 au Gabon</span>
@@ -167,12 +166,12 @@ export default function LandingPage() {
           
           <p className={styles.heroSubtitle}>
             La plateforme SaaS tout-en-un qui simplifie la gestion RH. 
-            Du recrutement à la paie, tout en un seul clic.
+            Une expérience ultra-premium pour des entreprises en pleine croissance.
           </p>
           
           <div className={styles.heroCta}>
             <Link href={user ? "/dashboard" : "/register"} className={styles.btnHero}>
-              {user ? 'Mon espace' : 'Démarrer gratuitement'}
+              {user ? 'Mon espace' : 'Essai gratuit'}
               <span>→</span>
             </Link>
             <a href="#features" className={styles.btnGhostHero}>

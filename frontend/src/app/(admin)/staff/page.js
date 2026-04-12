@@ -38,84 +38,100 @@ export default function StaffDashboardPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   return (
-    <div className="animate-fade-in dashboard-saas">
+    <div className="animate-in dashboard-saas">
+      {/* Mesh Background for Staff space */}
+      <div className="bg-mesh" style={{ opacity: 0.4 }} />
+
       {/* Header Section */}
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-end mb-10 relative z-10">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight">🎛️ Centre de Contrôle</h1>
-          <p className="text-slate-500 mt-1">Supervision globale et revenus récurrents (MRR).</p>
+          <span className="badge badge-primary mb-2 animate-fade-in">SYSTEM MONITORING</span>
+          <h1 className="text-4xl font-black tracking-tight text-slate-800">Command Center</h1>
+          <p className="text-slate-500 mt-1 font-medium">Real-time platform analytics & revenue tracking.</p>
         </div>
         <button 
-          className={`btn p-3 rounded-full transition-all ${loading ? 'bg-slate-100' : 'bg-white shadow-sm border hover:shadow-md'}`}
+          className={`iconBtn ${loading ? 'animate-glow' : ''}`}
           onClick={fetchData} 
           disabled={loading}
+          title="Actualiser les données"
         >
-          <HiOutlineRefresh className={loading ? 'animate-spin text-primary' : 'text-slate-600'} size={20} />
+          <HiOutlineRefresh className={loading ? 'animate-spin text-primary' : ''} />
         </button>
       </div>
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-2xl mb-8 border border-red-100 flex items-center gap-3">
-          <HiOutlineShieldExclamation size={24} />
-          <span>{error}</span>
+        <div className="glass-card border-red-200 text-red-600 p-5 mb-8 flex items-center gap-4 animate-in">
+          <div className="p-3 bg-red-100 rounded-xl"><HiOutlineShieldExclamation size={24} /></div>
+          <span className="font-bold">{error}</span>
         </div>
       )}
 
       {loading && !stats ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-3xl" />
+            <div key={i} className="skeleton h-32 w-full" />
           ))}
         </div>
       ) : stats ? (
-        <>
+        <div className="relative z-10">
           {/* Main KPI Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            {/* MRR Card (New) */}
-            <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-6 rounded-3xl text-white shadow-indigo-200 shadow-xl">
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-white/20 rounded-xl"><HiOutlineCurrencyDollar size={24} /></div>
-                <span className="text-xs font-bold bg-white/20 px-2 py-1 rounded-full">Mensuel</span>
+            {/* MRR Card (Premium Highlight) */}
+            <div className="premium-card bg-indigo-600 text-white animate-in" style={{ animationDelay: '0.1s' }}>
+              <div className="flex justify-between items-start mb-6">
+                <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md shadow-lg">
+                  <HiOutlineCurrencyDollar size={28} />
+                </div>
+                <div className="badge bg-white/20 text-white border-0">MRR</div>
               </div>
-              <h3 className="text-2xl font-bold">{formatCurrency(stats.mrr || 0)}</h3>
-              <p className="text-white/80 text-sm mt-1">Revenu Récurrent (MRR)</p>
+              <h3 className="text-3xl font-black mb-1 leading-tight">{formatCurrency(stats.mrr || 0)}</h3>
+              <p className="text-white/70 text-sm font-bold uppercase tracking-widest">Monthly Recurring Revenue</p>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><HiOutlineOfficeBuilding size={24} /></div>
+            <div className="glass-card animate-in" style={{ animationDelay: '0.2s' }}>
+              <div className="flex items-center gap-5 mb-6">
+                <div className="p-3 bg-emerald-100 text-emerald-600 rounded-2xl shadow-inner">
+                  <HiOutlineOfficeBuilding size={26} />
+                </div>
                 <div>
-                  <h4 className="text-2xl font-bold text-slate-800">{stats.total_organizations || 0}</h4>
-                  <p className="text-slate-500 text-sm">Organisations</p>
+                  <h4 className="text-3xl font-black text-slate-800 leading-tight">{stats.total_organizations || 0}</h4>
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">Organizations</p>
                 </div>
               </div>
-              <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-slate-100 rounded-full overflow-hidden shadow-inner">
                 <div 
-                  className="h-full bg-emerald-500 rounded-full" 
-                  style={{ width: `${(stats.active_organizations / stats.total_organizations) * 100}%` }} 
+                  className="h-full bg-emerald-500 rounded-full shadow-[0_0_10px_rgba(16,185,129,0.5)] transition-all duration-1000" 
+                  style={{ width: `${(stats.active_organizations / (stats.total_organizations || 1)) * 100}%` }} 
                 />
               </div>
-              <p className="text-[10px] text-slate-400 mt-2 uppercase font-bold tracking-wider">
-                {stats.active_organizations || 0} ACTIVES
-              </p>
+              <div className="flex justify-between mt-3">
+                <span className="text-[10px] text-slate-400 font-black tracking-widest uppercase">
+                  {stats.active_organizations || 0} Active Units
+                </span>
+                <span className="text-[10px] text-emerald-600 font-black tracking-widest">HEALTHY</span>
+              </div>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><HiOutlineUsers size={24} /></div>
+            <div className="glass-card animate-in" style={{ animationDelay: '0.3s' }}>
+              <div className="flex items-center gap-5">
+                <div className="p-3 bg-blue-100 text-blue-600 rounded-2xl shadow-inner">
+                  <HiOutlineUsers size={26} />
+                </div>
                 <div>
-                  <h4 className="text-2xl font-bold text-slate-800">{stats.total_employees || 0}</h4>
-                  <p className="text-slate-500 text-sm">Employés Gérés</p>
+                  <h4 className="text-3xl font-black text-slate-800 leading-tight">{stats.total_employees || 0}</h4>
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">Managed Talent</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="p-3 bg-red-50 text-red-600 rounded-2xl"><HiOutlineShieldExclamation size={24} /></div>
+            <div className="glass-card animate-in" style={{ animationDelay: '0.4s' }}>
+              <div className="flex items-center gap-5">
+                <div className="p-3 bg-red-100 text-red-600 rounded-2xl shadow-inner">
+                  <HiOutlineShieldExclamation size={26} />
+                </div>
                 <div>
-                  <h4 className="text-2xl font-bold text-slate-800">{stats.failed_attempts || 0}</h4>
-                  <p className="text-slate-500 text-sm">Alertes de Sécurité</p>
+                  <h4 className="text-3xl font-black text-slate-800 leading-tight">{stats.failed_attempts || 0}</h4>
+                  <p className="text-slate-500 text-sm font-bold uppercase tracking-wider">Security Events</p>
                 </div>
               </div>
             </div>
@@ -123,23 +139,26 @@ export default function StaffDashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Plan Distribution */}
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="font-bold text-slate-800 flex items-center gap-2">
-                  <HiOutlineChartBar className="text-primary" /> Distribution des Plans
+            <div className="glass-card animate-in p-8" style={{ animationDelay: '0.5s' }}>
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="font-black text-slate-800 text-lg flex items-center gap-3">
+                  <div className="w-2 h-6 bg-primary rounded-full" /> Plan Distribution
                 </h3>
               </div>
-              <div className="space-y-5">
+              <div className="space-y-6">
                 {(stats.org_distribution || []).map((item, i) => (
-                  <div key={i}>
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="font-medium text-slate-600 uppercase tracking-tight">{item.plan}</span>
-                      <span className="font-bold text-slate-800">{item.count} orgs</span>
+                  <div key={i} className="group">
+                    <div className="flex justify-between text-sm mb-2 px-1">
+                      <span className="font-bold text-slate-500 uppercase tracking-widest text-[11px] group-hover:text-primary transition-colors">{item.plan}</span>
+                      <span className="font-black text-slate-800">{item.count}</span>
                     </div>
-                    <div className="h-2.5 bg-slate-50 rounded-full overflow-hidden">
+                    <div className="h-3 bg-slate-50 rounded-full overflow-hidden shadow-inner border border-slate-100">
                       <div 
-                        className={`h-full rounded-full ${item.plan === 'premium' ? 'bg-indigo-500' : item.plan === 'pro' ? 'bg-blue-500' : 'bg-slate-300'}`}
-                        style={{ width: `${(item.count / stats.total_organizations) * 100}%` }}
+                        className={`h-full rounded-full transition-all duration-1000 ${
+                          item.plan === 'premium' ? 'bg-indigo-500 shadow-[0_0_15px_var(--staff-glow)]' : 
+                          item.plan === 'pro' ? 'bg-blue-500' : 'bg-slate-300'
+                        }`}
+                        style={{ width: `${(item.count / (stats.total_organizations || 1)) * 100}%` }}
                       />
                     </div>
                   </div>
@@ -148,37 +167,32 @@ export default function StaffDashboardPage() {
             </div>
 
             {/* Health & Usage */}
-            <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
-              <h3 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <HiOutlineBadgeCheck className="text-emerald-500" /> État de Santé du Système
+            <div className="glass-card animate-in p-8" style={{ animationDelay: '0.6s' }}>
+              <h3 className="font-black text-slate-800 text-lg mb-8 flex items-center gap-3">
+                <div className="w-2 h-6 bg-emerald-500 rounded-full" /> System Vitals
               </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-slate-50 rounded-2xl">
-                  <p className="text-xs text-slate-500 mb-1">Documents RH</p>
-                  <p className="text-xl font-bold text-slate-800">{stats.total_documents || 0}</p>
+              <div className="grid grid-cols-2 gap-6">
+                <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-primary/20 transition-all group">
+                  <p className="text-[10px] text-slate-400 mb-1 font-black tracking-widest uppercase">HR Artifacts</p>
+                  <p className="text-2xl font-black text-slate-800 group-hover:text-primary transition-colors">{stats.total_documents || 0}</p>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-2xl">
-                  <p className="text-xs text-slate-500 mb-1">Flux de Congés</p>
-                  <p className="text-xl font-bold text-slate-800">{stats.total_leave_requests || 0}</p>
+                <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-primary/20 transition-all group">
+                  <p className="text-[10px] text-slate-400 mb-1 font-black tracking-widest uppercase">Leave Velocity</p>
+                  <p className="text-2xl font-black text-slate-800 group-hover:text-primary transition-colors">{stats.total_leave_requests || 0}</p>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-2xl">
-                  <p className="text-xs text-slate-500 mb-1">Connexions (24h)</p>
-                  <p className="text-xl font-bold text-slate-800">{stats.recent_logins || 0}</p>
+                <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-primary/20 transition-all group">
+                  <p className="text-[10px] text-slate-400 mb-1 font-black tracking-widest uppercase">Active Sessions</p>
+                  <p className="text-2xl font-black text-slate-800 group-hover:text-primary transition-colors">{stats.recent_logins || 0}</p>
                 </div>
-                <div className="p-4 bg-slate-50 rounded-2xl">
-                  <p className="text-xs text-slate-500 mb-1">Temps de Réponse</p>
-                  <p className="text-xl font-bold text-emerald-600">82ms</p>
+                <div className="p-5 bg-slate-50/50 rounded-2xl border border-slate-100 hover:border-primary/20 transition-all group">
+                  <p className="text-[10px] text-slate-400 mb-1 font-black tracking-widest uppercase">Latency Avg</p>
+                  <p className="text-2xl font-black text-emerald-600">82ms</p>
                 </div>
               </div>
             </div>
           </div>
-        </>
+        </div>
       ) : null}
-
-      <style jsx>{`
-        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-      `}</style>
     </div>
   );
 }

@@ -100,23 +100,15 @@ export default function Sidebar() {
         {/* Logo */}
         <div className={styles.logo}>
           <div className={styles.logoIcon}>
-            <img src="/logo.png" alt="Logo" width={32} height={32} />
+            <img src="/logo.png" alt="Logo" />
           </div>
           {(!collapsed || isMobile) && <span className={styles.logoText}>Konggest</span>}
 
-          {isMobile ? (
-            <button
-              className={styles.collapseBtn}
-              onClick={() => setMobileOpen(false)}
-              aria-label="Fermer le menu"
-            >
-              <HiOutlineX />
-            </button>
-          ) : (
+          {!isMobile && (
             <button
               className={styles.collapseBtn}
               onClick={() => setCollapsed(!collapsed)}
-              aria-label="Toggle sidebar"
+              title={collapsed ? "Agrandir" : "Réduire"}
             >
               <HiOutlineChevronLeft className={collapsed ? styles.rotated : ''} />
             </button>
@@ -139,7 +131,6 @@ export default function Sidebar() {
                 >
                   <Icon className={styles.navIcon} />
                   {(!collapsed || isMobile) && <span>{item.label}</span>}
-                  {isActive && <div className={styles.activeIndicator} />}
                 </Link>
               );
             })}

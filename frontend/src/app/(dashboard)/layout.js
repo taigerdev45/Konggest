@@ -37,10 +37,16 @@ export default function DashboardLayout({ children }) {
 
   return (
     <div className={styles.layout}>
+      {/* Dynamic Background */}
+      <div className="bg-mesh" />
+      
       <Sidebar />
       <Header />
+      
       <main className={styles.main}>
-        {children}
+        <div className="animate-in">
+          {children}
+        </div>
       </main>
     </div>
   );

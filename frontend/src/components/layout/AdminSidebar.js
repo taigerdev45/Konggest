@@ -79,11 +79,11 @@ export default function AdminSidebar() {
         <div className={styles.header}>
           <div className={styles.logoArea}>
             <div className={styles.logoIcon}>
-              <img src="/logo.png" alt="Logo" width={28} height={28} />
+              <img src="/logo.png" alt="Logo" />
             </div>
             <div className={styles.logoText}>
               <span className={styles.brand}>Konggest</span>
-              <span className={styles.badge}>ADMIN</span>
+              <span className={styles.badge}>CONTROL CENTER</span>
             </div>
           </div>
           {isMobile && (
@@ -95,7 +95,7 @@ export default function AdminSidebar() {
 
         {/* Navigation */}
         <nav className={styles.nav}>
-          <span className={styles.sectionLabel}>PLATEFORME</span>
+          <span className={styles.sectionLabel}>SYSTEM CONTROL</span>
           {ADMIN_NAV.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
@@ -107,13 +107,12 @@ export default function AdminSidebar() {
               >
                 <Icon className={styles.navIcon} />
                 <span>{item.label}</span>
-                {active && <div className={styles.activeBar} />}
               </Link>
             );
           })}
 
           <div className={styles.divider} />
-          <span className={styles.sectionLabel}>ACCÈS RAPIDE</span>
+          <span className={styles.sectionLabel}>SHORTCUTS</span>
           <Link href="/dashboard" className={styles.navItem}>
             <HiOutlineChartBar className={styles.navIcon} />
             <span>Vue Entreprise</span>
@@ -124,8 +123,8 @@ export default function AdminSidebar() {
         <div className={styles.userSection}>
           <div className={styles.avatar}>{initials}</div>
           <div className={styles.userInfo}>
-            <span className={styles.userName}>{user?.profile?.full_name || 'Admin'}</span>
-            <span className={styles.userRole}>SUPER ADMIN</span>
+            <span className={styles.userName}>{user?.profile?.full_name || 'Staff User'}</span>
+            <span className={styles.userRole}>SYSTEM ADMIN</span>
           </div>
           <button className={styles.logoutBtn} onClick={logout} title="Déconnexion">
             <HiOutlineLogout />
