@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { HiOutlineClock, HiOutlineLogin, HiOutlineLogout, HiOutlineRefresh, HiOutlineCheckCircle } from 'react-icons/hi';
 import api from '@/lib/api';
+import AttendanceQR from '@/components/attendance/AttendanceQR';
 
 export default function TimeTrackingPage() {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState(null);
   const [submitting, setSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState('history'); // 'history' or 'qr'
 
   const [toast, setToast] = useState({ show: false, type: '', text: '' });
   const [statsData, setStatsData] = useState(null);
@@ -77,6 +79,9 @@ export default function TimeTrackingPage() {
     }
   };
 
+  const userRole = me?.profile?.role || 'employee';
+  const canManageQR = ['admin', 'hr', 'manager'].includes(userRole);
+
   const stats = {
     presence: statsData?.today?.presence_rate || '0%',
     average: statsData?.month?.avg_daily_hours || '0h',
@@ -139,60 +144,81 @@ export default function TimeTrackingPage() {
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0 }}>
-        <div className="p-lg border-b flex justify-between items-center">
-          <h3 style={{ margin: 0 }}>Historique récent</h3>
-          {todayEntry && (
-            <div className="badge badge-primary">
-              Aujourd&apos;hui : {todayEntry.check_in} {todayEntry.check_out ? `- ${todayEntry.check_out}` : '(En cours)'}
-            </div>
-          )}
+      {canManageQR && (
+        <div className="flex gap-4 mb-6 border-b">
+          <button 
+            onClick={() => setActiveTab('history')}
+            className={`pb-3 px-4 font-bold text-sm transition ${activeTab === 'history' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400 font-medium'}`}
+          >
+            HISTORIQUE
+          </button>
+          <button 
+            onClick={() => setActiveTab('qr')}
+            className={`pb-3 px-4 font-bold text-sm transition ${activeTab === 'qr' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-400 font-medium'}`}
+          >
+            STATION QR CODE
+          </button>
         </div>
-        <div className="table-container">
-          <table style={{ margin: 0 }}>
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Arrivée</th>
-                <th>Départ</th>
-                <th>Pause</th>
-                <th>Total</th>
-                <th>Statut</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                [...Array(3)].map((_, i) => (
-                  <tr key={i} className="skeleton-row">
-                    <td colSpan="6"><div className="skeleton" style={{ height: 20 }} /></td>
-                  </tr>
-                ))
-              ) : Array.isArray(entries) && entries.length > 0 ? (
-                entries.map(e => (
-                  <tr key={e.id}>
-                    <td>{new Date(e.date).toLocaleDateString('fr-FR')}</td>
-                    <td>{e.check_in}</td>
-                    <td>{e.check_out || '--:--'}</td>
-                    <td>{e.break_minutes} min</td>
-                    <td style={{ fontWeight: 600 }}>{e.worked_hours ? `${e.worked_hours}h` : '-'}</td>
-                    <td>
-                      <span className={`badge ${e.check_out ? 'badge-success' : 'badge-warning'}`}>
-                        {e.check_out ? 'Complet' : 'En cours'}
-                      </span>
+      )}
+
+      {activeTab === 'qr' && canManageQR ? (
+        <AttendanceQR organizationName={me?.organization_name || 'Votre Organisation'} />
+      ) : (
+        <div className="card" style={{ padding: 0 }}>
+          <div className="p-lg border-b flex justify-between items-center">
+            <h3 style={{ margin: 0 }}>Historique récent</h3>
+            {todayEntry && (
+              <div className="badge badge-primary">
+                Aujourd&apos;hui : {todayEntry.check_in} {todayEntry.check_out ? `- ${todayEntry.check_out}` : '(En cours)'}
+              </div>
+            )}
+          </div>
+          <div className="table-container">
+            <table style={{ margin: 0 }}>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Arrivée</th>
+                  <th>Départ</th>
+                  <th>Pause</th>
+                  <th>Total</th>
+                  <th>Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  [...Array(3)].map((_, i) => (
+                    <tr key={i} className="skeleton-row">
+                      <td colSpan="6"><div className="skeleton" style={{ height: 20 }} /></td>
+                    </tr>
+                  ))
+                ) : Array.isArray(entries) && entries.length > 0 ? (
+                  entries.map(e => (
+                    <tr key={e.id}>
+                      <td>{new Date(e.date).toLocaleDateString('fr-FR')}</td>
+                      <td>{e.check_in}</td>
+                      <td>{e.check_out || '--:--'}</td>
+                      <td>{e.break_minutes} min</td>
+                      <td style={{ fontWeight: 600 }}>{e.worked_hours ? `${e.worked_hours}h` : '-'}</td>
+                      <td>
+                        <span className={`badge ${e.check_out ? 'badge-success' : 'badge-warning'}`}>
+                          {e.check_out ? 'Complet' : 'En cours'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
+                      Aucun historique disponible.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
-                    Aucun historique disponible.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

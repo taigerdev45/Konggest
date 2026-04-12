@@ -1,28 +1,47 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import api from '@/lib/api';
-import { HiOutlineUserAdd, HiOutlineCheckCircle, HiOutlineClock, HiOutlineDocumentDownload, HiOutlineXCircle } from 'react-icons/hi';
+import {
+  DndContext,
+  DragOverlay,
+  closestCorners,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import KanbanColumn from '@/components/recruitment/KanbanColumn';
+import CandidateCard from '@/components/recruitment/CandidateCard';
 
 const STAGES = [
-  { id: 'new', label: 'Nouveau', color: 'bg-blue-100 border-blue-300 text-blue-800' },
-  { id: 'screening', label: 'Présélection', color: 'bg-yellow-100 border-yellow-300 text-yellow-800' },
-  { id: 'interview', label: 'Entretien', color: 'bg-orange-100 border-orange-300 text-orange-800' },
-  { id: 'offer', label: 'Offre', color: 'bg-purple-100 border-purple-300 text-purple-800' },
-  { id: 'hired', label: 'Embauché', color: 'bg-green-100 border-green-300 text-green-800' },
-  { id: 'rejected', label: 'Refusé', color: 'bg-red-100 border-red-300 text-red-800' },
+  { id: 'new', label: 'Nouveau', color: 'bg-blue-500 border-blue-100 text-blue-700' },
+  { id: 'screening', label: 'Présélection', color: 'bg-amber-500 border-amber-100 text-amber-700' },
+  { id: 'interview', label: 'Entretien', color: 'bg-indigo-500 border-indigo-100 text-indigo-700' },
+  { id: 'offer', label: 'Offre', color: 'bg-purple-500 border-purple-100 text-purple-700' },
+  { id: 'hired', label: 'Embauché', color: 'bg-emerald-500 border-emerald-100 text-emerald-700' },
+  { id: 'rejected', label: 'Refusé', color: 'bg-rose-500 border-rose-100 text-rose-700' },
 ];
 
 export default function RecruitmentDashboard() {
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeId, setActiveId] = useState(null);
   const [toast, setToast] = useState({ show: false, text: '' });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   const fetchApplications = async () => {
     try {
       const res = await api.get('/recruitment/applications/');
-      setApplications(res.results || res || []);
+      const data = Array.isArray(res.results) ? res.results : (Array.isArray(res) ? res : []);
+      setApplications(data);
     } catch (err) {
       console.error(err);
     } finally {
@@ -33,13 +52,11 @@ export default function RecruitmentDashboard() {
   useEffect(() => {
     fetchApplications();
 
-    // R6 : Websocket Realtime pour de nouvelles candidatures
     const channel = supabase
       .channel('public:konggest_public_recruitment')
       .on('broadcast', { event: 'new_application' }, (payload) => {
-        setToast({ show: true, text: `Nouvelle candidature : ${payload.payload.candidate_name} pour ${payload.payload.job_title} !` });
+        setToast({ show: true, text: `Nouvelle candidature : ${payload.payload.candidate_name} !` });
         setTimeout(() => setToast({ show: false, text: '' }), 5000);
-        // Refresh the board
         fetchApplications();
       })
       .subscribe();
@@ -49,98 +66,120 @@ export default function RecruitmentDashboard() {
     };
   }, []);
 
-  const updateStage = async (appId, newStage) => {
-    try {
-      await api.patch(`/recruitment/applications/${appId}/`, { stage: newStage });
-      setApplications(prev => prev.map(app => app.id === appId ? { ...app, stage: newStage } : app));
-    } catch (err) {
-      alert("Erreur lors de la mise à jour");
+  const handleDragStart = (event) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragOver = (event) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeApp = applications.find(a => a.id === active.id);
+    const overId = over.id;
+
+    // Is it dropping over a column?
+    const isOverAColumn = STAGES.some(s => s.id === overId);
+    
+    if (isOverAColumn && activeApp.stage !== overId) {
+      setApplications(prev => prev.map(a => a.id === active.id ? { ...a, stage: overId } : a));
     }
   };
 
-  const getSupabaseFileUrl = (path) => {
-    if (!path) return null;
-    if (path.startsWith('http')) return path; // Old backward compatibility
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    setActiveId(null);
+    if (!over) return;
+
+    const appId = active.id;
+    const activeApp = applications.find(a => a.id === appId);
     
-    // Generates a public URL (if the bucket is public) or we need a signed URL.
-    // For now assuming the HR has access through the signed proxy if needed, or we just rely on Supabase link
-    const { data } = supabase.storage.from('resumes').getPublicUrl(path);
-    return data.publicUrl;
+    // Determine the new stage
+    let newStage = over.id;
+    // If we dropped over another card, get its stage
+    const overApp = applications.find(a => a.id === over.id);
+    if (overApp) {
+      newStage = overApp.stage;
+    }
+
+    if (activeApp.stage !== newStage) {
+      // Update in base
+      try {
+        await api.patch(`/recruitment/applications/${appId}/`, { stage: newStage });
+        setApplications(prev => prev.map(a => a.id === appId ? { ...a, stage: newStage } : a));
+      } catch (err) {
+        console.error("Failed to update status", err);
+        fetchApplications(); // Revert
+      }
+    }
   };
 
-  if (loading) return <div className="p-10 text-center">Chargement du pipeline...</div>;
+  const activeApp = activeId ? applications.find(a => a.id === activeId) : null;
+
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-500 font-medium">Chargement du pipeline...</p>
+        </div>
+    </div>
+  );
 
   return (
-    <div className="max-w-full p-4 h-[calc(100vh-80px)] flex flex-col">
+    <div className="max-w-full h-full flex flex-col bg-white">
       {toast.show && (
-        <div className="fixed top-20 right-4 z-50 bg-blue-600 text-white p-4 rounded-lg shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-5">
-          <HiOutlineUserAdd className="text-xl" />
-          <span className="font-medium">{toast.text}</span>
+        <div className="fixed bottom-8 right-8 z-50 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-in fade-in slide-in-from-bottom-5 border border-white/10">
+          <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+            <HiOutlineUserAdd className="text-xl" />
+          </div>
+          <div>
+            <p className="text-sm font-bold">Nouvelle de Konggest</p>
+            <p className="text-xs text-gray-400">{toast.text}</p>
+          </div>
         </div>
       )}
 
-      <div className="mb-6 flex justify-between items-center">
+      <div className="px-8 pt-8 pb-6 flex justify-between items-end">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">Pipeline de Recrutement</h1>
-          <p className="text-gray-500 text-sm mt-1">Glissez/Changez le statut des candidats en temps réel.</p>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Recrutement</h1>
+          <p className="text-gray-500 font-medium mt-1">Gérez vos talents par glisser-déposer.</p>
         </div>
-        <button onClick={fetchApplications} className="btn btn-outlineborder border-gray-300 px-4 py-2 rounded-lg bg-white shadow-sm hover:bg-gray-50">
-          Rafraîchir
-        </button>
+        <div className="flex gap-3">
+          <button onClick={fetchApplications} className="btn bg-gray-50 text-gray-700 border border-gray-200 px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-gray-100 transition shadow-sm">
+            Rafraîchir
+          </button>
+          <button className="btn bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-blue-700 transition shadow-lg shadow-blue-200">
+            Nouveau Candidat
+          </button>
+        </div>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 flex-1 items-start">
-        {STAGES.map(stage => {
-          const columnApps = applications.filter(a => a.stage === stage.id);
-          return (
-            <div key={stage.id} className="min-w-[300px] w-[300px] bg-gray-50 rounded-xl border p-3 flex flex-col max-h-full">
-              <div className="flex justify-between items-center mb-4 px-1">
-                <h3 className={`text-sm font-bold px-3 py-1 rounded-full border ${stage.color}`}>
-                  {stage.label}
-                </h3>
-                <span className="text-gray-500 text-xs font-semibold bg-gray-200 px-2 py-1 rounded-full">{columnApps.length}</span>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                {columnApps.map(app => (
-                  <div key={app.id} className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-semibold text-gray-800 text-sm">{app.first_name} {app.last_name}</h4>
-                    </div>
-                    <p className="text-xs font-medium text-blue-600 mb-2 truncate" title={app.job_title}>{app.job_title}</p>
-                    
-                    <div className="text-xs text-gray-500 mb-3 space-y-1">
-                      <p className="truncate">{app.email}</p>
-                      <p>{new Date(app.created_at).toLocaleDateString()}</p>
-                    </div>
+      <div className="flex-1 overflow-x-auto px-8 pb-8 flex gap-6 items-start scroll-smooth">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          {STAGES.map(stage => (
+            <KanbanColumn 
+              key={stage.id} 
+              stage={stage} 
+              applications={applications.filter(a => a.stage === stage.id)} 
+            />
+          ))}
 
-                    <div className="flex justify-between items-center pt-2 border-t mt-2">
-                      <select 
-                        className="text-xs border rounded p-1 bg-gray-50 text-gray-700 outline-none"
-                        value={app.stage}
-                        onChange={(e) => updateStage(app.id, e.target.value)}
-                      >
-                        {STAGES.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                      </select>
-                      
-                      {app.resume_url && (
-                        <a 
-                          href={getSupabaseFileUrl(app.resume_url)}
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="text-gray-400 hover:text-blue-600 transition"
-                          title="Télécharger le CV"
-                        >
-                          <HiOutlineDocumentDownload size={18} />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
+          <DragOverlay>
+            {activeId ? (
+              <div className="rotate-3 cursor-grabbing scale-105 transition-transform">
+                <CandidateCard app={activeApp} />
               </div>
-            </div>
-          );
-        })}
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+        
+        {/* Fill space at the end */}
+        <div className="min-w-[40px] h-full" />
       </div>
     </div>
   );

@@ -262,16 +262,25 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
         if not tenant_id:
             return Response({'error': 'Organisation non identifiée.'}, status=400)
 
-        today = date.today()
-        expires_at = timezone.now().replace(hour=23, minute=59, second=59, microsecond=0)
+        # AT3 — Ajusté pour supporter le long-terme (60 jours)
+        is_long_term = request.data.get('long_term', False)
+        
+        if is_long_term:
+            expires_at = timezone.now() + timedelta(days=60)
+            # Pour le long terme, on utilise une "date virtuelle" ou on ignore la date dans la clé de session
+            # afin que le QR reste identique pendant les 60 jours.
+            target_date = date(2099, 12, 31) # Date sentinelle pour QR de station
+        else:
+            expires_at = timezone.now().replace(hour=23, minute=59, second=59, microsecond=0)
+            target_date = today
 
-        # Token HMAC déterministe pour ce tenant + cette date
-        token = _generate_qr_token(str(tenant_id), str(today))
+        # Token HMAC déterministe
+        token = _generate_qr_token(str(tenant_id), str(target_date))
 
-        # Créer ou récupérer la session du jour
+        # Créer ou récupérer la session
         qr_session, created = QRSession.objects.get_or_create(
             organization_id=tenant_id,
-            date=today,
+            date=target_date,
             defaults={
                 'token': token,
                 'expires_at': expires_at,

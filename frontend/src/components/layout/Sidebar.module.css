@@ -19,6 +19,22 @@
   box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
 }
 
+/* Background Logo Branding - Subtle */
+.sidebar::before {
+  content: '';
+  position: absolute;
+  top: 10%;
+  right: -50px;
+  width: 300px;
+  height: 300px;
+  background: url('/logo.png') no-repeat center;
+  background-size: contain;
+  opacity: 0.02; /* Extremely subtle to ensure readability */
+  filter: grayscale(1) brightness(2);
+  pointer-events: none;
+  z-index: -1;
+}
+
 .sidebar.collapsed {
   width: var(--sidebar-collapsed);
 }
