@@ -5,7 +5,8 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     RegisterView, LoginView, ProfileView, AuditLogViewSet, 
     StaffDashboardView, OrganizationViewSet, UserProfileViewSet, 
-    UserPlatformViewSet, PlatformStaffViewSet, InvoiceViewSet
+    UserPlatformViewSet, PlatformStaffViewSet, InvoiceViewSet,
+    PublicPartnerView
 )
 
 router = DefaultRouter()
