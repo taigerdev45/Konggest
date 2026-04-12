@@ -1,3 +1,9 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import api from '@/lib/api';
+import { HiOutlineUserAdd } from 'react-icons/hi';
 import {
   DndContext,
   DragOverlay,
