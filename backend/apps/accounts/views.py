@@ -175,7 +175,7 @@ class LoginView(APIView):
                 'id': user.id, 'email': user.email, 'full_name': user.get_full_name(),
                 'role': 'saas_admin' if is_saas_admin else user.profile.role,
                 'is_saas_admin': is_saas_admin,
-                'organization': user.profile.organization.name if not is_saas_admin else None,
+                'organization': user.profile.organization.name if (not is_saas_admin and hasattr(user, 'profile') and user.profile.organization) else None,
                 'redirect_to': '/staff' if is_saas_admin else '/dashboard',
             }
         })
