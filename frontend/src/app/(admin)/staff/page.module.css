@@ -1,0 +1,251 @@
+/* Staff Dashboard — Senior Executive Aesthetic */
+
+.container {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+}
+
+.titleArea h1 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #0F172A;
+  letter-spacing: -0.04em;
+  margin-top: 8px;
+}
+
+.subtitle {
+  color: #64748B;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* ─── Grid ─── */
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 32px;
+  margin-bottom: 48px;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  padding: 32px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.05);
+  border-color: #6366F1;
+}
+
+/* MRR Card — Exclusive Focus */
+.mrrCard {
+  background: #020617;
+  color: #FFFFFF;
+  border: none;
+  box-shadow: 0 25px 50px -12px rgba(99, 102, 241, 0.25);
+}
+
+.mrrCard .cardIcon {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818CF8;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.mrrCard h3 {
+  font-size: 2.25rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #FFFFFF;
+}
+
+.mrrCard .cardLabel {
+  color: #94A3B8;
+}
+
+/* Generic Card Elements */
+.cardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 32px;
+}
+
+.cardIcon {
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  background: #F8FAFC;
+  color: #6366F1;
+  font-size: 1.5rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.cardValue {
+  font-size: 2.25rem;
+  font-weight: 900;
+  color: #0F172A;
+  line-height: 1;
+  margin-bottom: 4px;
+  letter-spacing: -0.03em;
+}
+
+.cardLabel {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #64748B;
+}
+
+/* ─── Health Bars ─── */
+.healthTrack {
+  height: 6px;
+  background: #F1F5F9;
+  border-radius: 10px;
+  margin: 16px 0 12px;
+  overflow: hidden;
+}
+
+.healthBar {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 1s ease-in-out;
+}
+
+.healthMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Secondary Sections ─── */
+.secondaryGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.sectionTitle {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sectionTitle::before {
+  content: "";
+  width: 4px;
+  height: 20px;
+  background: #6366F1;
+  border-radius: 4px;
+}
+
+/* Plan Utility */
+.planRow {
+  margin-bottom: 24px;
+}
+
+.planInfo {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.planName {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94A3B8;
+  letter-spacing: 0.1em;
+}
+
+.planCount {
+  font-weight: 900;
+  color: #0F172A;
+}
+
+/* Vitals Grid */
+.vitalsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.vitalBox {
+  padding: 24px;
+  background: #F8FAFC;
+  border-radius: 20px;
+  border: 1px solid #F1F5F9;
+}
+
+.vitalLabel {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
+}
+
+.vitalValue {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #0F172A;
+}
+
+/* ─── Mobile ─── */
+@media (max-width: 1024px) {
+  .secondaryGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 24px 16px;
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  
+  .titleArea h1 {
+    font-size: 2rem;
+  }
+  
+  .kpiGrid {
+    gap: 16px;
+  }
+}

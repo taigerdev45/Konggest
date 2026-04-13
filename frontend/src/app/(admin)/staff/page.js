@@ -8,10 +8,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { 
   HiOutlineOfficeBuilding, HiOutlineUsers, 
   HiOutlineShieldExclamation, HiOutlineCurrencyDollar, 
-  HiOutlineRefresh, HiOutlineTrendingUp,
-  HiOutlineChartBar, HiOutlineBadgeCheck
+  HiOutlineRefresh
 } from 'react-icons/hi';
 import api from '@/lib/api';
+import styles from './page.module.css';
 
 const formatCurrency = (val) => 
   new Intl.NumberFormat('fr-FR', { style: 'decimal' }).format(Math.round(val)) + ' FCFA';
@@ -38,18 +38,16 @@ export default function StaffDashboardPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   return (
-    <div className="animate-in dashboard-saas min-h-screen bg-slate-50/50 p-6 md:p-10">
-      {/* Clean, Senior aesthetic - No background images */}
-
+    <div className={styles.container}>
       {/* Header Section */}
-      <div className="flex justify-between items-end mb-10 relative z-10">
-        <div>
-          <span className="badge badge-primary mb-2 animate-fade-in">SYSTEM MONITORING</span>
-          <h1 className="text-4xl font-black tracking-tight text-slate-800">Command Center</h1>
-          <p className="text-slate-500 mt-1 font-medium">Real-time platform analytics & revenue tracking.</p>
+      <div className={styles.header}>
+        <div className={styles.titleArea}>
+          <span className="badge badge-primary">SYSTEM MONITORING</span>
+          <h1>Command Center</h1>
+          <p className={styles.subtitle}>Real-time platform analytics & revenue tracking.</p>
         </div>
         <button 
-          className={`iconBtn ${loading ? 'animate-glow' : ''}`}
+          className="iconBtn"
           onClick={fetchData} 
           disabled={loading}
           title="Actualiser les données"
@@ -66,100 +64,87 @@ export default function StaffDashboardPage() {
       )}
 
       {loading && !stats ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+        <div className={styles.kpiGrid}>
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="skeleton h-32 w-full" />
+            <div key={i} className="skeleton" style={{ height: '160px', borderRadius: '24px' }} />
           ))}
         </div>
       ) : stats ? (
-        <div className="relative z-10">
+        <div className={styles.content}>
           {/* Main KPI Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+          <div className={styles.kpiGrid}>
             {/* MRR Card (Premium Highlight) */}
-            <div className="relative overflow-hidden p-8 rounded-[2rem] bg-[#020617] text-white shadow-2xl shadow-indigo-500/10 group animate-in" style={{ animationDelay: '0.1s' }}>
-              <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-600/20 blur-[60px] rounded-full -mr-10 -mt-10" />
-              <div className="relative z-10">
-                <div className="flex justify-between items-start mb-8">
-                  <div className="p-3.5 bg-indigo-500/20 text-indigo-400 rounded-2xl backdrop-blur-md border border-white/5">
-                    <HiOutlineCurrencyDollar size={28} />
-                  </div>
-                  <span className="text-[10px] font-black tracking-[0.2em] text-indigo-400/80 uppercase">Flux Mensuel</span>
+            <div className={`${styles.card} ${styles.mrrCard}`}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon}>
+                  <HiOutlineCurrencyDollar />
                 </div>
-                <h3 className="text-3xl font-black mb-1 leading-tight tracking-tighter">{formatCurrency(stats.mrr || 0)}</h3>
-                <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.15em]">Revenue Récurrent (MRR)</p>
+                <span className={styles.cardLabel}>Flux Mensuel</span>
+              </div>
+              <h3 className={styles.cardValue}>{formatCurrency(stats.mrr || 0)}</h3>
+              <p className={styles.cardLabel}>Revenue Récurrent (MRR)</p>
+            </div>
+
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon} style={{ color: '#10B981', background: '#ECFDF5' }}>
+                  <HiOutlineOfficeBuilding />
+                </div>
+                <span className={styles.cardLabel}>Entreprises</span>
+              </div>
+              <h4 className={styles.cardValue}>{stats.total_organizations || 0}</h4>
+              <div className={styles.healthTrack}>
+                <div 
+                  className={styles.healthBar} 
+                  style={{ width: `${(stats.active_organizations / (stats.total_organizations || 1)) * 100}%`, background: '#10B981' }} 
+                />
+              </div>
+              <div className={styles.healthMeta}>
+                <span>{stats.active_organizations || 0} Actives</span>
+                <span>Optimal</span>
               </div>
             </div>
 
-            <div className="glass-card p-8 rounded-[2rem] border-white/40 shadow-xl shadow-slate-200/40 hover:shadow-2xl transition-all duration-500 animate-in" style={{ animationDelay: '0.2s' }}>
-              <div className="flex items-center gap-5 mb-8">
-                <div className="p-3.5 bg-emerald-50 text-emerald-600 rounded-2xl border border-emerald-100">
-                  <HiOutlineOfficeBuilding size={26} />
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon} style={{ color: '#3B82F6', background: '#EFF6FF' }}>
+                  <HiOutlineUsers />
                 </div>
-                <div>
-                  <h4 className="text-3xl font-black text-slate-900 leading-tight tracking-tighter">{stats.total_organizations || 0}</h4>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">Entreprises</p>
-                </div>
+                <span className={styles.cardLabel}>Collab. Gérés</span>
               </div>
-              <div className="space-y-3">
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-1000" 
-                    style={{ width: `${(stats.active_organizations / (stats.total_organizations || 1)) * 100}%` }} 
-                  />
-                </div>
-                <div className="flex justify-between">
-                    <span className="text-[10px] text-slate-400 font-black uppercase tracking-widest">{stats.active_organizations || 0} Actives</span>
-                    <span className="text-[10px] text-emerald-600 font-bold uppercase">Optimal</span>
-                </div>
-              </div>
+              <h4 className={styles.cardValue}>{stats.total_employees || 0}</h4>
+              <p className={styles.cardLabel} style={{ marginTop: '16px' }}>Total Utilisateurs</p>
             </div>
 
-            <div className="glass-card p-8 rounded-[2rem] border-white/40 shadow-xl shadow-slate-200/40 animate-in" style={{ animationDelay: '0.3s' }}>
-              <div className="flex items-center gap-5">
-                <div className="p-3.5 bg-blue-50 text-blue-600 rounded-2xl border border-blue-100">
-                  <HiOutlineUsers size={26} />
+            <div className={styles.card}>
+              <div className={styles.cardHeader}>
+                <div className={styles.cardIcon} style={{ color: '#EF4444', background: '#FEF2F2' }}>
+                  <HiOutlineShieldExclamation />
                 </div>
-                <div>
-                  <h4 className="text-3xl font-black text-slate-900 leading-tight tracking-tighter">{stats.total_employees || 0}</h4>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">Collab. Gérés</p>
-                </div>
+                <span className={styles.cardLabel}>Incidents Sécu.</span>
               </div>
-            </div>
-
-            <div className="glass-card p-8 rounded-[2rem] border-white/40 shadow-xl shadow-slate-200/40 animate-in" style={{ animationDelay: '0.4s' }}>
-              <div className="flex items-center gap-5">
-                <div className="p-3.5 bg-rose-50 text-rose-600 rounded-2xl border border-rose-100">
-                  <HiOutlineShieldExclamation size={26} />
-                </div>
-                <div>
-                  <h4 className="text-3xl font-black text-slate-900 leading-tight tracking-tighter">{stats.failed_attempts || 0}</h4>
-                  <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.15em]">Incidents Sécu.</p>
-                </div>
-              </div>
+              <h4 className={styles.cardValue}>{stats.failed_attempts || 0}</h4>
+              <p className={styles.cardLabel} style={{ marginTop: '16px' }}>Dernières 24h</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="glass-card p-8 rounded-[2rem] border-white shadow-xl shadow-slate-200/40 animate-in" style={{ animationDelay: '0.5s' }}>
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="font-black text-slate-900 text-lg flex items-center gap-3 tracking-tighter uppercase">
-                  <div className="w-1.5 h-6 bg-indigo-500 rounded-full" /> Distribution Plans
-                </h3>
-              </div>
-              <div className="space-y-6">
+          <div className={styles.secondaryGrid}>
+            <div className={styles.card}>
+              <h3 className={styles.sectionTitle}>Distribution Plans</h3>
+              <div className={styles.planList}>
                 {(stats.org_distribution || []).map((item, i) => (
-                  <div key={i} className="group">
-                    <div className="flex justify-between text-sm mb-2 px-1">
-                      <span className="font-black text-slate-400 uppercase tracking-[0.2em] text-[10px] group-hover:text-indigo-600 transition-colors">{item.plan}</span>
-                      <span className="font-black text-slate-900">{item.count}</span>
+                  <div key={i} className={styles.planRow}>
+                    <div className={styles.planInfo}>
+                      <span className={styles.planName}>{item.plan}</span>
+                      <span className={styles.planCount}>{item.count}</span>
                     </div>
-                    <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div className={styles.healthTrack}>
                       <div 
-                        className={`h-full rounded-full transition-all duration-1000 ${
-                          item.plan === 'premium' ? 'bg-indigo-600 shadow-lg shadow-indigo-500/20' : 
-                          item.plan === 'pro' ? 'bg-blue-500' : 'bg-slate-300'
-                        }`}
-                        style={{ width: `${(item.count / (stats.total_organizations || 1)) * 100}%` }}
+                        className={styles.healthBar}
+                        style={{ 
+                          width: `${(item.count / (stats.total_organizations || 1)) * 100}%`,
+                          background: item.plan === 'premium' ? '#6366F1' : item.plan === 'pro' ? '#3B82F6' : '#94A3B8'
+                        }}
                       />
                     </div>
                   </div>
@@ -167,27 +152,24 @@ export default function StaffDashboardPage() {
               </div>
             </div>
 
-            {/* Health & Usage */}
-            <div className="glass-card p-8 rounded-[2rem] border-white shadow-xl shadow-slate-200/40 animate-in" style={{ animationDelay: '0.6s' }}>
-              <h3 className="font-black text-slate-900 text-lg mb-8 flex items-center gap-3 tracking-tighter uppercase">
-                <div className="w-1.5 h-6 bg-emerald-500 rounded-full" /> Santé Système
-              </h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-5 bg-slate-50/50 rounded-2xl border border-white hover:border-indigo-100 transition-all group">
-                  <p className="text-[10px] text-slate-400 mb-1 font-black tracking-widest uppercase">Documents HR</p>
-                  <p className="text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tighter">{stats.total_documents || 0}</p>
+            <div className={styles.card}>
+              <h3 className={styles.sectionTitle}>Santé Système</h3>
+              <div className={styles.vitalsGrid}>
+                <div className={styles.vitalBox}>
+                  <p className={styles.vitalLabel}>Documents HR</p>
+                  <p className={styles.vitalValue}>{stats.total_documents || 0}</p>
                 </div>
-                <div className="p-5 bg-slate-50/50 rounded-2xl border border-white hover:border-indigo-100 transition-all group">
-                  <p className="text-[10px] text-slate-400 mb-1 font-black tracking-widest uppercase">Demandes Congés</p>
-                  <p className="text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tighter">{stats.total_leave_requests || 0}</p>
+                <div className={styles.vitalBox}>
+                  <p className={styles.vitalLabel}>Demandes Congés</p>
+                  <p className={styles.vitalValue}>{stats.total_leave_requests || 0}</p>
                 </div>
-                <div className="p-5 bg-slate-50/50 rounded-2xl border border-white hover:border-indigo-100 transition-all group">
-                  <p className="text-[10px] text-slate-400 mb-1 font-black tracking-widest uppercase">Sessions Actives</p>
-                  <p className="text-2xl font-black text-slate-900 group-hover:text-indigo-600 transition-colors tracking-tighter">{stats.recent_logins || 0}</p>
+                <div className={styles.vitalBox}>
+                  <p className={styles.vitalLabel}>Sessions Actives</p>
+                  <p className={styles.vitalValue}>{stats.recent_logins || 0}</p>
                 </div>
-                <div className="p-5 bg-emerald-50/30 rounded-2xl border border-emerald-100/50 group">
-                  <p className="text-[10px] text-emerald-600/60 mb-1 font-black tracking-widest uppercase">Latence Moy.</p>
-                  <p className="text-2xl font-black text-emerald-600 tracking-tighter">82ms</p>
+                <div className={styles.vitalBox} style={{ background: '#ECFDF5' }}>
+                  <p className={styles.vitalLabel}>Latence Moy.</p>
+                  <p className={styles.vitalValue} style={{ color: '#059669' }}>82ms</p>
                 </div>
               </div>
             </div>
