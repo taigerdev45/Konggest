@@ -65,6 +65,14 @@ export default function RecruitmentDashboard() {
         setTimeout(() => setToast({ show: false, text: '' }), 5000);
         fetchApplications();
       })
+      .on('broadcast', { event: 'application_moved' }, (payload) => {
+        const { application_id, new_stage, candidate_name } = payload.payload;
+        // Optimization: only refresh if we don't have the update locally already
+        // (but since this is for OTHER users, we should update local state)
+        setApplications(prev => prev.map(a => a.id === application_id ? { ...a, stage: new_stage } : a));
+        setToast({ show: true, text: `${candidate_name} déplacé vers ${STAGES.find(s => s.id === new_stage)?.label}` });
+        setTimeout(() => setToast({ show: false, text: '' }), 4000);
+      })
       .subscribe();
 
     return () => {
@@ -169,6 +177,20 @@ export default function RecruitmentDashboard() {
             Nouveau Candidat
           </button>
         </div>
+      </div>
+
+      {/* Dynamic Summary Stats */}
+      <div className="px-6 md:px-12 mb-8 hidden md:flex items-center gap-6 overflow-x-auto no-scrollbar">
+        {STAGES.map(s => {
+          const count = applications.filter(a => a.stage === s.id).length;
+          return (
+            <div key={s.id} className="flex items-center gap-2 whitespace-nowrap bg-white py-2 px-4 rounded-xl border border-gray-50 shadow-sm">
+              <span className={`w-2 h-2 rounded-full ${s.color.split(' ')[0]}`} />
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.label}</span>
+              <span className="ml-1 font-black text-slate-800">{count}</span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Kanban Board */}

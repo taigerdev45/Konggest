@@ -9,14 +9,14 @@
   bottom: 0;
   left: 0;
   width: var(--sidebar-width);
-  background: linear-gradient(180deg, #1E1B4B 0%, #0F172A 100%); /* Premium Indigo Navy Gradient */
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: #020617; /* Solid Slate-950 for Senior Minimalist Look */
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  transition: transform var(--transition-base);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 20px 0 80px rgba(0, 0, 0, 0.5);
 }
 
 /* ─── Header ─── */
@@ -100,15 +100,18 @@
 }
 
 .navItem:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(255, 255, 255, 0.03);
   color: #FFFFFF;
+  transform: translateX(4px);
 }
 
 .navItem.active {
-  background: #6366F1;
-  color: #FFFFFF;
-  font-weight: 600;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  background: rgba(99, 102, 241, 0.1);
+  color: #818CF8; /* Electric Indigo */
+  font-weight: 700;
+  border-right: 3px solid #6366F1;
+  border-radius: 0 10px 10px 0;
+  margin-right: 12px;
 }
 
 .navIcon {

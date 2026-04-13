@@ -24,8 +24,8 @@
 .searchBar {
   position: relative;
   width: 100%;
-  max-width: 180px; /* Reduced from 260px */
-  transition: max-width var(--transition-base);
+  max-width: 240px; /* Slightly larger for usability but still compact */
+  transition: all 0.3s ease;
 }
 
 .searchIcon {
@@ -54,9 +54,9 @@
 
 .searchInput:focus {
   background: white;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-  max-width: 300px; /* Reduced from 480px */
+  border-color: #6366F1;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+  max-width: 320px;
 }
 
 /* ─── Actions ─── */
@@ -135,16 +135,22 @@
   }
 
   .searchBar {
-    max-width: 120px; /* Much smaller on mobile */
+    max-width: 44px; /* Collapse to icon on small mobile if needed, or just very small */
+    overflow: hidden;
   }
   
+  .searchBar:focus-within {
+    max-width: 180px;
+    z-index: 100;
+  }
+
   .searchInput {
-    padding: 8px 12px 8px 36px;
+    padding: 8px 12px 8px 40px;
     font-size: 0.8rem;
   }
 
   .searchIcon {
-    left: 12px;
+    left: 14px;
   }
 
   .actions {

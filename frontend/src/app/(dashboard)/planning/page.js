@@ -85,6 +85,16 @@ export default function PlanningPage() {
         setTimeout(() => setToast({ show: false, text: '' }), 5000);
         fetchPlannings();
       })
+      .on('broadcast', { event: 'schedule.moved' }, (payload) => {
+        const { id, date, employee_id, employee } = payload.payload;
+        setSchedules(prev => prev.map(s => s.id === id ? { ...s, date, employee: employee_id } : s));
+        setToast({ 
+          show: true, 
+          text: `Shift de ${employee} déplacé`,
+          type: 'info'
+        });
+        setTimeout(() => setToast({ show: false, text: '' }), 4000);
+      })
       .subscribe();
 
     return () => {
@@ -265,16 +275,16 @@ export default function PlanningPage() {
               onDragEnd={handleDragEnd}
             >
               <table className="w-full border-collapse">
-                <thead className="sticky top-0 z-20">
-                  <tr className="bg-white">
-                    <th className="p-6 md:p-8 border-r border-b border-gray-50 min-w-[300px] text-left">
+                <thead className="sticky top-0 z-[30]">
+                  <tr className="bg-white/80 backdrop-blur-md">
+                    <th className="p-6 md:p-8 border-r border-b border-gray-100 min-w-[300px] text-left sticky left-0 z-[35] bg-white/95">
                       <div className="flex items-center gap-3 text-slate-400 uppercase text-[10px] font-black tracking-[0.2em] mb-1">
                           <HiOutlineUserGroup size={14} className="text-blue-500" /> Collaborateurs
                       </div>
                       <div className="text-xs font-bold text-slate-300">Organisation Active</div>
                     </th>
                     {days.map((d, i) => (
-                      <th key={i} className={`p-4 md:p-6 border-r border-b border-gray-50 min-w-[160px] text-center ${d.toDateString() === new Date().toDateString() ? 'bg-blue-50/20' : ''}`}>
+                      <th key={i} className={`p-4 md:p-6 border-r border-b border-gray-100 min-w-[180px] text-center ${d.toDateString() === new Date().toDateString() ? 'bg-blue-50/30' : ''}`}>
                         <div className="block text-[9px] uppercase font-black text-slate-400 tracking-widest mb-1.5 leading-none">
                           {d.toLocaleDateString('fr-FR', { weekday: 'short' })}
                         </div>
@@ -287,16 +297,16 @@ export default function PlanningPage() {
                 </thead>
                 <tbody>
                   {employees.map(emp => (
-                    <tr key={emp.id} className="group hover:bg-slate-50/50 transition-all duration-300">
-                      <td className="p-6 md:p-8 text-left border-r border-b border-gray-50 bg-white group-hover:bg-slate-50 transition-all">
+                    <tr key={emp.id} className="group hover:bg-blue-50/20 transition-all duration-300">
+                      <td className="p-6 md:p-8 text-left border-r border-b border-gray-50 bg-white group-hover:bg-blue-50/30 transition-all sticky left-0 z-10">
                         <div className="flex items-center gap-4">
-                           <div className="w-12 h-12 rounded-[1.25rem] bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 flex items-center justify-center font-black shadow-sm border border-white group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all duration-500">
+                           <div className="w-12 h-12 rounded-[1.25rem] bg-gradient-to-br from-slate-100 to-slate-200 text-slate-600 flex items-center justify-center font-black shadow-sm border border-white group-hover:from-blue-600 group-hover:to-blue-700 group-hover:text-white transition-all duration-500 translate-z-0">
                              {emp.first_name[0]}{emp.last_name[0]}
                            </div>
                            <div className="min-w-0">
                              <p className="font-black text-gray-900 truncate uppercase tracking-tighter text-sm leading-tight mb-1">{emp.first_name} {emp.last_name}</p>
                              <div className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                <span className={`w-1.5 h-1.5 rounded-full ${emp.is_active ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
                                 <p className="text-[9px] text-blue-500 font-black uppercase tracking-[0.15em] opacity-70">
                                     {emp.department_name || 'Général'}
                                 </p>

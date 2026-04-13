@@ -333,7 +333,13 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
         today = date.today()
 
         # 1. Vérification HMAC côté serveur (infalsifiable)
-        if not _verify_qr_token(token, str(tenant_id), str(today)):
+        # On vérifie contre la date du jour OU la date sentinelle (2099-12-31) pour le long-terme
+        is_valid = _verify_qr_token(token, str(tenant_id), str(today))
+        if not is_valid:
+            sentinel_date = date(2099, 12, 31)
+            is_valid = _verify_qr_token(token, str(tenant_id), str(sentinel_date))
+
+        if not is_valid:
             logger.warning(f"AT4: Token QR invalide pour tenant {tenant_id}")
             return Response({'error': 'QR Code invalide ou expiré.'}, status=status.HTTP_403_FORBIDDEN)
 

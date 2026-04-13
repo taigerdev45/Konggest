@@ -67,25 +67,35 @@ class ScheduleViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         old_status = serializer.instance.status
+        old_date = serializer.instance.date
+        old_emp = serializer.instance.employee_id
+        
         schedule = serializer.save()
+        
+        # Broadcast if status changes to published
         if schedule.status == 'published' and old_status != 'published':
-            self._broadcast_planning(schedule.organization_id, schedule)
+            self._broadcast_planning(schedule.organization_id, schedule, "schedule.published")
+        # OR if it was already published and just moved
+        elif schedule.status == 'published' and (old_date != schedule.date or old_emp != schedule.employee_id):
+            self._broadcast_planning(schedule.organization_id, schedule, "schedule.moved")
 
-    def _broadcast_planning(self, tenant_id, schedule):
+    def _broadcast_planning(self, tenant_id, schedule, event="schedule.published"):
         try:
             payload = {
                 "id": schedule.id,
                 "date": str(schedule.date),
                 "employee": f"{schedule.employee.first_name} {schedule.employee.last_name}",
+                "employee_id": schedule.employee_id,
                 "start": str(schedule.start_time),
-                "end": str(schedule.end_time)
+                "end": str(schedule.end_time),
+                "status": schedule.status
             }
             threading.Thread(
                 target=_broadcast_realtime_async,
-                args=(f"planning:{tenant_id}", "schedule.published", payload)
+                args=(f"planning:{tenant_id}", event, payload)
             ).start()
-        except:
-            pass
+        except Exception as e:
+            logger.error(f"Planning Broadcast Error: {e}")
 
     @action(detail=False, methods=['post'], url_path='bulk-create')
     def bulk_create(self, request):

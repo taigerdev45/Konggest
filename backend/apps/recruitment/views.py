@@ -186,6 +186,19 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         qs = Application.objects.select_related('job')
         return qs.filter(job__organization_id=tenant_id) if tenant_id else qs
 
+    def perform_update(self, serializer):
+        """Broadcast status change in real-time."""
+        instance = serializer.save()
+        tenant_id = instance.job.organization_id
+        
+        # R6+: Broadcast status change
+        _broadcast_realtime_async(str(tenant_id), 'application_moved', {
+            'application_id': instance.id,
+            'new_stage': instance.stage,
+            'candidate_name': f"{instance.first_name} {instance.last_name}",
+            'job_title': instance.job.title
+        })
+
 class InterviewViewSet(viewsets.ModelViewSet):
     serializer_class = InterviewSerializer
     permission_classes = [IsHRManager]
