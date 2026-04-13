@@ -1,0 +1,215 @@
+/* Time Tracking — Senior Aesthetic */
+
+.container {
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+}
+
+.titleArea h1 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #0F172A;
+  letter-spacing: -0.04em;
+  margin-top: 8px;
+}
+
+.subtitle {
+  color: #64748B;
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 4px;
+}
+
+/* ─── Stats Grid ─── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.statCard {
+  background: #FFFFFF;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 24px;
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+}
+
+.statCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.05);
+  border-color: #6366F1;
+}
+
+.statLabel {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94A3B8;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: 900;
+  color: #0F172A;
+  letter-spacing: -0.02em;
+}
+
+.statIcon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* Colors */
+.emerald .statIcon { background: #ECFDF5; color: #10B981; }
+.blue .statIcon { background: #EFF6FF; color: #3B82F6; }
+.orange .statIcon { background: #FFF7ED; color: #F97316; }
+
+/* ─── Actions ─── */
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+.refreshBtn {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 16px;
+  color: #64748B;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.refreshBtn:hover {
+  background: #F8FAFC;
+  color: #0F172A;
+}
+
+.pointerBtn {
+  padding: 0 32px;
+  height: 56px;
+  border-radius: 16px;
+  font-weight: 900;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pointerIn { background: #6366F1; color: #FFFFFF; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.4); }
+.pointerOut { background: #F43F5E; color: #FFFFFF; box-shadow: 0 10px 20px -5px rgba(244, 63, 94, 0.4); }
+.pointerDisabled { background: #F1F5F9; color: #94A3B8; cursor: not-allowed; }
+
+/* ─── Content ─── */
+.contentCard {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 32px;
+  overflow: hidden;
+  box-shadow: 0 20px 50px -12px rgba(0, 0, 0, 0.05);
+}
+
+.cardHeader {
+  padding: 32px 40px;
+  border-bottom: 1px solid #F1F5F9;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cardTitle h3 {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #0F172A;
+}
+
+.cardTitle p {
+  font-size: 0.9rem;
+  color: #64748B;
+}
+
+/* ─── Table ─── */
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 20px 40px;
+  background: #F8FAFC;
+  text-align: left;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.table td {
+  padding: 24px 40px;
+  font-size: 0.9rem;
+  color: #334155;
+  border-bottom: 1px solid #F1F5F9;
+}
+
+.dateCell {
+  font-weight: 900;
+  color: #0F172A;
+}
+
+.statusBadge {
+  display: inline-flex;
+  padding: 6px 16px;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.complete { background: #ECFDF5; color: #059669; }
+.active { background: #EFF6FF; color: #2563EB; }
+
+/* ─── Mobile ─── */
+@media (max-width: 768px) {
+  .container { padding: 24px 16px; }
+  .header { flex-direction: column; align-items: flex-start; gap: 24px; }
+  .statCard { padding: 24px; }
+  .table th, .table td { padding: 16px 20px; }
+}
