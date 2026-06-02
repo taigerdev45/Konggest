@@ -108,15 +108,28 @@
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   color: #FFFFFF;
+  transform: translateX(4px);
 }
 
 .navItem.active {
-  background: var(--sidebar-active-bg);
+  background: linear-gradient(90deg, var(--sidebar-active-bg) 0%, #3B82F6 100%);
   color: #FFFFFF;
   font-weight: 600;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+}
+
+.navItem.active::after {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 20px;
+  background: #FFFFFF;
+  border-radius: 0 4px 4px 0;
 }
 
 .navIcon {

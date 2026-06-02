@@ -1,109 +1,46 @@
 'use client';
 
-/**
- * Konggest — Public Landing Page (Senior Elite Redesign)
- * High-end professional Corporate SaaS experience.
- */
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
-  HiOutlineUsers, 
-  HiOutlineClock, 
-  HiOutlineSearch, 
-  HiOutlineChartBar,
-  HiOutlineArrowRight,
-  HiOutlineLocationMarker,
-  HiOutlineBriefcase,
-  HiOutlineCheckCircle
+  HiOutlineUsers, HiOutlineCalendar, HiOutlineCurrencyDollar, 
+  HiOutlineChartBar, HiOutlineShieldCheck, HiOutlineClock,
+  HiOutlineMenu, HiOutlineX, HiOutlineArrowRight
 } from 'react-icons/hi';
+import api from '@/lib/api';
 import styles from './page.module.css';
 
 export default function LandingPage() {
-  const { user } = useAuth();
-  const [jobs, setJobs] = useState([]);
-  const [partners, setPartners] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [scrolled, setScrolled] = useState(false);
-  
-  const revealRefs = useRef([]);
-  revealRefs.current = [];
-
-  const addToRefs = useCallback((el) => {
-    if (el && !revealRefs.current.includes(el)) {
-      revealRefs.current.push(el);
-    }
-  }, []);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
-    fetchPublicJobs();
-    fetchPublicPartners();
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    
+    // Fetch public jobs
+    api.get('/public/jobs/').then(res => {
+      setJobs(Array.isArray(res) ? res.slice(0, 3) : []);
+    }).catch(() => {});
 
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
+    // Scroll reveal logic
+    const observerOptions = { threshold: 0.1 };
     const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
+      entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add(styles.isVisible);
         }
       });
-    }, { threshold: 0.1 });
+    }, observerOptions);
 
-    requestAnimationFrame(() => {
-      revealRefs.current.forEach((ref) => {
-        if (ref) observer.observe(ref);
-      });
-    });
+    document.querySelectorAll(`.${styles['reveal-up']}`).forEach(el => observer.observe(el));
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
-      revealRefs.current.forEach((ref) => {
-        if (ref) observer.unobserve(ref);
-      });
+      observer.disconnect();
     };
   }, []);
-
-  const fetchPublicJobs = async () => {
-    try {
-      const response = await fetch('/api/recruitment/public/jobs');
-      if (response.ok) setJobs(await response.json());
-    } catch (error) {
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchPublicPartners = async () => {
-    try {
-      const response = await fetch('/api/accounts/public-partners/');
-      if (response.ok) setPartners(await response.json());
-    } catch (error) {
-      console.error('Partners Error:', error);
-    }
-  };
-
-  const benefits = [
-    {
-      icon: HiOutlineUsers,
-      title: 'Gestion Centralisée du Capital Humain',
-      desc: 'Dites adieu aux feuilles Excel éparpillées. Gérez tout le cycle de vie de vos employés, des contrats aux congés, dans un unique point de vérité sécurisé.',
-      image: '/benefit-1.png' // Placeholder visual
-    },
-    {
-      icon: HiOutlineClock,
-      title: 'Automatisation de la Paie & Présences',
-      desc: 'Réduisez les erreurs humaines de 95%. Notre moteur de paie intégré synchronise les heures travaillées, les primes et les absences pour des fiches de paie irréprochables.',
-      image: '/benefit-2.png'
-    },
-    {
-      icon: HiOutlineChartBar,
-      title: 'Décisions Basées sur la Data',
-      desc: 'Transformez vos données RH en avantages stratégiques. Nos tableaux de bord interactifs vous fournissent une visibilité complète sur le turnover, la productivité et les coûts salariaux.',
-      image: '/benefit-3.png'
-    }
-  ];
 
   return (
     <div className={styles.container}>
@@ -114,150 +51,191 @@ export default function LandingPage() {
             <div className={styles.logoIcon}>
               <img src="/logo.png" alt="Konggest Logo" />
             </div>
-            <span className={styles.logoText}>Konggest</span>
+            <span className={styles.logoText">Konggest</span>
           </Link>
 
           <div className={styles.navLinksDesktop}>
-            <a href="#features">Produit</a>
-            <a href="#jobs">Carrières</a>
-            <a href="#about">À propos</a>
-            {user ? (
-              <Link href="/dashboard" className={styles.btnHero} style={{ padding: '8px 20px', fontSize: '0.9rem' }}>Dashboard</Link>
-            ) : (
-              <Link href="/register" className={styles.btnHero} style={{ padding: '8px 20px', fontSize: '0.9rem' }}>Essai Gratuit</Link>
-            )}
+            <a href="#features">Solutions</a>
+            <a href="#careers">Carrières</a>
+            <a href="#contact">Contact</a>
+            <Link href="/login" className={styles.btnGhostHero} style={{ padding: '0.6rem 1.5rem', fontSize: '0.95rem' }}>
+              Connexion
+            </Link>
+            <Link href="/register" className={styles.btnHero} style={{ padding: '0.6rem 1.5rem', fontSize: '0.95rem' }}>
+              Essai Gratuit
+            </Link>
           </div>
+
+          <button className={styles.mobileToggle} onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            {mobileMenuOpen ? <HiOutlineX /> : <HiOutlineMenu />}
+          </button>
         </div>
       </nav>
 
       {/* ═══ HERO SECTION ═══ */}
-      <header className={styles.hero}>
-        <div className={styles.heroBadge}>
-          <HiOutlineCheckCircle />
-          <span>Élu meilleure plateforme RH 2024 au Gabon</span>
-        </div>
-        
-        <h1 className={styles.heroTitle}>
-          Optimisez votre gestion RH avec la plateforme <span className={styles.titleLineAccent}>tout-en-un</span> conçue pour la croissance.
-        </h1>
-        
-        <p className={styles.heroSubtitle}>
-          Konggest simplifie chaque aspect de vos ressources humaines. Du recrutement à la paie, 
-          donnez à votre équipe les outils qu'elle mérite.
-        </p>
-        
-        <div className={styles.heroCta}>
-          <Link href="/register" className={styles.btnHero}>
-            Démarrer un essai gratuit
-          </Link>
-          <a href="#features" className={styles.btnGhostHero}>
-            Voir la démo
-          </a>
+      <section className={styles.hero}>
+        <div className={`${styles.heroContent} ${styles['reveal-up']}`}>
+          <div className={styles.heroBadge}>
+            <HiOutlineShieldCheck /> Logiciel RH certifié & sécurisé
+          </div>
+          <h1 className={styles.heroTitle}>
+            Pilotez votre <span className={styles.titleLineAccent}>Capital Humain</span> avec excellence
+          </h1>
+          <p className={styles.heroSubtitle}>
+            La plateforme tout-en-un pour automatiser votre gestion RH, engager vos talents et booster la productivité de votre entreprise.
+          </p>
+          <div className={styles.heroCta}>
+            <Link href="/register" className={styles.btnHero}>Démarrer maintenant</Link>
+            <Link href="#features" className={styles.btnGhostHero}>Découvrir les solutions</Link>
+          </div>
         </div>
 
-        <div className={`${styles.productMockup} reveal-up`} ref={addToRefs}>
-          <img src="/dashboard-mockup.png" alt="Konggest Dashboard Overview" />
+        <div className={`${styles.productMockup} ${styles['reveal-up']}`} style={{ transitionDelay: '0.2s' }}>
+          <img src="/dashboard-preview.png" alt="Konggest Interface Preview" />
         </div>
-      </header>
+      </section>
 
-      {/* ═══ TRUST BAR ═══ */}
+      {/* ═══ TRUST SECTION (Premium & Anonymous) ═══ */}
       <section className={styles.trustSection}>
         <p className={styles.trustTitle}>Ils nous font confiance pour leur gestion quotidienne</p>
         <div className={styles.trustLogos}>
-          {partners.length > 0 ? (
-            partners.map((partner, idx) => (
-              <span key={idx} className={styles.partnerName}>
-                {partner.name?.toUpperCase()}
-              </span>
-            ))
-          ) : (
-            <>
-              <span>COMILOG</span>
-              <span>SETRAG</span>
-              <span>BGFIBank</span>
-              <span>TotalEnergies</span>
-              <span>ERAMET</span>
-            </>
-          )}
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className={styles.trustLogoPlaceholder}>
+              <svg width="120" height="40" viewBox="0 0 120 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="10" y="10" width="20" height="20" rx="4" fill="#E2E8F0" />
+                <rect x="40" y="15" width="60" height="10" rx="2" fill="#F1F5F9" />
+              </svg>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* ═══ FEATURES / BENEFITS ═══ */}
       <section id="features" className={styles.features}>
         <div className={styles.sectionHeader}>
-          <span className={styles.sectionBadge}>Pourquoi Konggest ?</span>
-          <h2 className={styles.sectionTitle}>Une plateforme robuste pour vos ambitions</h2>
+          <span className={styles.sectionBadge}>Innovation RH</span>
+          <h2 className={styles.sectionTitle}>Une suite complète pour chaque étape du cycle employé</h2>
         </div>
 
         <div className={styles.benefitsContainer}>
-          {benefits.map((benefit, idx) => (
-            <div key={idx} className={`${styles.benefitRow} reveal-up`} ref={addToRefs}>
-              <div className={styles.benefitContent}>
-                <div className={styles.featureIconWrapper}>
-                  <benefit.icon />
-                </div>
-                <h3>{benefit.title}</h3>
-                <p>{benefit.desc}</p>
-              </div>
-              <div className={styles.benefitVisual}>
-                {/* Visual placeholder for features */}
-                <benefit.icon style={{ fontSize: '5rem', opacity: 0.2 }} />
-              </div>
+          <div className={`${styles.benefitRow} ${styles['reveal-up']}`}>
+            <div className={styles.benefitContent}>
+              <div className={styles.featureIconWrapper}><HiOutlineUsers /></div>
+              <h3>Gestion du Personnel</h3>
+              <p>Centralisez tous les dossiers employés, contrats et documents administratifs dans un espace sécurisé et conforme.</p>
             </div>
-          ))}
+            <div className={styles.benefitVisual}>
+              <HiOutlineUsers size={120} />
+            </div>
+          </div>
+
+          <div className={`${styles.benefitRow} ${styles['reveal-up']}`}>
+            <div className={styles.benefitContent}>
+              <div className={styles.featureIconWrapper}><HiOutlineCalendar /></div>
+              <h3>Absences & Congés</h3>
+              <p>Simplifiez les demandes de congés avec des workflows de validation automatisés et des compteurs mis à jour en temps réel.</p>
+            </div>
+            <div className={styles.benefitVisual}>
+              <HiOutlineCalendar size={120} />
+            </div>
+          </div>
+
+          <div className={`${styles.benefitRow} ${styles['reveal-up']}`}>
+            <div className={styles.benefitContent}>
+              <div className={styles.featureIconWrapper}><HiOutlineCurrencyDollar /></div>
+              <h3>Paie Automatisée</h3>
+              <p>Générez vos fiches de paie en quelques clics, calculez les cotisations et assurez une conformité totale avec la législation.</p>
+            </div>
+            <div className={styles.benefitVisual}>
+              <HiOutlineCurrencyDollar size={120} />
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* ═══ JOBS SECTION ═══ */}
-      <section id="jobs" className={styles.jobsSection}>
+      {/* ═══ CAREERS SECTION ═══ */}
+      <section id="careers" className={styles.jobsSection}>
         <div className={styles.sectionHeader}>
           <span className={styles.sectionBadge} style={{ color: '#60A5FA' }}>Carrières</span>
           <h2 className={styles.sectionTitle}>Rejoignez l&apos;aventure Konggest</h2>
         </div>
 
         <div className={styles.jobsGrid}>
-          {loading ? (
-            <div className={styles.loading}>Chargement des opportunités...</div>
-          ) : jobs.length === 0 ? (
-            <div className={styles.noJobs}>Aucun poste ouvert pour le moment.</div>
-          ) : (
-            jobs.slice(0, 3).map((job) => (
-              <div key={job.id} className={`${styles.jobCard} reveal-up`} ref={addToRefs}>
+          {jobs.length > 0 ? (
+            jobs.map((job) => (
+              <div key={job.id} className={styles.jobCard}>
                 <div className={styles.jobHeader}>
                   <span className={styles.contractBadge}>{job.contract_type}</span>
                   <h3>{job.title}</h3>
                 </div>
                 <div className={styles.jobMeta}>
-                  <span><HiOutlineLocationMarker /> {job.location}</span>
-                  <span><HiOutlineBriefcase /> {job.department}</span>
+                  <span><HiOutlineClock /> {job.location}</span>
                 </div>
-                <Link href="/careers" className={styles.applyLink}>
+                <Link href={`/careers`} className={styles.applyLink}>
                   En savoir plus <HiOutlineArrowRight />
                 </Link>
               </div>
             ))
+          ) : (
+            <div className={styles.jobCard} style={{ gridColumn: '1 / -1', textAlign: 'center' }}>
+              <p style={{ color: '#94A3B8' }}>Consultez nos opportunités actuelles sur notre portail dédié.</p>
+              <Link href="/careers" className={styles.btnHero} style={{ marginTop: '2rem', display: 'inline-block' }}>
+                Voir les offres
+              </Link>
+            </div>
           )}
         </div>
       </section>
 
       {/* ═══ CTA SECTION ═══ */}
       <section className={styles.ctaSection}>
-        <div className={styles.ctaContent}>
-          <h2>Prêt à passer à la vitesse supérieure ?</h2>
-          <p>Rejoignez les leaders du marché et transformez votre département RH en centre de profit.</p>
-          <Link href="/register" className={styles.btnCta}>
-            Essayer Konggest Gratuitement
-          </Link>
+        <div className={`${styles.ctaContent} ${styles['reveal-up']}`}>
+          <h2>Prêt à moderniser vos RH ?</h2>
+          <p style={{ fontSize: '1.25rem', opacity: 0.8, maxWidth: '600px', margin: '0 auto' }}>
+            Rejoignez des centaines d&apos;entreprises qui font confiance à Konggest pour gérer leur capital humain.
+          </p>
+          <Link href="/register" className={styles.btnCta}>Commencer l&apos;essai gratuit</Link>
         </div>
       </section>
 
       {/* ═══ FOOTER ═══ */}
       <footer className={styles.footer}>
-        <div className={styles.footerContent}>
+        <div className={styles.footerGrid}>
           <div className={styles.footerBrand}>
-            <span className={styles.logoText}>Konggest</span>
+            <h2>Konggest</h2>
+            <p>La plateforme RH nouvelle génération pour les entreprises ambitieuses.</p>
           </div>
-          <p>&copy; {new Date().getFullYear()} Konggest. Développé pour les entreprises gabonaises.</p>
+          <div className={styles.footerCol}>
+            <h4>Produit</h4>
+            <ul>
+              <li><a href="#">Fonctionnalités</a></li>
+              <li><a href="#">Tarifs</a></li>
+              <li><a href="#">Sécurité</a></li>
+            </ul>
+          </div>
+          <div className={styles.footerCol}>
+            <h4>Compagnie</h4>
+            <ul>
+              <li><a href="/careers">Carrières</a></li>
+              <li><a href="#">À propos</a></li>
+              <li><a href="#">Blog</a></li>
+            </ul>
+          </div>
+          <div className={styles.footerCol}>
+            <h4>Légal</h4>
+            <ul>
+              <li><a href="#">Confidentialité</a></li>
+              <li><a href="#">CGU</a></li>
+              <li><a href="#">Mentions légales</a></li>
+            </ul>
+          </div>
+        </div>
+        <div className={styles.footerBottom}>
+          <p>© 2026 Konggest. Tous droits réservés.</p>
+          <div style={{ display: 'flex', gap: '2rem' }}>
+            <a href="#">LinkedIn</a>
+            <a href="#">Twitter</a>
+          </div>
         </div>
       </footer>
     </div>
