@@ -51,7 +51,7 @@ export default function LandingPage() {
             <div className={styles.logoIcon}>
               <img src="/logo.png" alt="Konggest Logo" />
             </div>
-            <span className={styles.logoText">Konggest</span>
+            <span className={styles.logoText}>Konggest</span>
           </Link>
 
           <div className={styles.navLinksDesktop}>
