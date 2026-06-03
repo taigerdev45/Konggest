@@ -55,7 +55,7 @@ export default function PerformancePage() {
       .on('broadcast', { event: 'review.changed' }, (payload) => {
         setToast({ 
           show: true, 
-          text: `Évaluation ${payload.payload.action === 'deleted' ? 'supprimée' : 'mise à jour'} : ${payload.payload.employeeName}`, 
+          text: `Évaluation ${payload.action === 'deleted' ? 'supprimée' : 'mise à jour'} : ${payload.employeeName}`, 
           type: 'success' 
         });
         setTimeout(() => setToast({ show: false, text: '' }), 4000);
@@ -102,10 +102,9 @@ export default function PerformancePage() {
       }
       setToast({ show: true, text: errMsg, type: 'error' });
       setTimeout(() => setToast({ show: false, text: '' }), 5000);
-      setSubmitting(false); // Reset on error
+    } finally {
+      setSubmitting(false);
     }
-    // Submitting reset handled by WebSocket reload or finally block alternative
-    setSubmitting(false);
   };
 
   const averageRating = reviews.length > 0 
@@ -119,166 +118,267 @@ export default function PerformancePage() {
   const isHR = user?.profile?.role === 'hr' || user?.profile?.role === 'admin';
 
   return (
-    <div className="animate-in relative">
+    <div className="animate-in min-h-full flex flex-col bg-[#FDFDFF]">
       {toast.show && (
-        <div className={`fixed top-20 right-4 z-50 p-4 rounded-lg shadow-2xl flex items-center gap-3 text-white ${toast.type === 'error' ? 'bg-red-500' : 'bg-green-600'}`}>
+        <div className={`fixed top-4 right-8 z-[1000] px-6 py-4 rounded-[2rem] shadow-xl flex items-center gap-3 text-white animate-in slide-in-from-right-10 ${toast.type === 'error' ? 'bg-red-500/95' : 'bg-emerald-500/95'}`}>
           <HiOutlineBell className="text-xl" />
-          <span className="font-medium">{toast.text}</span>
+          <span className="font-bold">{toast.text}</span>
         </div>
       )}
 
-      <div className="page-header">
-        <div>
-          <h1>Performance & Évaluations</h1>
-          <p>Entretiens, objectifs et suivi de performance</p>
+      {/* Page Header */}
+      <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 md:pb-10 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6">
+        <div className="animate-in slide-in-from-left-4 duration-700">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-1 bg-emerald-500 rounded-full"></div>
+            <span className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.3em]">PERFORMANCE</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-3">
+            Suivi de Performance
+          </h1>
+          <p className="text-gray-400 font-medium text-sm md:text-base max-w-lg">
+            Évaluations, objectifs et suivi de performance de vos équipes.
+          </p>
         </div>
-        <div className="flex gap-sm">
-          <button className="btn btn-ghost" onClick={fetchData} disabled={loading} title="Rafraîchir manuellement">
+        <div className="flex gap-3 animate-in slide-in-from-right-4 duration-700">
+          <button 
+            onClick={fetchData} 
+            disabled={loading}
+            className="flex-1 md:flex-none bg-white text-gray-900 border border-gray-100 px-6 py-3.5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition shadow-sm flex items-center gap-2"
+          >
             <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
+            Rafraîchir
           </button>
           {isHR && (
-            <button className="btn btn-primary shadow" onClick={() => setShowModal(true)}>
-              <HiOutlinePlus /> Nouvelle évaluation
+            <button 
+              onClick={() => setShowModal(true)} 
+              className="flex-1 md:flex-none bg-emerald-600 text-white px-8 py-3.5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-emerald-700 transition shadow-xl shadow-emerald-500/20 ring-1 ring-emerald-400/50 flex items-center gap-2"
+            >
+              <HiOutlinePlus size={18} />
+              Nouvelle Évaluation
             </button>
           )}
         </div>
       </div>
 
-      <div className="grid grid-3" style={{ marginBottom: 20 }}>
-        <div className="stat-card purple relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 opacity-10 text-6xl"><HiOutlineStar /></div>
-          <div className="stat-icon purple"><HiOutlineStar /></div>
+      {/* Stats Cards */}
+      <div className="px-6 md:px-12 pb-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="stat-card">
+          <div className="stat-icon purple">
+            <HiOutlineStar />
+          </div>
           <div className="stat-info">
             <h3>{averageRating}/5</h3>
-            <p>Note moyenne</p>
+            <p>Note Moyenne</p>
           </div>
         </div>
-        <div className="stat-card green relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 opacity-10 text-6xl"><HiOutlineCheckCircle /></div>
-          <div className="stat-icon green"><HiOutlineCheckCircle /></div>
+
+        <div className="stat-card">
+          <div className="stat-icon green">
+            <HiOutlineCheckCircle />
+          </div>
           <div className="stat-info">
             <h3>{objectivesCompletion}%</h3>
-            <p>Objectifs atteints</p>
+            <p>Objectifs Atteints</p>
           </div>
         </div>
-        <div className="stat-card cyan relative overflow-hidden">
-          <div className="absolute -right-4 -top-4 opacity-10 text-6xl"><HiOutlineChartBar /></div>
-          <div className="stat-icon cyan"><HiOutlineChartBar /></div>
+
+        <div className="stat-card">
+          <div className="stat-icon cyan">
+            <HiOutlineChartBar />
+          </div>
           <div className="stat-info">
             <h3>{reviews.length}</h3>
-            <p>Évaluations totales</p>
+            <p>Évaluations Totales</p>
           </div>
         </div>
       </div>
 
-      <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
-        <div className="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Employé</th>
-                <th>Période</th>
-                <th>Note</th>
-                <th>Date</th>
-                <th>Statut</th>
-                <th>Objectifs</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                [...Array(3)].map((_, i) => (
-                  <tr key={i} className="skeleton-row">
-                    <td colSpan="6"><div className="skeleton" style={{ height: 20 }} /></td>
-                  </tr>
-                ))
-              ) : reviews.length > 0 ? (
-                reviews.map(r => (
-                  <tr key={r.id}>
-                    <td style={{ fontWeight: 500 }}>
-                      <div className="flex items-center gap-xs">
-                        <span className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs">
-                           {r.employee_name.substring(0,2).toUpperCase()}
+      {/* Reviews Table */}
+      <div className="px-6 md:px-12 pb-12 flex-1">
+        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
+          <div className="p-6 md:p-8 border-b border-gray-100 bg-gray-50/30">
+            <h3 className="text-lg font-black text-gray-900 mb-2">Historique des Évaluations</h3>
+            <p className="text-sm text-gray-400">Suivi de performance de l'ensemble des collaborateurs.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-white/80 backdrop-blur-sm sticky top-0 z-10">
+                <tr>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">
+                    Collaborateur
+                  </th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">
+                    Période
+                  </th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">
+                    Note
+                  </th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">
+                    Date
+                  </th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">
+                    Statut
+                  </th>
+                  <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">
+                    Objectifs
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {loading ? (
+                  [...Array(3)].map((_, i) => (
+                    <tr key={i}>
+                      <td colSpan="6" className="px-8 py-6">
+                        <div className="skeleton" style={{ height: '24px' }} />
+                      </td>
+                    </tr>
+                  ))
+                ) : reviews.length > 0 ? (
+                  reviews.map(r => (
+                    <tr key={r.id} className="group hover:bg-emerald-50/30 transition-all duration-300">
+                      <td className="px-8 py-6 border-b border-gray-50">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-[1.25rem] bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 flex items-center justify-center font-black shadow-sm border border-white">
+                            {r.employee_name?.substring(0,2).toUpperCase() || '??'}
+                          </div>
+                          <span className="font-black text-gray-900">{r.employee_name}</span>
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 border-b border-gray-50 text-gray-600 font-medium">
+                        {r.period}
+                      </td>
+                      <td className="px-8 py-6 border-b border-gray-50">
+                        <div className="flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <HiOutlineStar 
+                              key={star} 
+                              style={{ 
+                                fill: star <= r.overall_rating ? '#eab308' : 'none', 
+                                color: star <= r.overall_rating ? '#eab308' : '#d1d5db',
+                                opacity: star <= r.overall_rating ? 1 : 0.4
+                              }} 
+                            />
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-8 py-6 border-b border-gray-50 text-gray-500 font-medium">
+                        {new Date(r.review_date).toLocaleDateString('fr-FR')}
+                      </td>
+                      <td className="px-8 py-6 border-b border-gray-50">
+                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${r.status === 'completed' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                          {r.status === 'completed' ? 'Terminé' : 'En cours'}
                         </span>
-                        {r.employee_name}
-                      </div>
-                    </td>
-                    <td>{r.period}</td>
-                    <td>
-                      <div className="flex items-center gap-xs" style={{ color: 'var(--warning)' }}>
-                        {[...Array(5)].map((_, i) => (
-                          <HiOutlineStar key={i} style={{ fill: i < r.overall_rating ? 'currentColor' : 'none', opacity: i < r.overall_rating ? 1 : 0.3 }} />
-                        ))}
-                      </div>
-                    </td>
-                    <td>{new Date(r.review_date).toLocaleDateString('fr-FR')}</td>
-                    <td>
-                      <span className={`badge ${r.status === 'completed' ? 'badge-success' : 'badge-warning'}`}>
-                        {r.status === 'completed' ? 'Terminé' : 'En cours'}
-                      </span>
-                    </td>
-                    <td>
-                      <span className="badge badge-neutral">{r.objectives?.length || 0}</span>
+                      </td>
+                      <td className="px-8 py-6 border-b border-gray-50">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-600">
+                          {r.objectives?.length || 0}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-8 py-20 text-center">
+                      <div className="text-gray-400 font-medium">Aucune évaluation trouvée.</div>
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr><td colSpan="6" style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>Aucune évaluation trouvée.</td></tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
       {/* New Review Modal */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
-            <div className="modal-header">
-              <h2>Nouvelle évaluation</h2>
-              <button className="btn-close" onClick={() => setShowModal(false)}>&times;</button>
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
+          <div className="bg-white rounded-[3rem] max-w-2xl w-full p-8 md:p-12 relative shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20">
+            <div className="absolute top-8 right-8">
+              <button onClick={() => setShowModal(false)} className="w-10 h-10 rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center font-black">✕</button>
             </div>
-            <form onSubmit={handleSubmit} className="modal-body">
-              <div className="form-group mb-md">
-                <label>Employé *</label>
-                <select className="select-input" name="employee" value={formData.employee} onChange={handleInputChange} required>
+            
+            <div className="mb-10">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-1 bg-emerald-500 rounded-full"></div>
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Nouvelle Évaluation</span>
+              </div>
+              <h2 className="text-3xl font-black text-gray-900 tracking-tighter">Ajouter une Évaluation</h2>
+              <p className="text-gray-400 text-sm font-medium mt-1">Enregistrez les performances de vos collaborateurs.</p>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Collaborateur</label>
+                <select 
+                  className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm"
+                  name="employee" 
+                  value={formData.employee} 
+                  onChange={handleInputChange} 
+                  required
+                >
                   <option value="">Sélectionner un employé...</option>
                   {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
                 </select>
               </div>
-              <div className="grid grid-2 gap-md mb-md">
-                <div className="form-group">
-                  <label>Période *</label>
-                  <input className="text-input" type="text" name="period" value={formData.period} onChange={handleInputChange} required placeholder="Ex: Q1 2026" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Période</label>
+                  <input 
+                    className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm text-gray-600"
+                    type="text" 
+                    name="period" 
+                    value={formData.period} 
+                    onChange={handleInputChange} 
+                    required 
+                    placeholder="Ex: Q1 2026" 
+                  />
                 </div>
-                <div className="form-group">
-                  <label>Note (1-5) *</label>
-                  <input className="text-input" type="number" name="overall_rating" min="1" max="5" value={formData.overall_rating} onChange={handleInputChange} required />
+                <div>
+                  <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Note (1-5)</label>
+                  <input 
+                    className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm text-gray-600"
+                    type="number" 
+                    name="overall_rating" 
+                    min="1" 
+                    max="5" 
+                    value={formData.overall_rating} 
+                    onChange={handleInputChange} 
+                    required 
+                  />
                 </div>
               </div>
-              <div className="form-group mb-md">
-                <label>Points forts</label>
-                <textarea className="text-input" name="strengths" value={formData.strengths} onChange={handleInputChange} rows="2" placeholder="Qualités observées..."></textarea>
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Points Forts</label>
+                <textarea 
+                  className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm text-gray-600 min-h-[100px]"
+                  name="strengths" 
+                  value={formData.strengths} 
+                  onChange={handleInputChange} 
+                  placeholder="Qualités observées..."
+                ></textarea>
               </div>
-              <div className="form-group mb-md">
-                <label>Axes d'amélioration</label>
-                <textarea className="text-input" name="improvements" value={formData.improvements} onChange={handleInputChange} rows="2" placeholder="Compétences à développer..."></textarea>
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Axes d'Amélioration</label>
+                <textarea 
+                  className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm text-gray-600 min-h-[100px]"
+                  name="improvements" 
+                  value={formData.improvements} 
+                  onChange={handleInputChange} 
+                  placeholder="Compétences à développer..."
+                ></textarea>
               </div>
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
+              
+              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
+                <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
+                  Annuler
+                </button>
+                <button type="submit" disabled={submitting} className="bg-emerald-600 text-white font-black px-10 py-4 rounded-[1.5rem] shadow-xl shadow-emerald-500/20 hover:bg-emerald-700 transition-all hover:-translate-y-1 text-[11px] uppercase tracking-widest ring-1 ring-emerald-400">
                   {submitting ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
               </div>
             </form>
           </div>
-          <style jsx>{`
-            .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
-            .modal-content { width: 90%; padding: 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-            .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-            .btn-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted); }
-            .form-group label { display: block; margin-bottom: 6px; font-size: 0.9rem; font-weight: 500; }
-            .text-input, .select-input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; }
-          `}</style>
         </div>
       )}
     </div>

@@ -1,175 +1,158 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { HiOutlineBell, HiOutlineRefresh, HiOutlineCheckCircle, HiOutlineExclamationCircle, HiOutlineInformationCircle } from 'react-icons/hi';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
+import { HiOutlineBell, HiOutlineCheckCircle, HiOutlineX, HiOutlineTrash } from 'react-icons/hi';
 import api from '@/lib/api';
 
-const TYPE_CONFIG = {
-  leave: { bg: 'rgba(56, 189, 248, 0.1)', color: '#0ea5e9', icon: HiOutlineBell },
-  payroll: { bg: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', icon: HiOutlineCheckCircle },
-  warning: { bg: 'rgba(234, 179, 8, 0.1)', color: '#eab308', icon: HiOutlineExclamationCircle },
-  info: { bg: 'rgba(100, 116, 139, 0.1)', color: '#64748b', icon: HiOutlineInformationCircle },
-  success: { bg: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', icon: HiOutlineCheckCircle },
-  task: { bg: 'rgba(168, 85, 247, 0.1)', color: '#a855f7', icon: HiOutlineBell },
-};
-
-export default function NotificationsPage() {
-  const { user } = useAuth();
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
-
-  const showToast = (text, type = 'info') => {
-    setToast({ show: true, text, type });
-    setTimeout(() => setToast({ show: false, text: '' }), 5000);
-  };
-
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await api.get('/notifications/');
-      setNotifications(data);
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Initialization & Realtime
-  useEffect(() => {
-    if (!user?.id) return;
-
-    fetchNotifications();
-
-    // Setup Supabase Realtime Listener
-    const channel = supabase
-      .channel(`notifications:${user.id}`)
-      .on('broadcast', { event: 'new_notification' }, ({ payload }) => {
-        // 1. Show dynamic toast
-        showToast(payload.message, payload.type);
-        
-        // 2. Fetch fresh data (or we could prepend manually if payload has all fields)
-        fetchNotifications();
-        
-        // 3. Play subtle sound if possible (optional)
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, fetchNotifications]);
-
-  const markAllAsRead = async () => {
-    try {
-      await api.post('/notifications/mark_all_read/');
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-      showToast('Toutes les notifications ont été marquées comme lues', 'success');
-    } catch (err) {
-      console.error('Error marking all as read:', err);
-    }
-  };
-
-  const markAsRead = async (id) => {
-    try {
-      await api.post(`/notifications/${id}/mark_read/`);
-      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-    } catch (err) {
-      console.error('Error marking as read:', err);
-    }
-  };
+function NotificationItem({ notif, onMarkRead, onDelete }) {
+  const [deleting, setDeleting] = useState(false);
+  const isUnread = !notif.is_read;
 
   return (
-    <div className="animate-fade-in" style={{ maxWidth: '800px', margin: '0 auto' }}>
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className={`toast toast-${toast.type} fixed top-4 right-4 z-50 animate-slide-in shadow-xl`} style={{
-          backgroundColor: 'var(--card-bg)', border: '1px solid var(--border)',
-          padding: '12px 20px', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '10px'
-        }}>
-          <HiOutlineBell style={{ color: TYPE_CONFIG[toast.type]?.color || 'var(--primary)' }} />
-          <span className="text-sm font-medium">{toast.text}</span>
+    <div className={`flex gap-4 p-6 rounded-[2rem] transition-all duration-300 hover:bg-gray-50/50 group ${isUnread ? 'bg-blue-50/30' : ''}`}>
+      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
+        notif.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 
+        notif.type === 'warning' ? 'bg-amber-100 text-amber-600' : 
+        notif.type === 'error' ? 'bg-red-100 text-red-600' :
+        'bg-blue-100 text-blue-600'
+      }`}>
+        <HiOutlineBell size={18} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-start justify-between gap-3 mb-1">
+          <h3 className="font-black text-gray-900 text-sm">{notif.title}</h3>
+          <div className="flex items-center gap-2">
+            {isUnread && (
+              <button
+                onClick={() => onMarkRead(notif.id)}
+                className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-all flex items-center justify-center"
+                title="Marquer comme lu"
+              >
+                <HiOutlineCheckCircle size={16} />
+              </button>
+            )}
+            <button
+              onClick={() => onDelete(notif.id)}
+              className="w-8 h-8 rounded-full bg-gray-100 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center"
+              title="Supprimer"
+              disabled={deleting}
+            >
+              <HiOutlineTrash size={16} />
+            </button>
+          </div>
         </div>
-      )}
+        <p className="text-gray-500 font-medium text-xs mb-2">{notif.message}</p>
+        <div className="text-[10px] text-gray-400 uppercase tracking-[0.2em] font-black">
+          {new Date(notif.created_at).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <div className="page-header flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-2xl font-bold">Notifications</h1>
-          <p className="text-slate-500">Alertes, rappels et mises à jour en temps réel.</p>
+export default function NotificationsPage() {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchNotifs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.get('/accounts/notifications/');
+      setNotifications(Array.isArray(data) ? data : (data.results || []));
+    } catch { /* silent */ } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { fetchNotifs(); }, [fetchNotifs]);
+
+  const markAsRead = useCallback(async (id) => {
+    try {
+      await api.patch(`/accounts/notifications/${id}/`, { is_read: true });
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch { /* silent */ }
+  }, []);
+
+  const deleteNotif = useCallback(async (id) => {
+    if (!confirm('Supprimer cette notification ?')) return;
+    try {
+      await api.delete(`/accounts/notifications/${id}/`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch { /* silent */ }
+  }, []);
+
+  const markAllRead = useCallback(async () => {
+    try {
+      await api.post('/accounts/notifications/mark-all-read/');
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch { /* silent */ }
+  }, []);
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  return (
+    <div className="min-h-full flex flex-col bg-[#FDFDFF]">
+      {/* Page Header */}
+      <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 md:pb-10 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6">
+        <div className="animate-in slide-in-from-left-4 duration-700">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-1 bg-blue-500 rounded-full"></div>
+            <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">CENTRE DE NOTIFICATIONS</span>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-3">
+            Notifications
+          </h1>
+          <p className="text-gray-400 font-medium text-sm md:text-base max-w-lg">
+            Gérez vos alertes et notifications en temps réel.
+          </p>
         </div>
-        <div className="flex gap-2">
-          <button className="btn btn-ghost p-2" onClick={fetchNotifications} disabled={loading}>
-            <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
-          </button>
-          <button className="btn-secondary px-4 py-2 rounded-lg text-sm font-medium" onClick={markAllAsRead}>
-            Tout marquer comme lu
-          </button>
+        <div className="flex gap-3 animate-in slide-in-from-right-4 duration-700">
+          {unreadCount > 0 && (
+            <button onClick={markAllRead} className="flex-1 md:flex-none bg-white text-gray-900 border border-gray-100 px-6 py-3.5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition shadow-sm flex items-center gap-2">
+              <HiOutlineCheckCircle size={16} />
+              Tout marquer comme lu
+            </button>
+          )}
         </div>
       </div>
 
-      <div className="card shadow-sm overflow-hidden" style={{ backgroundColor: 'var(--card-bg)', borderRadius: '16px', border: '1px solid var(--border)' }}>
-        {loading && notifications.length === 0 ? (
-          <div className="p-8 space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="skeleton h-20 w-full rounded-xl" />)}
-          </div>
-        ) : notifications.length > 0 ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {notifications.map(n => {
-              const config = TYPE_CONFIG[n.notification_type] || TYPE_CONFIG.info;
-              const Icon = config.icon;
-              
-              return (
-                <div key={n.id} 
-                  className={`flex items-start gap-4 p-5 transition-all hover:bg-slate-50 dark:hover:bg-slate-900/50 ${!n.is_read ? 'bg-blue-50/30 dark:bg-blue-900/10' : ''}`}
-                  onClick={() => !n.is_read && markAsRead(n.id)}
-                  style={{ cursor: n.is_read ? 'default' : 'pointer' }}
-                >
-                  <div className="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center" 
-                    style={{ backgroundColor: config.bg, color: config.color }}>
-                    <Icon size={20} />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start mb-1">
-                      <h3 className={`text-sm font-semibold truncate ${!n.is_read ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
-                        {n.title}
-                      </h3>
-                      <span className="text-xs text-slate-400 whitespace-nowrap ml-2">
-                        {new Date(n.created_at).toLocaleDateString('fr-FR', { 
-                          hour: '2-digit', 
-                          minute: '2-digit' 
-                        })}
-                      </span>
+      {/* Content */}
+      <div className="px-6 md:px-12 pb-12 flex-1">
+        <div className="max-w-3xl mx-auto">
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
+            {loading ? (
+              <div className="p-8 space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="flex gap-4 p-6">
+                    <div className="w-10 h-10 skeleton rounded-full" />
+                    <div className="flex-1 space-y-3">
+                      <div className="skeleton" style={{ height: '16px', width: '50%' }} />
+                      <div className="skeleton" style={{ height: '12px', width: '80%' }} />
+                      <div className="skeleton" style={{ height: '10px', width: '30%' }} />
                     </div>
-                    <p className={`text-sm leading-relaxed ${!n.is_read ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400'}`}>
-                      {n.message}
-                    </p>
-                    {n.link && (
-                      <a href={n.link} className="text-xs font-semibold text-blue-500 hover:text-blue-600 mt-2 inline-block">
-                        Voir le détail
-                      </a>
-                    )}
                   </div>
-                  
-                  {!n.is_read && (
-                    <div className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
-                  )}
+                ))}
+              </div>
+            ) : notifications.length > 0 ? (
+              <div className="divide-y divide-gray-50">
+                {notifications.map(notif => (
+                <div key={notif.id} className="animate-in slide-in-from-left-4 duration-700">
+                    <NotificationItem 
+                      notif={notif} 
+                      onMarkRead={markAsRead} 
+                      onDelete={deleteNotif} 
+                    />
                 </div>
-              );
-            })}
+                ))}
+              </div>
+            ) : (
+              <div className="p-12 text-center">
+                <div className="w-20 h-20 rounded-full bg-blue-50 text-blue-400 flex items-center justify-center mx-auto mb-4">
+                  <HiOutlineBell size={32} />
+                </div>
+                <div className="text-gray-400 font-medium">Aucune notification pour le moment.</div>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="p-16 text-center">
-            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <HiOutlineBell className="text-slate-400" size={32} />
-            </div>
-            <h3 className="text-slate-900 dark:text-white font-medium">Aucune notification</h3>
-            <p className="text-slate-500 text-sm mt-1">Vous êtes à jour ! Toutes les alertes apparaîtront ici.</p>
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

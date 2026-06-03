@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { HiOutlineCog, HiOutlineUser, HiOutlineOfficeBuilding, HiOutlineCheckCircle } from 'react-icons/hi';
+import { HiOutlineCog, HiOutlineUser, HiOutlineOfficeBuilding, HiOutlineCheckCircle, HiOutlineUsers, HiOutlineKey, HiOutlineGlobe } from 'react-icons/hi';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 
@@ -17,7 +17,7 @@ export default function SettingsPage() {
     sector: 'Technologie',
   });
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
+  const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
 
   useEffect(() => {
     if (user) {
@@ -37,12 +37,12 @@ export default function SettingsPage() {
     setSubmitting(true);
     try {
       await api.patch('/auth/profile/', profileData);
-      setMessage({ type: 'success', text: 'Profil mis à jour avec succès.' });
+      setToast({ show: true, text: 'Profil mis à jour avec succès.', type: 'success' });
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour du profil.' });
+      setToast({ show: true, text: 'Erreur lors de la mise à jour du profil.', type: 'error' });
     } finally {
       setSubmitting(false);
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      setTimeout(() => setToast({ show: false, text: '', type: 'info' }), 3000);
     }
   };
 
@@ -50,163 +50,171 @@ export default function SettingsPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // Note: This endpoint should be implemented in backend if not already there
       await api.patch('/accounts/organizations/me/', orgData);
-      setMessage({ type: 'success', text: 'Organisation mise à jour.' });
+      setToast({ show: true, text: 'Organisation mise à jour.', type: 'success' });
     } catch (err) {
-      setMessage({ type: 'error', text: 'Erreur lors de la mise à jour de l\'organisation.' });
+      setToast({ show: true, text: 'Erreur lors de la mise à jour de l\'organisation.', type: 'error' });
     } finally {
       setSubmitting(false);
-      setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+      setTimeout(() => setToast({ show: false, text: '', type: 'info' }), 3000);
     }
   };
 
   return (
-    <div>
-      <div className="page-header">
-        <div>
-          <h1><HiOutlineCog style={{ verticalAlign: 'middle', marginRight: '10px' }} /> Paramètres</h1>
-          <p>Configuration de l&apos;organisation et du profil</p>
-        </div>
-      </div>
-
-      {message.text && (
-        <div className={`toast animate-in ${message.type === 'success' ? 'toast-success' : 'toast-error'}`} 
-             style={{ 
-               position: 'fixed', 
-               bottom: '30px', 
-               right: '30px', 
-               zIndex: 1000,
-               padding: '16px 24px',
-               borderRadius: 'var(--radius-lg)',
-               background: message.type === 'success' ? 'var(--success)' : 'var(--danger)',
-               color: 'white',
-               boxShadow: 'var(--shadow-xl)',
-               display: 'flex',
-               alignItems: 'center',
-               gap: '12px',
-               fontWeight: 600
-             }}>
-          {message.type === 'success' ? <HiOutlineCheckCircle fontSize="1.4rem" /> : <HiOutlineCog fontSize="1.4rem" />}
-          {message.text}
+    <div className="min-h-full flex flex-col bg-[#FDFDFF]">
+      {toast.show && (
+        <div className={`fixed bottom-8 right-8 z-[1000] px-6 py-4 rounded-[2rem] shadow-xl flex items-center gap-3 text-white animate-in slide-in-from-right-10 ${toast.type === 'error' ? 'bg-red-500/95' : 'bg-emerald-500/95'}`}>
+          {toast.type === 'success' ? <HiOutlineCheckCircle className="text-xl" /> : <HiOutlineCog className="text-xl" />}
+          <span className="font-black">{toast.text}</span>
         </div>
       )}
 
-      <div className="grid grid-2 gap-lg animate-in delay-1">
-        {/* Profile Card */}
-        <div className="card shadow-md">
-          <div className="flex items-center gap-md mb-lg">
-            <div className="avatar avatar-md" style={{ background: 'var(--primary-glow)', color: 'var(--primary)', border: 'none' }}>
-              <HiOutlineUser />
-            </div>
-            <div>
-              <h3 style={{ margin: 0 }}>Mon Profil</h3>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Gérez vos informations personnelles.</p>
-            </div>
+      {/* Page Header */}
+      <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 md:pb-10 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6">
+        <div className="animate-in slide-in-from-left-4 duration-700">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-1 bg-blue-500 rounded-full"></div>
+            <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">PRÉFÉRENCES</span>
           </div>
-          
-          <form onSubmit={handleProfileSave} className="flex flex-col gap-md">
-            <div className="input-group">
-              <label className="label">Nom complet</label>
-              <input 
-                className="input" 
-                value={profileData.full_name} 
-                onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                placeholder="Ex: Jean Dupont"
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label className="label">Adresse Email</label>
-              <input 
-                className="input bg-secondary" 
-                value={profileData.email} 
-                type="email" 
-                disabled 
-                style={{ cursor: 'not-allowed' }} 
-              />
-              <span className="helper-text">L&apos;email est lié à votre compte d&apos;authentification.</span>
-            </div>
-            <div className="input-group">
-              <label className="label">Rôle d&apos;accès</label>
-              <div className="input bg-secondary flex items-center gap-sm">
-                <span className="badge badge-primary">{user?.profile?.role?.toUpperCase() || 'ADMIN'}</span>
-              </div>
-            </div>
-            <div className="mt-md pt-md border-top">
-              <button type="submit" className="btn btn-primary w-full" disabled={submitting}>
-                {submitting ? 'Mise à jour...' : 'Sauvegarder le profil'}
-              </button>
-            </div>
-          </form>
-        </div>
-
-        {/* Organization Card */}
-        <div className="card shadow-md">
-          <div className="flex items-center gap-md mb-lg">
-            <div className="avatar avatar-md" style={{ background: 'var(--accent-light)', color: 'white', border: 'none', backgroundOpacity: 0.1 }}>
-              <HiOutlineOfficeBuilding />
-            </div>
-            <div>
-              <h3 style={{ margin: 0 }}>Organisation</h3>
-              <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-muted)' }}>Configurez l&apos;identité de votre entreprise.</p>
-            </div>
-          </div>
-
-          <form onSubmit={handleOrgSave} className="flex flex-col gap-md">
-            <div className="input-group">
-              <label className="label">Nom de l&apos;entreprise</label>
-              <input 
-                className="input" 
-                value={orgData.name} 
-                onChange={(e) => setOrgData({ ...orgData, name: e.target.value })}
-                placeholder="Ex: Konggest Inc."
-                required
-              />
-            </div>
-            <div className="input-group">
-              <label className="label">Secteur d&apos;activité</label>
-              <select 
-                className="input"
-                value={orgData.sector}
-                onChange={(e) => setOrgData({ ...orgData, sector: e.target.value })}
-              >
-                <option value="Technologie">Technologie & Logiciel</option>
-                <option value="Finance">Services Financiers</option>
-                <option value="Santé">Santé & Médical</option>
-                <option value="Éducation">Éducation & Formation</option>
-                <option value="Commerce">Commerce & Retail</option>
-                <option value="Industrie">Industrie & Manufacturier</option>
-                <option value="Autre">Autre secteur</option>
-              </select>
-            </div>
-            <div className="input-group">
-              <label className="label">Abonnement</label>
-              <div className="flex items-center justify-between p-md rounded-lg border-dashed" style={{ border: '2px dashed var(--primary-light)', background: 'var(--primary-glow)' }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: 'var(--primary)' }}>Business Plan</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Actif jusqu&apos;au 31 Déc. 2026</div>
-                </div>
-                <button type="button" className="btn btn-sm btn-ghost">Gérer</button>
-              </div>
-            </div>
-            <div className="mt-md pt-md border-top">
-              <button type="submit" className="btn btn-primary w-full" disabled={submitting}>
-                {submitting ? 'Mise à jour...' : 'Mettre à jour l&apos;organisation'}
-              </button>
-            </div>
-          </form>
+          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-3">
+            Paramètres
+          </h1>
+          <p className="text-gray-400 font-medium text-sm md:text-base max-w-lg">
+            Gérez votre profil, l'organisation et les configurations système.
+          </p>
         </div>
       </div>
 
-      <div className="card-glass mt-xl animate-in delay-2" style={{ border: '1px solid var(--primary-glow)', padding: '24px 32px' }}>
-        <div className="flex items-center justify-between gap-lg">
-          <div>
-            <h3 style={{ margin: '0 0 4px 0' }}>Gestion des Accès Équipe</h3>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>Gérez les invitations et les rôles de vos administrateurs et managers.</p>
+      {/* Main Content */}
+      <div className="px-6 md:px-12 pb-12 flex-1">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Profile Card */}
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 animate-in slide-in-from-left-4 duration-700">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 rounded-[1.5rem] bg-blue-100 text-blue-600 flex items-center justify-center">
+                <HiOutlineUser size={28} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Mon Profil</h3>
+                <p className="text-xs text-gray-400 font-medium">Gérez vos informations personnelles.</p>
+              </div>
+            </div>
+            
+            <form onSubmit={handleProfileSave} className="flex flex-col gap-5">
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Nom complet</label>
+                <input 
+                  className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 text-sm text-gray-800 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold" 
+                  value={profileData.full_name} 
+                  onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                  placeholder="Ex: Jean Dupont"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Adresse Email</label>
+                <input 
+                  className="w-full border-2 border-gray-100 bg-gray-100 rounded-[1.5rem] px-5 py-4 text-sm text-gray-600 font-bold cursor-not-allowed" 
+                  value={profileData.email} 
+                  type="email" 
+                  disabled 
+                />
+                <p className="text-[10px] text-gray-400 uppercase tracking-widest font-black mt-2">L&apos;email est lié à votre compte d&apos;authentification.</p>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Rôle d&apos;accès</label>
+                <div className="border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 flex items-center gap-3">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-blue-100 text-blue-600">
+                    {user?.profile?.role?.toUpperCase() || 'ADMIN'}
+                  </span>
+                </div>
+              </div>
+              <button type="submit" className="mt-2 bg-blue-600 text-white font-black px-6 py-4 rounded-[1.5rem] shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all hover:-translate-y-1 text-xs uppercase tracking-widest ring-1 ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" disabled={submitting}>
+                {submitting ? 'Mise à jour...' : 'Sauvegarder le profil'}
+              </button>
+            </form>
           </div>
-          <Link href="/users" className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>
-            Accéder à l&apos;équipe →
+
+          {/* Organization Card */}
+          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 animate-in slide-in-from-right-4 duration-700">
+            <div className="flex items-center gap-4 mb-8">
+              <div className="w-14 h-14 rounded-[1.5rem] bg-purple-100 text-purple-600 flex items-center justify-center">
+                <HiOutlineOfficeBuilding size={28} />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900 tracking-tight">Organisation</h3>
+                <p className="text-xs text-gray-400 font-medium">Configurez l&apos;identité de votre entreprise.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleOrgSave} className="flex flex-col gap-5">
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Nom de l&apos;entreprise</label>
+                <input 
+                  className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 text-sm text-gray-800 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/5 outline-none transition-all font-bold" 
+                  value={orgData.name} 
+                  onChange={(e) => setOrgData({ ...orgData, name: e.target.value })}
+                  placeholder="Ex: Konggest Inc."
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Secteur d&apos;activité</label>
+                <select 
+                  className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 text-sm text-gray-800 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/5 outline-none transition-all font-bold"
+                  value={orgData.sector}
+                  onChange={(e) => setOrgData({ ...orgData, sector: e.target.value })}
+                >
+                  <option value="Technologie">Technologie & Logiciel</option>
+                  <option value="Finance">Services Financiers</option>
+                  <option value="Santé">Santé & Médical</option>
+                  <option value="Éducation">Éducation & Formation</option>
+                  <option value="Commerce">Commerce & Retail</option>
+                  <option value="Industrie">Industrie & Manufacturier</option>
+                  <option value="Autre">Autre secteur</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Abonnement</label>
+                <div className="flex items-center justify-between p-5 rounded-[1.5rem] bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-dashed border-blue-100">
+                  <div>
+                    <div className="font-black text-blue-700">Business Plan</div>
+                    <div className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Actif jusqu&apos;au 31 Déc. 2026</div>
+                  </div>
+                  <button type="button" className="bg-white text-blue-600 border border-blue-100 px-4 py-2 rounded-[1rem] text-xs font-black uppercase tracking-widest hover:bg-blue-50 transition-all">Gérer</button>
+                </div>
+              </div>
+              <button type="submit" className="mt-2 bg-purple-600 text-white font-black px-6 py-4 rounded-[1.5rem] shadow-xl shadow-purple-500/20 hover:bg-purple-700 transition-all hover:-translate-y-1 text-xs uppercase tracking-widest ring-1 ring-purple-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" disabled={submitting}>
+                {submitting ? 'Mise à jour...' : 'Mettre à jour l&apos;organisation'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Quick Links Section */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5 animate-in slide-in-from-bottom-4 duration-700">
+          <Link href="/settings/organization" className="group bg-white rounded-[2rem] border border-gray-100 shadow-lg shadow-gray-200/30 p-6 hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="w-12 h-12 rounded-[1.25rem] bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
+              <HiOutlineOfficeBuilding size={24} />
+            </div>
+            <h4 className="font-black text-gray-900 mb-1">Organisation</h4>
+            <p className="text-xs text-gray-400 font-medium">Départements, lieux & congés</p>
+          </Link>
+          
+          <Link href="/users" className="group bg-white rounded-[2rem] border border-gray-100 shadow-lg shadow-gray-200/30 p-6 hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="w-12 h-12 rounded-[1.25rem] bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
+              <HiOutlineUsers size={24} />
+            </div>
+            <h4 className="font-black text-gray-900 mb-1">Gestion des Accès</h4>
+            <p className="text-xs text-gray-400 font-medium">Équipe, rôles & permissions</p>
+          </Link>
+
+          <Link href="/audit-logs" className="group bg-white rounded-[2rem] border border-gray-100 shadow-lg shadow-gray-200/30 p-6 hover:shadow-xl hover:-translate-y-1 transition-all">
+            <div className="w-12 h-12 rounded-[1.25rem] bg-amber-50 text-amber-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
+              <HiOutlineKey size={24} />
+            </div>
+            <h4 className="font-black text-gray-900 mb-1">Audit Logs</h4>
+            <p className="text-xs text-gray-400 font-medium">Traçabilité & sécurité</p>
           </Link>
         </div>
       </div>
