@@ -13,14 +13,15 @@ import {
   HiOutlineCurrencyDollar, HiOutlineDocumentText, HiOutlineClock,
   HiOutlineBriefcase, HiOutlineChartBar, HiOutlineBell,
   HiOutlineCog, HiOutlineLogout, HiOutlineChevronLeft, HiOutlineMenu,
-  HiOutlineX, HiOutlineShieldCheck, HiOutlineOfficeBuilding
+  HiOutlineX, HiOutlineShieldCheck, HiOutlineOfficeBuilding,
+  HiOutlineUserGroup
 } from 'react-icons/hi';
 import styles from './Sidebar.module.css';
 
 const NAV_ITEMS = [
   { path: '/dashboard', icon: HiOutlineViewGrid, label: 'Dashboard', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/employees', icon: HiOutlineUsers, label: 'Employés', roles: ['admin', 'hr', 'manager'] },
-  { path: '/users', icon: HiOutlineUsers, label: 'Utilisateurs', roles: ['admin', 'hr'] },
+  { path: '/users', icon: HiOutlineUserGroup, label: 'Utilisateurs', roles: ['admin', 'hr'] },
   { path: '/leaves', icon: HiOutlineCalendar, label: 'Congés', roles: ['admin', 'hr', 'manager', 'employee'] },
   { path: '/payroll', icon: HiOutlineCurrencyDollar, label: 'Paie', roles: ['admin', 'hr', 'employee'] },
   { path: '/documents', icon: HiOutlineDocumentText, label: 'Documents', roles: ['admin', 'hr', 'employee'] },
@@ -117,7 +118,7 @@ export default function Sidebar() {
         {/* Navigation Section */}
         <nav className={styles.nav}>
           <div className={styles.navSection}>
-            {(!collapsed || isMobile) && <span className={styles.sectionLabel}>MENU PRINCIPAL</span>}
+            {(!collapsed || isMobile) && <span className={styles.sectionLabel}>Navigation</span>}
             {filteredNavItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.path);
@@ -136,7 +137,7 @@ export default function Sidebar() {
           </div>
 
           <div className={styles.navSection}>
-            {(!collapsed || isMobile) && <span className={styles.sectionLabel}>SYSTÈME ET PARAMÈTRES</span>}
+            {(!collapsed || isMobile) && <span className={styles.sectionLabel}>Paramètres</span>}
             {filteredBottomItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname.startsWith(item.path);

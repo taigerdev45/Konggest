@@ -1,15 +1,20 @@
-/* Admin Layout — Premium Dark */
+/* Admin Layout — Salle des Machines */
 
 .layout {
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: #0F1117;
 }
 
 .main {
-  margin-left: 260px;
+  margin-left: var(--sidebar-width);
   padding: 28px;
   min-height: 100vh;
   transition: margin-left var(--transition-base);
+  background: #0F1117;
+  /* Dot grid subtil — signal "environnement technique" */
+  background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  background-position: 0 0;
 }
 
 @media (max-width: 768px) {

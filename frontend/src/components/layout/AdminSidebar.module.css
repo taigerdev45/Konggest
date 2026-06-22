@@ -1,238 +1,298 @@
 /* ============================================
-   Admin Sidebar — Solid Control Center
-   Deep Navy + Indigo Accents
+   AdminSidebar — Espace Staff "Salle des Machines"
+   Anthracite + ambre système · contexte technique
    ============================================ */
 
 .sidebar {
   position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
+  top: 0; bottom: 0; left: 0;
   width: var(--sidebar-width);
-  background: #020617; /* Solid Slate-950 for Senior Minimalist Look */
-  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  background: #0C0E12;
+  border-right: 1px solid rgba(255,255,255,0.04);
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
   overflow: hidden;
-  box-shadow: 20px 0 80px rgba(0, 0, 0, 0.5);
 }
 
-/* ─── Header ─── */
+/* ─── Header / Marque ─── */
 .header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 24px 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0 20px;
+  min-height: var(--header-height);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
 }
 
 .logoArea {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
 }
 
 .logoIcon {
-  width: 38px;
-  height: 38px;
-  background: #6366F1; /* Indigo Staff Color */
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  background: rgba(240,165,0,0.1);
+  border: 1px solid rgba(240,165,0,0.25);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 4px;
+  padding: 3px;
   flex-shrink: 0;
-  overflow: hidden; /* Added strict overflow hidden */
+  overflow: hidden;
 }
 
 .logoIcon img {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Ensure the logo scales correctly */
-}
-
-.brand {
-  font-size: 1.15rem;
-  font-weight: 800;
-  color: #FFFFFF;
-  letter-spacing: -0.02em;
+  object-fit: contain;
 }
 
 .logoText {
   display: flex;
   flex-direction: column;
+  gap: 1px;
+}
+
+.brand {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #FFFFFF;
+  letter-spacing: -0.03em;
+  line-height: 1;
 }
 
 .badge {
-  font-size: 0.6rem;
-  font-weight: 800;
-  color: #6366F1;
-  letter-spacing: 0.12em;
+  font-family: 'JetBrains Mono', 'Fira Mono', 'Courier New', monospace;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: #F0A500;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  margin-top: -2px;
+  line-height: 1;
 }
+
+.closeBtn {
+  background: rgba(255,255,255,0.04);
+  border: none;
+  color: rgba(255,255,255,0.4);
+  font-size: 1.25rem;
+  padding: 6px;
+  border-radius: 7px;
+  cursor: pointer;
+  display: flex;
+  transition: background 0.18s, color 0.18s;
+}
+
+.closeBtn:hover { background: rgba(255,255,255,0.08); color: white; }
 
 /* ─── Navigation ─── */
 .nav {
   flex: 1;
-  padding: 24px 12px;
+  padding: 20px 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
   overflow-y: auto;
+  scrollbar-width: none;
 }
+.nav::-webkit-scrollbar { display: none; }
 
 .sectionLabel {
-  font-size: 0.65rem;
+  font-family: 'JetBrains Mono', 'Fira Mono', 'Courier New', monospace;
+  font-size: 0.58rem;
   font-weight: 700;
-  color: #64748B;
-  letter-spacing: 0.12em;
-  padding: 0 16px 12px;
+  color: rgba(255,255,255,0.2);
+  letter-spacing: 0.16em;
+  padding: 0 14px 10px;
   text-transform: uppercase;
 }
 
 .navItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border-radius: 10px;
-  color: #94A3B8;
+  gap: 11px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  color: rgba(255,255,255,0.42);
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
   font-weight: 500;
-  transition: all 0.2s ease;
+  transition: background 0.18s, color 0.18s;
   position: relative;
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.03);
-  color: #FFFFFF;
-  transform: translateX(4px);
+  background: rgba(255,255,255,0.04);
+  color: rgba(255,255,255,0.85);
 }
 
 .navItem.active {
-  background: rgba(99, 102, 241, 0.1);
-  color: #818CF8; /* Electric Indigo */
-  font-weight: 700;
-  border-right: 3px solid #6366F1;
-  border-radius: 0 10px 10px 0;
-  margin-right: 12px;
+  background: rgba(240,165,0,0.08);
+  color: #F0A500;
+  font-weight: 600;
+}
+
+.navItem.active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 16px;
+  background: #F0A500;
+  border-radius: 3px 0 0 3px;
 }
 
 .navIcon {
-  font-size: 1.25rem;
-  opacity: 0.8;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+  opacity: 0.75;
+  transition: opacity 0.18s;
 }
+
+.navItem.active .navIcon { opacity: 1; }
+.navItem:hover .navIcon { opacity: 1; }
 
 .divider {
   height: 1px;
-  background: rgba(255, 255, 255, 0.05);
-  margin: 16px;
+  background: rgba(255,255,255,0.05);
+  margin: 12px 14px;
 }
 
 /* ─── User Profile ─── */
 .userSection {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 24px 20px;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  margin-top: auto;
+  gap: 10px;
+  padding: 16px 18px;
+  background: rgba(0,0,0,0.25);
+  border-top: 1px solid rgba(255,255,255,0.05);
+  flex-shrink: 0;
 }
 
 .avatar {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #6366F1, #4F46E5);
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  background: rgba(240,165,0,0.12);
+  border: 1px solid rgba(240,165,0,0.25);
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  color: #FFFFFF;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+  font-size: 0.85rem;
+  color: #F0A500;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .userInfo {
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .userName {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .userRole {
-  font-size: 0.65rem;
-  color: #6366F1;
-  font-weight: 800;
-  letter-spacing: 0.05em;
+  font-family: 'JetBrains Mono', 'Fira Mono', monospace;
+  font-size: 0.58rem;
+  color: #F0A500;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-top: 1px;
 }
 
 .logoutBtn {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255,255,255,0.04);
   border: none;
-  color: #94A3B8;
-  padding: 8px;
-  border-radius: 8px;
+  color: rgba(255,255,255,0.3);
+  padding: 7px;
+  border-radius: 7px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  display: flex;
+  font-size: 1rem;
+  transition: background 0.18s, color 0.18s;
+  flex-shrink: 0;
 }
 
 .logoutBtn:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239,68,68,0.1);
   color: #EF4444;
 }
 
-/* ─── Mobile ─── */
+/* ─── Mobile Top Nav ─── */
 .mobileTopNav {
   position: fixed;
   top: 0; left: 0; right: 0;
   height: 60px;
-  background: #0F172A;
+  background: #0C0E12;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 20px;
   z-index: 900;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.mobileLogo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .mobileBrand {
   color: #FFFFFF;
   font-weight: 800;
-  margin-left: 10px;
+  font-size: 1rem;
+  letter-spacing: -0.03em;
 }
 
 .mobileToggle {
   background: none;
   border: none;
-  color: white;
-  font-size: 1.5rem;
+  color: rgba(255,255,255,0.7);
+  font-size: 1.4rem;
   cursor: pointer;
+  display: flex;
 }
 
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
+  background: rgba(0,0,0,0.65);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   z-index: 950;
 }
 
 @media (max-width: 768px) {
   .sidebar {
     transform: translateX(-100%);
+    width: 280px;
   }
   .sidebar.mobileOpen {
     transform: translateX(0);
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar { transition: none; }
 }

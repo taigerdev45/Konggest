@@ -83,7 +83,7 @@ export default function AdminSidebar() {
             </div>
             <div className={styles.logoText}>
               <span className={styles.brand}>Konggest</span>
-              <span className={styles.badge}>CONTROL CENTER</span>
+              <span className={styles.badge}>ESPACE STAFF</span>
             </div>
           </div>
           {isMobile && (
@@ -95,7 +95,7 @@ export default function AdminSidebar() {
 
         {/* Navigation Section */}
         <nav className={styles.nav}>
-          <span className={styles.sectionLabel}>SYSTEM CONTROL</span>
+          <span className={styles.sectionLabel}>Tableau de bord</span>
           {ADMIN_NAV.map((item) => {
             const Icon = item.icon;
             const active = isActive(item);
@@ -112,10 +112,10 @@ export default function AdminSidebar() {
           })}
 
           <div className={styles.divider} />
-          <span className={styles.sectionLabel}>SHORTCUTS</span>
+          <span className={styles.sectionLabel}>Accès rapide</span>
           <Link href="/dashboard" className={styles.navItem}>
             <HiOutlineChartBar className={styles.navIcon} />
-            <span>Vue Entreprise</span>
+            <span>Vue entreprise</span>
           </Link>
         </nav>
 
@@ -124,7 +124,7 @@ export default function AdminSidebar() {
           <div className={styles.avatar}>{initials}</div>
           <div className={styles.userInfo}>
             <span className={styles.userName}>{user?.profile?.full_name || 'Staff User'}</span>
-            <span className={styles.userRole}>SYSTEM ADMIN</span>
+            <span className={styles.userRole}>ADMIN SYSTÈME</span>
           </div>
           <button className={styles.logoutBtn} onClick={logout} title="Déconnexion">
             <HiOutlineLogout />
