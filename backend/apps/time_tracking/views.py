@@ -126,7 +126,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Pointages filtrés par tenant et rôle."""
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id()
         qs = TimeEntry.objects.select_related('employee', 'employee__department')
 
         if tenant_id:
@@ -138,8 +138,8 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
             role = getattr(user.profile, 'role', None)
             if role == 'employee':
                 try:
-                    qs = qs.filter(employee=user.profile.employee)
-                except AttributeError:
+                    qs = qs.filter(employee=user.employee)
+                except (AttributeError, Exception):
                     return TimeEntry.objects.none()
 
         return qs
@@ -152,14 +152,14 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         employee = self._get_employee_from_request(self.request)
         entry = serializer.save(employee=employee) if employee else serializer.save()
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id()
         if tenant_id:
             invalidate_cache(tenant_id, 'timentry_list')
             invalidate_cache(tenant_id, 'timentry_stats')
 
     def perform_update(self, serializer):
         entry = serializer.save()
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id()
         if tenant_id:
             invalidate_cache(tenant_id, 'timentry_list')
             invalidate_cache(tenant_id, 'timentry_stats')
@@ -195,7 +195,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
 
         today = date.today()
         now = timezone.now().time()
-        tenant_id = getattr(request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id(request)
 
         try:
             entry = TimeEntry.objects.get(employee=employee, date=today)
@@ -258,13 +258,14 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
         TTL 24h. 1 QR par organisation par jour.
         Accessible uniquement aux managers/admin/RH.
         """
-        tenant_id = getattr(request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id(request)
         if not tenant_id:
             return Response({'error': 'Organisation non identifiée.'}, status=400)
 
         # AT3 — Ajusté pour supporter le long-terme (60 jours)
         is_long_term = request.data.get('long_term', False)
-        
+        today = date.today()
+
         if is_long_term:
             expires_at = timezone.now() + timedelta(days=60)
             # Pour le long terme, on utilise une "date virtuelle" ou on ignore la date dans la clé de session
@@ -326,7 +327,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
         if scan_type not in ('in', 'out'):
             return Response({'error': 'scan_type doit être "in" ou "out".'}, status=400)
 
-        tenant_id = getattr(request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id(request)
         if not tenant_id:
             return Response({'error': 'Organisation non identifiée.'}, status=400)
 
@@ -447,7 +448,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
         - Heures sup du mois en cours
         - Employés actuellement présents
         """
-        tenant_id = getattr(request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id(request)
         today = date.today()
         month_start = today.replace(day=1)
 
@@ -541,7 +542,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
         Seuil retard : check_in > 09:00 (configurable via hr_settings)
         Absence : employé actif sans TimeEntry pour aujourd'hui.
         """
-        tenant_id = getattr(request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id(request)
         if not tenant_id:
             return Response({'error': 'Organisation non identifiée.'}, status=400)
 
@@ -590,15 +591,25 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
             'absent_count': absent_employees.count(),
         })
 
-    # ─── Helper interne ──────────────────────────────────
+    # ─── Helpers internes ──────────────────────────────────
+
+    def _resolve_tenant_id(self, request=None):
+        """Tenant ID robuste: middleware → profil DRF → None."""
+        req = request or self.request
+        tenant_id = getattr(req, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = req.user.profile.organization_id
+            except Exception:
+                pass
+        return tenant_id
 
     def _get_employee_from_request(self, request):
         """Récupère l'employé lié au user connecté. Logge si absent."""
-        if hasattr(request.user, 'profile'):
-            try:
-                return request.user.profile.employee
-            except AttributeError:
-                logger.info(f"Aucun profil employé lié au user {request.user.id}")
+        try:
+            return request.user.employee
+        except (AttributeError, Exception):
+            logger.info(f"Aucun profil employé lié au user {getattr(request.user, 'id', '?')}")
         return None
 
 
@@ -613,7 +624,7 @@ class OvertimeViewSet(viewsets.ModelViewSet):
     filterset_fields = ['employee', 'status']
 
     def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id()
         qs = OvertimeRequest.objects.select_related('employee')
 
         if tenant_id:
@@ -624,8 +635,8 @@ class OvertimeViewSet(viewsets.ModelViewSet):
             role = getattr(user.profile, 'role', None)
             if role == 'employee':
                 try:
-                    qs = qs.filter(employee=user.profile.employee)
-                except AttributeError:
+                    qs = qs.filter(employee=user.employee)
+                except (AttributeError, Exception):
                     return OvertimeRequest.objects.none()
 
         return qs
@@ -634,7 +645,7 @@ class OvertimeViewSet(viewsets.ModelViewSet):
         user = self.request.user
         if hasattr(user, 'profile'):
             try:
-                serializer.save(employee=user.profile.employee, status='pending')
+                serializer.save(employee=user.employee, status='pending')
                 return
             except AttributeError:
                 pass
@@ -667,7 +678,7 @@ class QRSessionViewSet(viewsets.ReadOnlyModelViewSet):
     ordering = ['-date']
 
     def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = self._resolve_tenant_id()
         qs = QRSession.objects.all()
         if tenant_id:
             qs = qs.filter(organization_id=tenant_id)

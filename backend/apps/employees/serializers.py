@@ -107,7 +107,7 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
         source='location.name', read_only=True, default=''
     )
     manager_name = serializers.SerializerMethodField()
-    seniority_years = serializers.IntegerField(source='seniority_years', read_only=True)
+    seniority_years = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Employee
