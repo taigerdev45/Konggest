@@ -419,10 +419,10 @@ body.modal-open {
   inset: 0;
   background: rgba(15, 23, 42, 0.5);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   z-index: 1000;
-  padding: 16px;
+  padding: 20px 16px;
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
 }
@@ -432,12 +432,13 @@ body.modal-open {
   border-radius: 20px;
   width: 100%;
   max-width: 560px;
-  max-height: calc(100dvh - 32px);
+  max-height: calc(100dvh - 40px);
   display: flex;
   flex-direction: column;
   box-shadow: 0 32px 80px rgba(15,23,42,0.18), 0 8px 24px rgba(15,23,42,0.08);
   animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
+  margin: auto;
 }
 
 .modal-header {

@@ -599,16 +599,16 @@ export default function EmployeesPage() {
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
-            <div className="modal-body">
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {formError && (
-              <div style={{ marginBottom: 12, padding: '12px 16px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid var(--danger)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                <HiOutlineExclamationCircle size={18} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: 2 }} />
-                <pre style={{ margin: 0, fontSize: '0.82rem', color: 'var(--danger)', whiteSpace: 'pre-wrap' }}>{formError}</pre>
+              <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid var(--danger)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                <HiOutlineExclamationCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: 1 }} />
+                <pre style={{ margin: 0, fontSize: '0.8rem', color: 'var(--danger)', whiteSpace: 'pre-wrap' }}>{formError}</pre>
               </div>
             )}
-              {/* Section Identité */}
-              <SectionTitle>Identité professionnelle</SectionTitle>
-              <div className="grid grid-2 gap-md">
+              {/* Identité */}
+              <SectionTitle>Identité</SectionTitle>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px 14px' }}>
                 <Field label="Matricule *" error={fieldErrors.employee_id}>
                   <input className="input" name="employee_id" value={formData.employee_id}
                     onChange={handleInputChange} required placeholder="EMP-2026-001" />
@@ -616,22 +616,6 @@ export default function EmployeesPage() {
                 <Field label="Numéro CNSS" error={fieldErrors.cnss_number}>
                   <input className="input" name="cnss_number" value={formData.cnss_number}
                     onChange={handleInputChange} placeholder="123456-A" />
-                </Field>
-                <Field label="Prénom *" error={fieldErrors.first_name}>
-                  <input className="input" name="first_name" value={formData.first_name}
-                    onChange={handleInputChange} required />
-                </Field>
-                <Field label="Nom de famille *" error={fieldErrors.last_name}>
-                  <input className="input" name="last_name" value={formData.last_name}
-                    onChange={handleInputChange} required />
-                </Field>
-                <Field label="Email professionnel *" error={fieldErrors.email}>
-                  <input className="input" type="email" name="email" value={formData.email}
-                    onChange={handleInputChange} required />
-                </Field>
-                <Field label="Téléphone" error={fieldErrors.phone}>
-                  <input className="input" name="phone" value={formData.phone}
-                    onChange={handleInputChange} placeholder="+241 01 23 45 67" />
                 </Field>
                 <Field label="Genre">
                   <select className="input" name="gender" value={formData.gender} onChange={handleInputChange}>
@@ -641,31 +625,46 @@ export default function EmployeesPage() {
                     <option value="O">Autre</option>
                   </select>
                 </Field>
+                <Field label="Prénom *" error={fieldErrors.first_name}>
+                  <input className="input" name="first_name" value={formData.first_name}
+                    onChange={handleInputChange} required />
+                </Field>
+                <Field label="Nom de famille *" error={fieldErrors.last_name}>
+                  <input className="input" name="last_name" value={formData.last_name}
+                    onChange={handleInputChange} required />
+                </Field>
+                <Field label="Téléphone" error={fieldErrors.phone}>
+                  <input className="input" name="phone" value={formData.phone}
+                    onChange={handleInputChange} placeholder="+241 01 23 45 67" />
+                </Field>
               </div>
+              <Field label="Email professionnel *" error={fieldErrors.email}>
+                <input className="input" type="email" name="email" value={formData.email}
+                  onChange={handleInputChange} required />
+              </Field>
 
-              {/* Section Organisation */}
+              {/* Organisation */}
               <SectionTitle>Organisation</SectionTitle>
-              <div className="grid grid-2 gap-md">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px 14px' }}>
                 <Field label="Département">
                   <select className="input" name="department" value={formData.department} onChange={handleInputChange}>
-                    <option value="">Sélectionner...</option>
+                    <option value="">Département...</option>
                     {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </Field>
-                {/* FIX T14 : champ position ajouté */}
                 <Field label="Poste">
                   <select className="input" name="position" value={formData.position} onChange={handleInputChange}>
-                    <option value="">Sélectionner un poste...</option>
+                    <option value="">Poste...</option>
                     {filteredPositions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
                   </select>
                 </Field>
                 <Field label="Site / Lieu">
                   <select className="input" name="location" value={formData.location} onChange={handleInputChange}>
-                    <option value="">Sélectionner un site...</option>
+                    <option value="">Site...</option>
                     {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                   </select>
                 </Field>
-                <Field label="Type de contrat">
+                <Field label="Contrat">
                   <select className="input" name="contract_type" value={formData.contract_type} onChange={handleInputChange}>
                     <option value="cdi">CDI</option>
                     <option value="cdd">CDD</option>
@@ -689,25 +688,24 @@ export default function EmployeesPage() {
                 </Field>
               </div>
 
-              {/* Section Fiscal */}
-              <SectionTitle>Informations fiscales (Gabon)</SectionTitle>
-              <div className="grid grid-2 gap-md">
+              {/* Fiscal */}
+              <SectionTitle>Fiscal (Gabon)</SectionTitle>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
                 <Field label="Salaire brut mensuel (XAF)" error={fieldErrors.salary}>
                   <input className="input" type="number" name="salary" value={formData.salary}
                     onChange={handleInputChange} min={0} step={1000} />
                 </Field>
-                <Field label="Parts IRPP (Quotient familial)">
+                <Field label="Parts IRPP">
                   <input className="input" type="number" step="0.5" min="1" name="family_parts"
                     value={formData.family_parts} onChange={handleInputChange} />
                 </Field>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.88rem', color: '#475569' }}>
                 <input type="checkbox" id="is_expat" name="is_expat"
-                  checked={formData.is_expat} onChange={handleInputChange} />
-                <label htmlFor="is_expat" style={{ margin: 0, cursor: 'pointer', fontSize: '0.9rem' }}>
-                  Cet employé est un expatrié
-                </label>
-              </div>
+                  checked={formData.is_expat} onChange={handleInputChange}
+                  style={{ width: 16, height: 16, accentColor: 'var(--primary)' }} />
+                Cet employé est un expatrié
+              </label>
 
             </div>{/* end modal-body */}
             <div className="modal-footer">
@@ -759,7 +757,7 @@ export default function EmployeesPage() {
                   Fichier CSV UTF-8, colonnes requises : employee_id, first_name, last_name, email, hire_date
                 </p>
               </div>
-              <button className="btn btn-ghost" onClick={() => setShowImport(false)}>✕</button>
+              <button className="btn-modal-close" onClick={() => setShowImport(false)}>✕</button>
             </div>
             <form onSubmit={handleImportSubmit} style={{ display: 'contents' }}>
               <div className="modal-body">
