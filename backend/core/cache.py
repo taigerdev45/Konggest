@@ -8,7 +8,7 @@ from django.core.cache import cache
 
 def cache_key(tenant_id, resource, identifier=None):
     """Generate a tenant-scoped cache key."""
-    key = f"konggest:tenant:{tenant_id}:{resource}"
+    key = f"konggest:v2:tenant:{tenant_id}:{resource}"
     if identifier:
         key += f":{identifier}"
     return key
@@ -48,7 +48,7 @@ def invalidate_cache(tenant_id, resource):
     try:
         from django_redis import get_redis_connection
         conn = get_redis_connection('default')
-        keys = conn.keys(f"*{cache_key(tenant_id, resource)}*")
+        keys = conn.keys(f"*konggest:v2:tenant:{tenant_id}:{resource}*")
         if keys:
             conn.delete(*keys)
     except Exception:
@@ -60,7 +60,7 @@ def invalidate_tenant_cache(tenant_id):
     try:
         from django_redis import get_redis_connection
         conn = get_redis_connection('default')
-        keys = conn.keys(f"*konggest:tenant:{tenant_id}:*")
+        keys = conn.keys(f"*konggest:v2:tenant:{tenant_id}:*")
         if keys:
             conn.delete(*keys)
     except Exception:
