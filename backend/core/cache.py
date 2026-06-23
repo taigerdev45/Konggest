@@ -19,17 +19,22 @@ def cache_response(timeout=900, key_prefix='view'):
     def decorator(view_func):
         @wraps(view_func)
         def wrapper(self, request, *args, **kwargs):
+            from rest_framework.response import Response as DRFResponse
             tenant_id = getattr(request, 'tenant_id', 'global')
             ck = cache_key(tenant_id, key_prefix, request.get_full_path())
 
             cached = cache.get(ck)
             if cached is not None:
-                return cached
+                return DRFResponse(cached)
 
             response = view_func(self, request, *args, **kwargs)
 
             if response.status_code == 200:
-                cache.set(ck, response, timeout)
+                # Cache only response.data — Response objects are not picklable
+                try:
+                    cache.set(ck, response.data, timeout)
+                except Exception:
+                    pass
 
             return response
         return wrapper

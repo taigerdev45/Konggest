@@ -20,11 +20,7 @@ import {
   HiOutlineChevronLeft, HiOutlineChevronRight, HiOutlineWifi,
 } from 'react-icons/hi';
 import api from '@/lib/api';
-// T16 : Realtime Supabase
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+import { supabase } from '@/lib/supabase';
 
 // ─── Constantes ───
 
@@ -194,9 +190,8 @@ export default function EmployeesPage() {
 
   // ── T16 : Realtime Supabase — refresh auto sur events employés ──
   useEffect(() => {
-    if (!supabaseUrl || !supabaseKey) return;
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
     // Récupérer le tenant_id depuis le JWT déjà stocké dans le localStorage par le contexte Auth
     let tenantId = null;
     try {
