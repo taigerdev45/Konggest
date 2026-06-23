@@ -21,7 +21,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
 
-    @action(detail=False, methods=['post'])
+    @action(detail=False, methods=['post'], url_path='mark-all-read', url_name='mark-all-read')
     def mark_all_read(self, request):
         """
         Mark all unread notifications for the current user as read.
@@ -50,7 +50,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], url_path='unread-count', url_name='unread-count')
     def unread_count(self, request):
         """
         Return the count of unread notifications for the current user.

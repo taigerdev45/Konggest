@@ -101,7 +101,6 @@ export default function EmployeesPage() {
 
   // Modal CRUD
   const [showModal, setShowModal]   = useState(false);
-  useScrollLock(showModal || !!deleteTarget || showImport);
   const [editId, setEditId]         = useState(null);
   const [formData, setFormData]     = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -114,6 +113,7 @@ export default function EmployeesPage() {
 
   // Modal import CSV
   const [showImport, setShowImport] = useState(false);
+  useScrollLock(showModal || !!deleteTarget || showImport);
   const [csvFile, setCsvFile]       = useState(null);
   const [importing, setImporting]   = useState(false);
 

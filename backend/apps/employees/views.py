@@ -365,10 +365,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             serializer = EmployeeDetailSerializer(employee, context={'request': request})
             return Response(serializer.data)
         except Employee.DoesNotExist:
-            return Response(
-                {'error': 'Aucun profil employé trouvé pour cet utilisateur.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
+            return Response(None, status=status.HTTP_200_OK)
 
     # ── Statistiques dashboard ── FIX T4 + FIX T8
     @action(detail=False, methods=['get'])

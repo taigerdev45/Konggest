@@ -22,12 +22,12 @@ export default function UsersPage() {
   const [filterRole, setFilterRole]     = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showInviteModal, setShowInviteModal] = useState(false);
-  useScrollLock(showInviteModal || !!deleteTarget || !!inviteResult);
   const [inviteData, setInviteData]     = useState({ email: '', full_name: '', role: 'employee' });
   const [submitting, setSubmitting]     = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [toast, setToast]               = useState({ show: false, type: '', text: '' });
-  const [inviteResult, setInviteResult] = useState(null); // { email, role, temp_password, email_sent }
+  const [inviteResult, setInviteResult] = useState(null);
+  useScrollLock(showInviteModal || !!deleteTarget || !!inviteResult);
 
   const showToast = (type, text) => {
     setToast({ show: true, type, text });
