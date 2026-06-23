@@ -601,6 +601,11 @@ class PositionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         tenant_id = getattr(self.request, 'tenant_id', None)
+        if not tenant_id:
+            try:
+                tenant_id = self.request.user.profile.organization_id
+            except Exception:
+                pass
         qs = Position.objects.select_related('department')
         if tenant_id:
             qs = qs.filter(organization_id=tenant_id)

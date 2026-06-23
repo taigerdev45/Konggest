@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { HiOutlineClock, HiOutlineLogin, HiOutlineLogout, HiOutlineRefresh, HiOutlineCheckCircle } from 'react-icons/hi';
+import { Html5QrcodeScanner } from 'html5-qrcode';
 import api from '@/lib/api';
 import AttendanceQR from '@/components/attendance/AttendanceQR';
 import { useAuth } from '@/contexts/AuthContext';
@@ -184,7 +185,7 @@ export default function TimeTrackingPage() {
             canManageQR ? (
               <AttendanceQR organizationName={me?.organization_name || user?.organization_name || 'Votre Organisation'} />
             ) : (
-              <EmployeeScanInfo />
+              <EmployeeScanner />
             )
           ) : (
             <div className={styles.contentCard}>
@@ -260,44 +261,112 @@ export default function TimeTrackingPage() {
   );
 }
 
-function EmployeeScanInfo() {
+function EmployeeScanner() {
+  const [scanType, setScanType] = useState('in');
+  const [done, setDone] = useState(false);
+  const [toast, setToast] = useState({ show: false, type: '', text: '' });
+  const processingRef = useRef(false);
+
+  const showToast = (type, text) => {
+    setToast({ show: true, type, text });
+    setTimeout(() => setToast({ show: false }), 4000);
+  };
+
+  useEffect(() => {
+    if (done) return;
+    const scanner = new Html5QrcodeScanner('tt-reader', {
+      qrbox: { width: 240, height: 240 },
+      fps: 5,
+      rememberLastUsedCamera: true,
+    });
+
+    scanner.render(async (decodedText) => {
+      if (processingRef.current) return;
+      processingRef.current = true;
+      try {
+        const res = await api.post('/time-tracking/entries/scan/', {
+          token: decodedText,
+          scan_type: scanType,
+        });
+        showToast('success', res.message || 'Pointage enregistré');
+        setDone(true);
+        scanner.clear();
+      } catch (err) {
+        const msg = err?.error || err?.response?.data?.error || 'QR invalide ou expiré.';
+        showToast('error', msg);
+        setTimeout(() => { processingRef.current = false; }, 3000);
+      }
+    }, () => {});
+
+    return () => { scanner.clear().catch(() => {}); };
+  }, [scanType, done]);
+
+  if (done) {
+    return (
+      <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl overflow-hidden">
+        <div className="p-12 flex flex-col items-center gap-6 text-center">
+          <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center">
+            <HiOutlineCheckCircle className="text-white text-4xl" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 tracking-tighter mb-2">Pointage validé</h2>
+            <p className="text-gray-400 text-sm font-medium">Votre présence a été enregistrée.</p>
+          </div>
+          <button
+            onClick={() => { setDone(false); processingRef.current = false; }}
+            className="px-6 py-3 rounded-2xl bg-gray-100 text-gray-700 font-black text-xs uppercase tracking-widest hover:bg-gray-200 transition-all"
+          >
+            Nouveau pointage
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-gray-200/40 overflow-hidden">
-      <div className="p-8 md:p-12 flex flex-col items-center justify-center text-center gap-6">
-        <div className="w-20 h-20 bg-blue-50 rounded-[1.5rem] flex items-center justify-center text-blue-500 text-4xl">
-          📱
+      {toast.show && (
+        <div className={`fixed bottom-8 left-1/2 -translate-x-1/2 px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-3 text-white z-[200] ${toast.type === 'error' ? 'bg-red-500' : 'bg-gray-900'}`}>
+          <span className="font-black text-xs uppercase tracking-widest">{toast.text}</span>
         </div>
-        <div>
-          <h2 className="text-2xl font-black text-gray-900 tracking-tighter mb-2">
-            Pointage par QR Code
-          </h2>
-          <p className="text-gray-400 font-medium max-w-sm mx-auto text-sm">
-            Un QR Code unique est affiché à l'entrée de votre établissement.
-            Scannez-le avec votre appareil photo pour enregistrer votre présence.
-          </p>
-        </div>
+      )}
 
-        <div className="w-full max-w-md grid grid-cols-1 gap-4 text-left">
-          {[
-            { step: '1', title: 'Ouvrez votre caméra', desc: 'Utilisez l\'appareil photo de votre smartphone ou l\'application de scan.' },
-            { step: '2', title: 'Scannez le QR Code affiché', desc: 'Le QR Code se trouve à l\'entrée de vos locaux. Pointez votre caméra dessus.' },
-            { step: '3', title: 'Confirme automatiquement', desc: 'Votre pointage est enregistré instantanément et de manière infalsifiable.' },
-          ].map(({ step, title, desc }) => (
-            <div key={step} className="flex gap-4 p-5 rounded-[1.5rem] bg-gray-50/60 border border-gray-100">
-              <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0">
-                {step}
-              </div>
-              <div>
-                <div className="font-black text-gray-900 text-sm mb-1">{title}</div>
-                <div className="text-gray-400 text-xs font-medium">{desc}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="p-6 pb-0 text-center">
+        <h2 className="text-xl font-black text-gray-900 tracking-tighter mb-1">Scanner QR Code</h2>
+        <p className="text-gray-400 text-xs font-medium mb-4">Pointez la caméra sur le QR Code de votre établissement.</p>
 
-        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 text-xs font-black uppercase tracking-widest border border-emerald-100">
-          🔒 Cryptographiquement sécurisé — Non falsifiable
+        <div className="flex gap-3 p-1.5 bg-gray-100/60 rounded-[1.5rem] w-fit mx-auto mb-5">
+          <button
+            onClick={() => { setScanType('in'); processingRef.current = false; }}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${scanType === 'in' ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <HiOutlineLogin size={14} /> Arrivée
+          </button>
+          <button
+            onClick={() => { setScanType('out'); processingRef.current = false; }}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${scanType === 'out' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            <HiOutlineLogout size={14} /> Départ
+          </button>
         </div>
+      </div>
+
+      <div className="relative">
+        <div id="tt-reader" className="w-full" />
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+          <div className="w-52 h-52 relative">
+            <div className="absolute top-0 left-0 w-7 h-7 border-t-4 border-l-4 border-blue-500 rounded-tl-xl" />
+            <div className="absolute top-0 right-0 w-7 h-7 border-t-4 border-r-4 border-blue-500 rounded-tr-xl" />
+            <div className="absolute bottom-0 left-0 w-7 h-7 border-b-4 border-l-4 border-blue-500 rounded-bl-xl" />
+            <div className="absolute bottom-0 right-0 w-7 h-7 border-b-4 border-r-4 border-blue-500 rounded-br-xl" />
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4 text-center">
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">
+          {scanType === 'in' ? 'Prêt — Arrivée' : 'Prêt — Départ'}
+        </p>
       </div>
     </div>
   );
