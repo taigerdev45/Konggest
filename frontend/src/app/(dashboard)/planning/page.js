@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { supabase } from '@/lib/supabase';
 import api from '@/lib/api';
 import { HiOutlineCalendar, HiOutlinePrinter, HiOutlinePlus, HiOutlineUserGroup } from 'react-icons/hi';
@@ -39,6 +40,7 @@ export default function PlanningPage() {
   const [selectedEmployees, setSelectedEmployees] = useState([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedTemplate, setSelectedTemplate] = useState('');
+  useScrollLock(showModal);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } })
@@ -291,24 +293,24 @@ export default function PlanningPage() {
 
       {/* Modal assignation */}
       {showModal && (
-        <div className="fixed inset-0 bg-[#0F1A10]/50 backdrop-blur-sm flex items-center justify-center p-4 z-[200]">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl">
-            <div className="flex items-start justify-between mb-5">
+        <div className="modal-overlay">
+          <div className="modal-content animate-in" style={{ maxWidth: 540 }}>
+            <div className="modal-header">
               <div>
-                <span className="text-[11px] font-semibold text-[#2D6A4F] uppercase tracking-[0.1em]">Opérationnel</span>
-                <h2 className="text-[17px] font-semibold text-[#0F1A10] mt-0.5">Assignation de shift</h2>
-                <p className="text-[12px] text-[#6B7E6D] mt-0.5">Configurez les horaires de vos ressources.</p>
+                <h2>Assignation de shift</h2>
+                <p>Configurez les horaires de vos ressources.</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center">×</button>
+              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
-
-            <form onSubmit={handleBulkSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className={S.label}>Collaborateurs</label>
+            <form onSubmit={handleBulkSubmit} style={{ display: 'contents' }}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="input-group">
+                  <label htmlFor="plan-emps">Collaborateurs <span style={{ fontWeight: 400, color: 'var(--text-muted)', fontSize: '0.78rem' }}>(Ctrl+clic pour plusieurs)</span></label>
                   <select
+                    id="plan-emps"
                     multiple
-                    className={`${S.input} h-44`}
+                    className="input"
+                    style={{ height: 140 }}
                     onChange={e => setSelectedEmployees(Array.from(e.target.selectedOptions, o => o.value))}
                   >
                     {employees.map(emp => (
@@ -316,14 +318,14 @@ export default function PlanningPage() {
                     ))}
                   </select>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className={S.label}>Date d'effet</label>
-                    <input type="date" required value={selectedDate} onChange={e => setSelectedDate(e.target.value)} className={S.input} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="input-group">
+                    <label htmlFor="plan-date">Date d&apos;effet *</label>
+                    <input id="plan-date" className="input" type="date" required value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
                   </div>
-                  <div>
-                    <label className={S.label}>Type de Shift</label>
-                    <select required value={selectedTemplate} onChange={e => setSelectedTemplate(e.target.value)} className={S.input}>
+                  <div className="input-group">
+                    <label htmlFor="plan-tpl">Type de Shift *</label>
+                    <select id="plan-tpl" className="input" required value={selectedTemplate} onChange={e => setSelectedTemplate(e.target.value)}>
                       <option value="">Choisir un créneau</option>
                       {templates.map(t => (
                         <option key={t.id} value={t.id}>{t.name} • {t.start_time.substring(0, 5)} - {t.end_time.substring(0, 5)}</option>
@@ -332,9 +334,9 @@ export default function PlanningPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-[rgba(20,34,24,0.06)]">
-                <button type="button" onClick={() => setShowModal(false)} className={`${S.btn} ${S.secondary}`}>Annuler</button>
-                <button type="submit" className={`${S.btn} ${S.primary}`}>Confirmer l'Assignation</button>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary">Confirmer l&apos;Assignation</button>
               </div>
             </form>
           </div>

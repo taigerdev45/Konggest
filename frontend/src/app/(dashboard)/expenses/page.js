@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { HiOutlineDocumentText, HiOutlineCheck, HiOutlineX, HiOutlineRefresh, HiOutlineUpload, HiOutlineDownload } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,6 +30,7 @@ export default function ExpensesPage() {
   const [date, setDate] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [file, setFile] = useState(null);
+  useScrollLock(showModal);
 
   const showToast = (type, text) => {
     setToast({ show: true, type, text });
@@ -220,46 +222,45 @@ export default function ExpensesPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg w-full max-w-md p-6">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-bold">Soumettre une note de frais</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-500 hover:text-gray-700"><HiOutlineX size={24} /></button>
+        <div className="modal-overlay">
+          <div className="modal-content animate-in" style={{ maxWidth: 480 }}>
+            <div className="modal-header">
+              <div>
+                <h2>Soumettre une note de frais</h2>
+                <p>Renseignez les détails de votre dépense.</p>
+              </div>
+              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="mb-4">
-                <label className="block mb-1 text-sm font-medium">Montant (FCFA)</label>
-                <input type="number" required value={amount} onChange={e => setAmount(e.target.value)} className="w-full border rounded p-2" min="1" />
+            <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="input-group">
+                  <label htmlFor="exp-amount">Montant (FCFA) *</label>
+                  <input id="exp-amount" className="input" type="number" required value={amount} onChange={e => setAmount(e.target.value)} min="1" placeholder="0" />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="exp-reason">Motif / Description *</label>
+                  <input id="exp-reason" className="input" type="text" required value={reason} onChange={e => setReason(e.target.value)} placeholder="Ex: Restaurant client X" />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="exp-cat">Catégorie</label>
+                  <select id="exp-cat" className="input" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
+                    <option value="">— Sélectionnez —</option>
+                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="input-group">
+                  <label htmlFor="exp-date">Date *</label>
+                  <input id="exp-date" className="input" type="date" required value={date} onChange={e => setDate(e.target.value)} />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="exp-file">Justificatif (Image/PDF)</label>
+                  <input id="exp-file" className="input" type="file" onChange={e => setFile(e.target.files[0])} accept="image/*,.pdf" />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 4 }}>Compressé automatiquement (max 500 Ko).</span>
+                </div>
               </div>
-              
-              <div className="mb-4">
-                <label className="block mb-1 text-sm font-medium">Motif / Description</label>
-                <input type="text" required value={reason} onChange={e => setReason(e.target.value)} className="w-full border rounded p-2" placeholder="Ex: Restaurant client X" />
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-1 text-sm font-medium">Catégorie</label>
-                <select value={categoryId} onChange={e => setCategoryId(e.target.value)} className="w-full border rounded p-2">
-                  <option value="">-- Sélectionnez --</option>
-                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-1 text-sm font-medium">Date</label>
-                <input type="date" required value={date} onChange={e => setDate(e.target.value)} className="w-full border rounded p-2" />
-              </div>
-
-              <div className="mb-4">
-                <label className="block mb-1 text-sm font-medium">Justificatif (Image/PDF)</label>
-                <input type="file" onChange={e => setFile(e.target.files[0])} accept="image/*,.pdf" className="w-full border rounded p-2 text-sm" />
-                <p className="text-xs text-gray-500 mt-1">Sera compressé (max 500 Ko) automatiquement sur le backend.</p>
-              </div>
-
-              <div className="flex justify-end gap-2 mt-6">
-                <button type="button" onClick={() => setShowModal(false)} className="btn btn-ghost">Annuler</button>
-                <button type="submit" disabled={submitting} className="btn btn-primary">{submitting ? 'Envoi...' : 'Soumettre'}</button>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Envoi...' : 'Soumettre'}</button>
               </div>
             </form>
           </div>

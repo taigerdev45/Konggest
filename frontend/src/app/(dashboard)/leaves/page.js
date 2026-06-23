@@ -23,7 +23,6 @@ const TD = { padding: '13px 18px', verticalAlign: 'middle', borderBottom: '1px s
 
 export default function LeavesPage() {
   const { user } = useAuth();
-  useScrollLock(showModal || rejectionModal.show);
   const [requests, setRequests]     = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [me, setMe]                 = useState(null);
@@ -32,6 +31,7 @@ export default function LeavesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [rejectionModal, setRejectionModal] = useState({ show: false, id: null, reason: '' });
   const [toast, setToast]           = useState({ show: false, type: '', text: '' });
+  useScrollLock(showModal || rejectionModal.show);
 
   const [formData, setFormData] = useState({
     leave_type: '', start_date: '', end_date: '', days_count: 0, reason: '',

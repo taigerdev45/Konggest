@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { HiOutlineChartBar, HiOutlinePlus, HiOutlineRefresh, HiOutlineStar, HiOutlineCheckCircle } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -24,6 +25,7 @@ export default function PerformancePage() {
   const [employees, setEmployees] = useState([]);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
+  useScrollLock(showModal);
 
   const [formData, setFormData] = useState({
     employee: '',
@@ -230,44 +232,46 @@ export default function PerformancePage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-[#0F1A10]/50 backdrop-blur-sm flex items-center justify-center p-4 z-[200]">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl">
-            <div className="flex items-start justify-between mb-5">
+        <div className="modal-overlay">
+          <div className="modal-content animate-in" style={{ maxWidth: 560 }}>
+            <div className="modal-header">
               <div>
-                <span className="text-[11px] font-semibold text-[#2D6A4F] uppercase tracking-[0.1em]">Nouvelle évaluation</span>
-                <h2 className="text-[17px] font-semibold text-[#0F1A10] mt-0.5">Enregistrer une évaluation</h2>
+                <h2>Enregistrer une évaluation</h2>
+                <p>Évaluation de performance collaborateur.</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center text-base">✕</button>
+              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className={S.label}>Collaborateur</label>
-                <select className={S.input} name="employee" value={formData.employee} onChange={handleInputChange} required>
-                  <option value="">Sélectionner un employé...</option>
-                  {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={S.label}>Période</label>
-                  <input className={S.input} type="text" name="period" value={formData.period} onChange={handleInputChange} required placeholder="Ex: Q1 2026" />
+            <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="input-group">
+                  <label htmlFor="perf-emp">Collaborateur *</label>
+                  <select id="perf-emp" className="input" name="employee" value={formData.employee} onChange={handleInputChange} required>
+                    <option value="">Sélectionner un employé...</option>
+                    {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+                  </select>
                 </div>
-                <div>
-                  <label className={S.label}>Note (1–5)</label>
-                  <input className={S.input} type="number" name="overall_rating" min="1" max="5" value={formData.overall_rating} onChange={handleInputChange} required />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="input-group">
+                    <label htmlFor="perf-period">Période *</label>
+                    <input id="perf-period" className="input" type="text" name="period" value={formData.period} onChange={handleInputChange} required placeholder="Ex: Q1 2026" />
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="perf-rating">Note (1–5) *</label>
+                    <input id="perf-rating" className="input" type="number" name="overall_rating" min="1" max="5" value={formData.overall_rating} onChange={handleInputChange} required />
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label htmlFor="perf-strengths">Points forts</label>
+                  <textarea id="perf-strengths" className="input" style={{ minHeight: 80, resize: 'none' }} name="strengths" value={formData.strengths} onChange={handleInputChange} placeholder="Qualités observées..." />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="perf-improvements">Axes d&apos;amélioration</label>
+                  <textarea id="perf-improvements" className="input" style={{ minHeight: 80, resize: 'none' }} name="improvements" value={formData.improvements} onChange={handleInputChange} placeholder="Compétences à développer..." />
                 </div>
               </div>
-              <div>
-                <label className={S.label}>Points forts</label>
-                <textarea className={`${S.input} min-h-[80px] resize-none`} name="strengths" value={formData.strengths} onChange={handleInputChange} placeholder="Qualités observées..." />
-              </div>
-              <div>
-                <label className={S.label}>Axes d'amélioration</label>
-                <textarea className={`${S.input} min-h-[80px] resize-none`} name="improvements" value={formData.improvements} onChange={handleInputChange} placeholder="Compétences à développer..." />
-              </div>
-              <div className="flex justify-end gap-2 pt-2 border-t border-[rgba(20,34,24,0.06)]">
-                <button type="button" onClick={() => setShowModal(false)} className={`${S.btn} ${S.secondary}`}>Annuler</button>
-                <button type="submit" disabled={submitting} className={`${S.btn} ${S.primary}`}>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
                   {submitting ? 'Enregistrement...' : 'Enregistrer'}
                 </button>
               </div>

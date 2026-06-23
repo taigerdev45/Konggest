@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   HiOutlineOfficeBuilding,
   HiOutlineMap,
@@ -46,6 +47,7 @@ export default function OrganizationSettingsPage() {
   const [modalType, setModalType] = useState('');
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({});
+  useScrollLock(showModal);
 
   const fetchData = async (tab = activeTab) => {
     setLoading(true);
@@ -311,98 +313,98 @@ export default function OrganizationSettingsPage() {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-[#0F1A10]/50 backdrop-blur-sm flex items-center justify-center p-4 z-[200]">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl">
-            <div className="flex items-start justify-between mb-5">
+        <div className="modal-overlay">
+          <div className="modal-content animate-in" style={{ maxWidth: 520 }}>
+            <div className="modal-header">
               <div>
-                <span className="text-[11px] font-semibold text-[#2D6A4F] uppercase tracking-[0.1em]">{editId ? 'Modification' : 'Nouveau'}</span>
-                <h2 className="text-[17px] font-semibold text-[#0F1A10] mt-0.5">{editId ? 'Modifier' : 'Ajouter'} {activeTabData.singularLabel}</h2>
+                <h2>{editId ? 'Modifier' : 'Ajouter'} {activeTabData.singularLabel}</h2>
+                <p>{editId ? 'Modifier les informations existantes.' : 'Créer un nouvel élément.'}</p>
               </div>
-              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center text-base">✕</button>
+              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
+            <form onSubmit={handleSave} style={{ display: 'contents' }}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {/* Department */}
+                {modalType === 'department' && <>
+                  <div className="input-group">
+                    <label htmlFor="org-name">Nom du Département *</label>
+                    <input id="org-name" className="input" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Ressources Humaines" />
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="org-desc">Description (optionnel)</label>
+                    <textarea id="org-desc" className="input" style={{ minHeight: 80, resize: 'none' }} value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Courte description..." />
+                  </div>
+                </>}
 
-            <form onSubmit={handleSave} className="space-y-4">
-              {/* Department */}
-              {modalType === 'department' && <>
-                <div>
-                  <label className={S.label}>Nom du Département</label>
-                  <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Ressources Humaines" />
-                </div>
-                <div>
-                  <label className={S.label}>Description (optionnel)</label>
-                  <textarea className={`${S.input} min-h-[80px] resize-none`} value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Courte description..." />
-                </div>
-              </>}
+                {/* Location */}
+                {modalType === 'location' && <>
+                  <div className="input-group">
+                    <label htmlFor="loc-name">Nom du Site *</label>
+                    <input id="loc-name" className="input" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Siège Social" />
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="loc-addr">Adresse</label>
+                    <input id="loc-addr" className="input" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Rue, Quartier..." />
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="loc-city">Ville</label>
+                    <input id="loc-city" className="input" value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value})} placeholder="Ex: Libreville" />
+                  </div>
+                </>}
 
-              {/* Location */}
-              {modalType === 'location' && <>
-                <div>
-                  <label className={S.label}>Nom du Site</label>
-                  <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Siège Social" />
-                </div>
-                <div>
-                  <label className={S.label}>Adresse</label>
-                  <input className={S.input} value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Rue, Quartier..." />
-                </div>
-                <div>
-                  <label className={S.label}>Ville</label>
-                  <input className={S.input} value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value})} placeholder="Ex: Libreville" />
-                </div>
-              </>}
+                {/* Leave Type */}
+                {modalType === 'leaveType' && <>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="input-group">
+                      <label htmlFor="lt-name">Désignation *</label>
+                      <input id="lt-name" className="input" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Congé Annuel" />
+                    </div>
+                    <div className="input-group">
+                      <label htmlFor="lt-code">Code *</label>
+                      <input id="lt-code" className="input" value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} required placeholder="Ex: CA" />
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="input-group">
+                      <label htmlFor="lt-days">Jours par an *</label>
+                      <input id="lt-days" className="input" type="number" value={formData.days_per_year || ''} onChange={e => setFormData({...formData, days_per_year: e.target.value})} required />
+                    </div>
+                    <div className="input-group">
+                      <label htmlFor="lt-color">Couleur</label>
+                      <input id="lt-color" className="input" style={{ height: 40, padding: 4 }} type="color" value={formData.color || '#2D6A4F'} onChange={e => setFormData({...formData, color: e.target.value})} />
+                    </div>
+                  </div>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input type="checkbox" style={{ width: 16, height: 16 }} checked={formData.is_paid || false} onChange={e => setFormData({...formData, is_paid: e.target.checked})} />
+                    <span style={{ fontSize: '0.87rem', color: 'var(--text-primary)' }}>Congé rémunéré (payé)</span>
+                  </label>
+                </>}
 
-              {/* Leave Type */}
-              {modalType === 'leaveType' && <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={S.label}>Désignation</label>
-                    <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Congé Annuel" />
+                {/* Payroll Period */}
+                {modalType === 'payrollPeriod' && <>
+                  <div className="input-group">
+                    <label htmlFor="pp-name">Nom de la Période *</label>
+                    <input id="pp-name" className="input" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Mars 2026" />
                   </div>
-                  <div>
-                    <label className={S.label}>Code</label>
-                    <input className={S.input} value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} required placeholder="Ex: CA" />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="input-group">
+                      <label htmlFor="pp-start">Début *</label>
+                      <input id="pp-start" className="input" type="date" value={formData.start_date || ''} onChange={e => setFormData({...formData, start_date: e.target.value})} required />
+                    </div>
+                    <div className="input-group">
+                      <label htmlFor="pp-end">Fin *</label>
+                      <input id="pp-end" className="input" type="date" value={formData.end_date || ''} onChange={e => setFormData({...formData, end_date: e.target.value})} required />
+                    </div>
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={S.label}>Jours par an</label>
-                    <input className={S.input} type="number" value={formData.days_per_year || ''} onChange={e => setFormData({...formData, days_per_year: e.target.value})} required />
-                  </div>
-                  <div>
-                    <label className={S.label}>Couleur</label>
-                    <input className={`${S.input} h-10 p-1`} type="color" value={formData.color || '#2D6A4F'} onChange={e => setFormData({...formData, color: e.target.value})} />
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded accent-[#2D6A4F]" checked={formData.is_paid || false} onChange={e => setFormData({...formData, is_paid: e.target.checked})} />
-                  <span className="text-[13px] text-[#0F1A10]">Congé rémunéré (payé)</span>
-                </label>
-              </>}
-
-              {/* Payroll Period */}
-              {modalType === 'payrollPeriod' && <>
-                <div>
-                  <label className={S.label}>Nom de la Période</label>
-                  <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Mars 2026" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className={S.label}>Début</label>
-                    <input className={S.input} type="date" value={formData.start_date || ''} onChange={e => setFormData({...formData, start_date: e.target.value})} required />
-                  </div>
-                  <div>
-                    <label className={S.label}>Fin</label>
-                    <input className={S.input} type="date" value={formData.end_date || ''} onChange={e => setFormData({...formData, end_date: e.target.value})} required />
-                  </div>
-                </div>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" className="w-4 h-4 rounded accent-[#2D6A4F]" checked={formData.is_closed || false} onChange={e => setFormData({...formData, is_closed: e.target.checked})} />
-                  <span className="text-[13px] text-[#0F1A10]">Considérer comme clôturée</span>
-                </label>
-              </>}
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-[rgba(20,34,24,0.06)]">
-                <button type="button" onClick={() => setShowModal(false)} className={`${S.btn} ${S.secondary}`}>Annuler</button>
-                <button type="submit" disabled={loading} className={`${S.btn} ${S.primary}`}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                    <input type="checkbox" style={{ width: 16, height: 16 }} checked={formData.is_closed || false} onChange={e => setFormData({...formData, is_closed: e.target.checked})} />
+                    <span style={{ fontSize: '0.87rem', color: 'var(--text-primary)' }}>Considérer comme clôturée</span>
+                  </label>
+                </>}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+                <button type="submit" className="btn btn-primary" disabled={loading}>
                   {loading ? 'Enregistrement...' : editId ? 'Modifier' : 'Créer'}
                 </button>
               </div>
