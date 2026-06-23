@@ -204,18 +204,20 @@ export default function PlanningPage() {
       <div className="flex items-center justify-between px-6 py-2.5 bg-white border-b border-[rgba(20,34,24,0.06)]">
         <button
           onClick={() => { const p = new Date(currentWeekStart); p.setDate(p.getDate() - 7); setCurrentWeekStart(p); }}
-          className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-[rgba(45,106,79,0.08)] hover:text-[#2D6A4F] flex items-center justify-center text-sm transition-colors"
-        >←</button>
-        <div className="text-center">
-          <span className="text-[11px] font-semibold text-[#6B7E6D] uppercase tracking-[0.08em] block mb-0.5">Période active</span>
+          className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-[rgba(45,106,79,0.08)] hover:text-[#2D6A4F] flex items-center justify-center transition-colors font-medium"
+          aria-label="Semaine précédente"
+        >‹</button>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[11px] font-semibold text-[#6B7E6D] uppercase tracking-[0.08em]">Période active</span>
           <span className="text-[13px] font-semibold text-[#0F1A10]">
             {currentWeekStart.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })} — {weekEnd.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
           </span>
         </div>
         <button
           onClick={() => { const n = new Date(currentWeekStart); n.setDate(n.getDate() + 7); setCurrentWeekStart(n); }}
-          className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-[rgba(45,106,79,0.08)] hover:text-[#2D6A4F] flex items-center justify-center text-sm transition-colors"
-        >→</button>
+          className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-[rgba(45,106,79,0.08)] hover:text-[#2D6A4F] flex items-center justify-center transition-colors font-medium"
+          aria-label="Semaine suivante"
+        >›</button>
       </div>
 
       {/* Grid */}
