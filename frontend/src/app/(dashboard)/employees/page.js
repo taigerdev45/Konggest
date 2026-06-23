@@ -12,6 +12,7 @@
  * T16 : Realtime Supabase — refresh auto sur employee.created / employee.deleted
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import Link from 'next/link';
 import {
   HiOutlineSearch, HiOutlinePlus, HiOutlineFilter, HiOutlineRefresh,
@@ -100,6 +101,7 @@ export default function EmployeesPage() {
 
   // Modal CRUD
   const [showModal, setShowModal]   = useState(false);
+  useScrollLock(showModal || !!deleteTarget || showImport);
   const [editId, setEditId]         = useState(null);
   const [formData, setFormData]     = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
@@ -593,7 +595,7 @@ export default function EmployeesPage() {
                   {editId ? 'Mettez à jour les informations du profil.' : 'Réglementation Gabon 2026 — Tous les champs * sont requis.'}
                 </p>
               </div>
-              <button className="btn btn-ghost" onClick={() => setShowModal(false)}>✕</button>
+              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'contents' }}>

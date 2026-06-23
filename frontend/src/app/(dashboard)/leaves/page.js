@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   HiOutlineCalendar, HiOutlinePlus, HiOutlineRefresh, HiOutlineCheck,
   HiOutlineX, HiOutlineDownload, HiOutlineEye, HiOutlineTrash,
@@ -22,6 +23,7 @@ const TD = { padding: '13px 18px', verticalAlign: 'middle', borderBottom: '1px s
 
 export default function LeavesPage() {
   const { user } = useAuth();
+  useScrollLock(showModal || rejectionModal.show);
   const [requests, setRequests]     = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [me, setMe]                 = useState(null);
@@ -293,47 +295,49 @@ export default function LeavesPage() {
       {/* New Request Modal */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 580 }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 520 }}>
             <div className="modal-header">
               <div>
                 <h2>Nouvelle demande de congé</h2>
-                <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>Renseignez les dates et le motif de votre absence.</p>
+                <p>Renseignez les dates et le motif de votre absence.</p>
               </div>
-              <button className="btn btn-ghost" onClick={() => setShowModal(false)}>✕</button>
+              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleSubmit} className="modal-body">
-              <div className="input-group mb-md">
-                <label>Type de congé *</label>
-                <select className="input" name="leave_type" value={formData.leave_type} onChange={handleInputChange} required>
-                  <option value="">Sélectionner un type...</option>
-                  {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                </select>
-              </div>
-              <div className="grid grid-2 gap-md mb-md">
+            <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 <div className="input-group">
-                  <label>Date de début *</label>
-                  <input className="input" type="date" name="start_date" value={formData.start_date} onChange={handleInputChange} required />
+                  <label>Type de congé *</label>
+                  <select className="input" name="leave_type" value={formData.leave_type} onChange={handleInputChange} required>
+                    <option value="">Sélectionner un type...</option>
+                    {leaveTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="input-group">
+                    <label>Date de début *</label>
+                    <input className="input" type="date" name="start_date" value={formData.start_date} onChange={handleInputChange} required />
+                  </div>
+                  <div className="input-group">
+                    <label>Date de fin *</label>
+                    <input className="input" type="date" name="end_date" value={formData.end_date} onChange={handleInputChange} required />
+                  </div>
                 </div>
                 <div className="input-group">
-                  <label>Date de fin *</label>
-                  <input className="input" type="date" name="end_date" value={formData.end_date} onChange={handleInputChange} required />
+                  <label>Durée calculée</label>
+                  <div className="input" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', cursor: 'default' }}>
+                    <HiOutlineCalendar style={{ color: 'var(--primary)' }} />
+                    <strong>{formData.days_count} jour(s)</strong>
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label>Motif / Justification</label>
+                  <textarea className="input" name="reason" value={formData.reason} onChange={handleInputChange} rows={2} placeholder="Ex: Congés annuels, rendez-vous médical..." />
                 </div>
               </div>
-              <div className="input-group mb-md">
-                <label>Durée calculée</label>
-                <div className="input" style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg-secondary)', cursor: 'default' }}>
-                  <HiOutlineCalendar style={{ color: 'var(--primary)' }} />
-                  <strong>{formData.days_count} jour(s)</strong>
-                </div>
-              </div>
-              <div className="input-group mb-md">
-                <label>Motif / Justification</label>
-                <textarea className="input" name="reason" value={formData.reason} onChange={handleInputChange} rows={3} placeholder="Ex: Congés annuels, rendez-vous médical..." />
-              </div>
-              <div className="modal-footer mt-lg">
+              <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting || !me}>
-                  {submitting ? 'Envoi...' : 'Soumettre la demande'}
+                  {submitting ? 'Envoi...' : 'Soumettre'}
                 </button>
               </div>
             </form>
@@ -344,38 +348,38 @@ export default function LeavesPage() {
       {/* Rejection Modal */}
       {rejectionModal.show && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 440 }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 420 }}>
             <div className="modal-header">
               <div>
-                <h2 style={{ color: 'var(--danger)' }}>Refuser la demande</h2>
-                <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>Indiquez le motif du refus.</p>
+                <h2>Refuser la demande</h2>
+                <p>Indiquez le motif du refus.</p>
               </div>
-              <button className="btn btn-ghost" onClick={() => setRejectionModal({ show: false, id: null, reason: '' })}>✕</button>
+              <button className="btn-modal-close" onClick={() => setRejectionModal({ show: false, id: null, reason: '' })}>✕</button>
             </div>
             <div className="modal-body">
-              <div className="input-group mb-lg">
+              <div className="input-group">
                 <label>Motif du refus *</label>
                 <textarea
                   className="input"
                   value={rejectionModal.reason}
                   onChange={e => setRejectionModal(p => ({ ...p, reason: e.target.value }))}
-                  rows={4}
+                  rows={3}
                   placeholder="Ex: Période de forte activité, solde insuffisant..."
                   required
                 />
               </div>
-              <div className="modal-footer flex gap-sm">
-                <button type="button" className="btn btn-ghost flex-1" onClick={() => setRejectionModal({ show: false, id: null, reason: '' })}>Annuler</button>
-                <button
-                  type="button"
-                  className="btn flex-1"
-                  style={{ background: 'var(--danger)', color: '#fff' }}
-                  disabled={!rejectionModal.reason}
-                  onClick={() => handleAction(rejectionModal.id, 'reject', { reason: rejectionModal.reason })}
-                >
-                  Confirmer le refus
-                </button>
-              </div>
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={() => setRejectionModal({ show: false, id: null, reason: '' })}>Annuler</button>
+              <button
+                type="button"
+                className="btn"
+                style={{ background: 'var(--danger)', color: '#fff' }}
+                disabled={!rejectionModal.reason}
+                onClick={() => handleAction(rejectionModal.id, 'reject', { reason: rejectionModal.reason })}
+              >
+                Confirmer
+              </button>
             </div>
           </div>
         </div>

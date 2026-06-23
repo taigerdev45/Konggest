@@ -410,28 +410,33 @@ tbody tr:hover {
 .badge-neutral { background: #F1F5F9; color: #475569; }
 
 /* ─── Modal ─── */
+body.modal-open {
+  overflow: hidden;
+}
+
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(15, 23, 42, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  padding: 20px;
-  overflow-y: auto;
+  padding: 16px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
 }
 
 .modal-content {
   background: #FFFFFF;
-  border-radius: var(--radius-lg);
-  width: 90%;
+  border-radius: 20px;
+  width: 100%;
   max-width: 560px;
-  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 32px);
   display: flex;
   flex-direction: column;
-  box-shadow: var(--shadow-premium);
-  animation: slideUp 0.3s cubic-bezier(0, 0, 0.2, 1);
+  box-shadow: 0 32px 80px rgba(15,23,42,0.18), 0 8px 24px rgba(15,23,42,0.08);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
@@ -439,29 +444,61 @@ tbody tr:hover {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28px 32px 20px;
+  padding: 20px 24px 16px;
   flex-shrink: 0;
-  border-bottom: 1px solid var(--border-light);
+  border-bottom: 1px solid #F1F5F9;
 }
 
 .modal-header h2 {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modal-header p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 2px 0 0;
 }
 
 .modal-body {
   overflow-y: auto;
   flex: 1;
-  padding: 24px 32px;
+  padding: 20px 24px;
+  overscroll-behavior: contain;
 }
 
 .modal-footer {
   flex-shrink: 0;
-  padding: 16px 32px 24px;
-  border-top: 1px solid var(--border-light);
+  padding: 14px 24px 18px;
+  border-top: 1px solid #F1F5F9;
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: flex-end;
-  background: #fff;
+  background: #FAFAFA;
+}
+
+/* Close button inside modal-header */
+.modal-header .btn-modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: none;
+  background: #F1F5F9;
+  color: #64748B;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+.modal-header .btn-modal-close:hover {
+  background: #E2E8F0;
+  color: #1E293B;
 }
 
 @keyframes fadeIn {

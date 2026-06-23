@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import {
   HiOutlineShieldCheck, HiOutlineRefresh, HiOutlineSearch, HiOutlineFilter,
   HiOutlineUserAdd, HiOutlineMail, HiOutlineTrash, HiOutlineLockClosed,
@@ -21,6 +22,7 @@ export default function UsersPage() {
   const [filterRole, setFilterRole]     = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showInviteModal, setShowInviteModal] = useState(false);
+  useScrollLock(showInviteModal || !!deleteTarget || !!inviteResult);
   const [inviteData, setInviteData]     = useState({ email: '', full_name: '', role: 'employee' });
   const [submitting, setSubmitting]     = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -237,39 +239,41 @@ export default function UsersPage() {
       {/* Invite Modal */}
       {showInviteModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 480 }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 460 }}>
             <div className="modal-header">
               <div>
                 <h2>Inviter un collaborateur</h2>
-                <p style={{ fontSize: '0.83rem', color: 'var(--text-muted)' }}>Envoyez une invitation pour rejoindre votre organisation.</p>
+                <p>Rejoindre votre organisation.</p>
               </div>
-              <button className="btn btn-ghost" onClick={() => setShowInviteModal(false)}>✕</button>
+              <button className="btn-modal-close" onClick={() => setShowInviteModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleInvite} className="modal-body flex flex-col gap-md">
-              <div className="input-group">
-                <label>Nom complet *</label>
-                <input className="input" value={inviteData.full_name} onChange={e => setInviteData({ ...inviteData, full_name: e.target.value })} placeholder="Jean Dupont" required />
-              </div>
-              <div className="input-group">
-                <label>Email professionnel *</label>
-                <div style={{ position: 'relative' }}>
-                  <HiOutlineMail style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
-                  <input className="input" style={{ paddingLeft: 38 }} type="email" value={inviteData.email} onChange={e => setInviteData({ ...inviteData, email: e.target.value })} placeholder="jean@entreprise.com" required />
+            <form onSubmit={handleInvite} style={{ display: 'contents' }}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="input-group">
+                  <label>Nom complet *</label>
+                  <input className="input" value={inviteData.full_name} onChange={e => setInviteData({ ...inviteData, full_name: e.target.value })} placeholder="Jean Dupont" required />
+                </div>
+                <div className="input-group">
+                  <label>Email professionnel *</label>
+                  <div style={{ position: 'relative' }}>
+                    <HiOutlineMail style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--primary)' }} />
+                    <input className="input" style={{ paddingLeft: 38 }} type="email" value={inviteData.email} onChange={e => setInviteData({ ...inviteData, email: e.target.value })} placeholder="jean@entreprise.com" required />
+                  </div>
+                </div>
+                <div className="input-group">
+                  <label>Rôle et accès</label>
+                  <select className="input" value={inviteData.role} onChange={e => setInviteData({ ...inviteData, role: e.target.value })}>
+                    <option value="employee">Employé</option>
+                    <option value="manager">Manager</option>
+                    <option value="hr">Responsable RH</option>
+                    <option value="admin">Administrateur</option>
+                  </select>
                 </div>
               </div>
-              <div className="input-group">
-                <label>Rôle et niveau d&apos;accès</label>
-                <select className="input" value={inviteData.role} onChange={e => setInviteData({ ...inviteData, role: e.target.value })}>
-                  <option value="employee">Employé (Consultation & Congés)</option>
-                  <option value="manager">Manager (Approbation & Équipe)</option>
-                  <option value="hr">RH (Paie & Gestion complète)</option>
-                  <option value="admin">Administrateur (Configuration système)</option>
-                </select>
-              </div>
-              <div className="modal-footer mt-md">
+              <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowInviteModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting ? "Envoi..." : "Envoyer l'invitation"}
+                  {submitting ? "Envoi..." : "Inviter"}
                 </button>
               </div>
             </form>
@@ -280,58 +284,58 @@ export default function UsersPage() {
       {/* Delete Confirm */}
       {deleteTarget && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 420 }}>
-            <div style={{ textAlign: 'center', padding: '8px 0 24px' }}>
-              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 400 }}>
+            <div className="modal-body" style={{ textAlign: 'center', padding: '28px 24px 20px' }}>
+              <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(239,68,68,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <HiOutlineTrash size={22} style={{ color: 'var(--danger)' }} />
               </div>
-              <h2 style={{ marginBottom: 8 }}>Supprimer le membre ?</h2>
-              <p style={{ color: 'var(--text-secondary)' }}>
+              <h2 style={{ marginBottom: 8, fontSize: '1.1rem' }}>Supprimer le membre ?</h2>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.88rem' }}>
                 <strong>{deleteTarget.full_name}</strong> sera définitivement retiré(e) de la plateforme.
               </p>
             </div>
-            <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
+            <div className="modal-footer" style={{ justifyContent: 'center' }}>
               <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Annuler</button>
-              <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }} onClick={confirmDelete}>Oui, supprimer</button>
+              <button className="btn" style={{ background: 'var(--danger)', color: '#fff' }} onClick={confirmDelete}>Supprimer</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ✅ Credentials Modal — shown after successful invitation */}
+      {/* Credentials Modal */}
       {inviteResult && (
         <div className="modal-overlay" style={{ zIndex: 2100 }}>
-          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
-            {/* Header */}
-            <div style={{ textAlign: 'center', padding: '8px 0 20px' }}>
-              <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-                <HiOutlineCheckCircle size={28} style={{ color: 'var(--success)' }} />
+          <div className="modal-content animate-in" style={{ maxWidth: 480 }}>
+            <div className="modal-header" style={{ borderBottom: 'none', paddingBottom: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(16,185,129,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <HiOutlineCheckCircle size={20} style={{ color: 'var(--success)' }} />
+                </div>
+                <div>
+                  <h2>Invitation créée</h2>
+                  <p>{inviteResult.email_sent ? 'Email envoyé automatiquement.' : 'Transmettez les identifiants manuellement.'}</p>
+                </div>
               </div>
-              <h2 style={{ marginBottom: 6 }}>Invitation créée !</h2>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.87rem' }}>
-                {inviteResult.email_sent
-                  ? '✅ Un email de confirmation a été envoyé via Supabase.'
-                  : '⚠️ Email non envoyé — communiquez les identifiants manuellement.'}
-              </p>
+              <button className="btn-modal-close" onClick={() => setInviteResult(null)}>✕</button>
             </div>
-
-            {/* Credentials Box */}
-            <div style={{ background: 'var(--bg-secondary)', borderRadius: 12, padding: '20px 24px', border: '1px solid var(--border-color)', marginBottom: 20 }}>
-              <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 14 }}>
-                🔐 Identifiants de connexion
-              </p>
-              <CredentialRow label="Email" value={inviteResult.email} />
-              <CredentialRow label="Rôle" value={ROLE_LABELS[inviteResult.role] || inviteResult.role} badge />
-              <CredentialRow label="Mot de passe temporaire" value={inviteResult.temp_password} secret />
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div style={{ background: '#F8FAFC', borderRadius: 12, padding: '16px 20px', border: '1px solid #E2E8F0' }}>
+                <p style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 12 }}>
+                  Identifiants de connexion
+                </p>
+                <CredentialRow label="Email" value={inviteResult.email} />
+                <CredentialRow label="Rôle" value={ROLE_LABELS[inviteResult.role] || inviteResult.role} badge />
+                <CredentialRow label="Mot de passe temporaire" value={inviteResult.temp_password} secret />
+              </div>
+              <div style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 8, padding: '10px 14px', fontSize: '0.82rem', color: '#92400E' }}>
+                ⚠️ Transmettez ce mot de passe de façon sécurisée. L&apos;utilisateur devra le changer à sa première connexion.
+              </div>
             </div>
-
-            <div style={{ background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 8, padding: '12px 16px', marginBottom: 20, fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
-              ⚠️ <strong>Important :</strong> Transmettez ce mot de passe de façon sécurisée. L&apos;utilisateur devra le changer à sa première connexion.
+            <div className="modal-footer">
+              <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setInviteResult(null)}>
+                Fermer
+              </button>
             </div>
-
-            <button className="btn btn-primary" style={{ width: '100%' }} onClick={() => setInviteResult(null)}>
-              Fermer
-            </button>
           </div>
         </div>
       )}

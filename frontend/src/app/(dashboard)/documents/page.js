@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { HiOutlineDocumentText, HiOutlineUpload, HiOutlineRefresh, HiOutlineDownload, HiOutlineTrash } from 'react-icons/hi';
 import api from '@/lib/api';
 import { supabase } from '@/lib/supabase';
@@ -11,6 +12,7 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  useScrollLock(showModal);
   const [uploading, setUploading] = useState(false);
   
   const [formData, setFormData] = useState({
@@ -241,74 +243,65 @@ export default function DocumentsPage() {
       {/* Upload Modal */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 480 }}>
             <div className="modal-header">
               <div>
                 <h2>Uploader un document</h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Ajoutez un fichier à votre coffre-fort numérique.</p>
+                <p>Ajoutez un fichier à votre coffre-fort numérique.</p>
               </div>
-              <button className="btn-close" onClick={() => setShowModal(false)}>&times;</button>
+              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleUpload} className="modal-body flex flex-col gap-md">
-              <div className="input-group">
-                <label className="label">Titre du document *</label>
-                <input 
-                  className="input"
-                  type="text" 
-                  value={formData.title} 
-                  onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))} 
-                  required 
-                  placeholder="Ex: Contrat de travail, Attestation..." 
-                />
-              </div>
-              <div className="input-group">
-                <label className="label">Sélectionner le fichier *</label>
-                <div 
-                  style={{ 
-                    border: '2px dashed var(--border)', 
-                    borderRadius: 'var(--radius-md)', 
-                    padding: '24px', 
-                    textAlign: 'center',
-                    background: 'var(--bg-secondary)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onClick={() => document.getElementById('file-upload').click()}
-                  onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
-                  onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--border)'}
-                >
-                  <HiOutlineUpload fontSize="2rem" style={{ color: 'var(--primary)', marginBottom: 8 }} />
-                  <p style={{ margin: 0, fontWeight: 600, fontSize: '0.9rem' }}>
-                    {formData.file ? formData.file.name : 'Cliquez pour choisir un fichier'}
-                  </p>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                    PDF, PNG, JPG jusqu'à 10MB
-                  </p>
-                  <input 
-                    id="file-upload"
-                    type="file" 
-                    onChange={handleFileChange} 
-                    required 
-                    style={{ display: 'none' }}
+            <form onSubmit={handleUpload} style={{ display: 'contents' }}>
+              <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div className="input-group">
+                  <label>Titre du document *</label>
+                  <input
+                    className="input"
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    required
+                    placeholder="Ex: Contrat de travail, Attestation..."
                   />
                 </div>
-              </div>
-              <div className="input-group flex items-center gap-sm mt-xs">
-                <input 
-                  type="checkbox" 
-                  id="confidential" 
-                  checked={formData.is_confidential} 
-                  onChange={(e) => setFormData(prev => ({ ...prev, is_confidential: e.target.checked }))}
-                  style={{ width: 18, height: 18 }}
-                />
-                <label htmlFor="confidential" style={{ marginBottom: 0, fontSize: '0.85rem', cursor: 'pointer' }}>
-                  Restreindre l'accès (Confidentiel)
+                <div className="input-group">
+                  <label>Fichier *</label>
+                  <div
+                    style={{
+                      border: '2px dashed #CBD5E1',
+                      borderRadius: 12,
+                      padding: '20px 16px',
+                      textAlign: 'center',
+                      background: '#F8FAFC',
+                      cursor: 'pointer',
+                      transition: 'border-color 0.15s',
+                    }}
+                    onClick={() => document.getElementById('file-upload').click()}
+                    onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--primary)'}
+                    onMouseOut={(e) => e.currentTarget.style.borderColor = '#CBD5E1'}
+                  >
+                    <HiOutlineUpload size={24} style={{ color: 'var(--primary)', marginBottom: 6 }} />
+                    <p style={{ margin: 0, fontWeight: 600, fontSize: '0.88rem', color: '#334155' }}>
+                      {formData.file ? formData.file.name : 'Cliquez pour choisir'}
+                    </p>
+                    <p style={{ margin: '3px 0 0', fontSize: '0.74rem', color: 'var(--text-muted)' }}>PDF, PNG, JPG · max 10 MB</p>
+                    <input id="file-upload" type="file" onChange={handleFileChange} required style={{ display: 'none' }} />
+                  </div>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.88rem', color: '#475569' }}>
+                  <input
+                    type="checkbox"
+                    checked={formData.is_confidential}
+                    onChange={(e) => setFormData(prev => ({ ...prev, is_confidential: e.target.checked }))}
+                    style={{ width: 16, height: 16, accentColor: 'var(--primary)' }}
+                  />
+                  Restreindre l&apos;accès (Confidentiel)
                 </label>
               </div>
-              <div className="modal-footer mt-lg">
+              <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={uploading || !formData.file}>
-                  {uploading ? 'Upload en cours...' : 'Lancer l\'upload'}
+                  {uploading ? 'Upload...' : 'Uploader'}
                 </button>
               </div>
             </form>

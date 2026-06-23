@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useScrollLock } from '@/hooks/useScrollLock';
 import { HiOutlineCurrencyDollar, HiOutlineRefresh, HiOutlinePlus, HiOutlinePrinter, HiOutlineEye, HiOutlineTrendingUp, HiOutlineCheck, HiOutlineBell } from 'react-icons/hi';
 import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -22,6 +23,7 @@ export default function PayrollPage() {
   });
   const [showGenModal, setShowGenModal] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  useScrollLock(showGenModal || showPreviewModal);
   const [selectedPayslip, setSelectedPayslip] = useState(null);
   const [genData, setGenData] = useState({ period: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -244,15 +246,15 @@ export default function PayrollPage() {
       {/* Preview Modal */}
       {showPreviewModal && selectedPayslip && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 850, padding: 0, overflow: 'hidden' }}>
-            <div className="modal-header" style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)' }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 820 }}>
+            <div className="modal-header">
               <div>
-                <h2 style={{ fontSize: '1.2rem' }}>Aperçu du Bulletin de Paie</h2>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Période : {selectedPayslip.period_name}</p>
+                <h2>Aperçu du Bulletin de Paie</h2>
+                <p>Période : {selectedPayslip.period_name}</p>
               </div>
-              <button className="btn-close" onClick={() => setShowPreviewModal(false)}>&times;</button>
+              <button className="btn-modal-close" onClick={() => setShowPreviewModal(false)}>✕</button>
             </div>
-            <div className="modal-body" style={{ padding: '40px 50px', background: 'white', color: '#1e293b' }}>
+            <div className="modal-body" style={{ color: '#1e293b' }}>
               {/* Payslip Header */}
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 40, borderBottom: '2px solid #0f172a', paddingBottom: 20 }}>
                 <div>
@@ -323,8 +325,8 @@ export default function PayrollPage() {
                 </div>
               </div>
             </div>
-            <div className="modal-footer" style={{ padding: '16px 24px', background: 'var(--bg-secondary)', display: 'flex', justifyContent: 'flex-end', gap: 12 }}>
-              <button className="btn btn-secondary" onClick={() => setShowPreviewModal(false)}>Fermer</button>
+            <div className="modal-footer">
+              <button className="btn btn-ghost" onClick={() => setShowPreviewModal(false)}>Fermer</button>
               <button className="btn btn-primary" onClick={() => window.print()}>
                 <HiOutlinePrinter /> Imprimer
               </button>
@@ -336,35 +338,37 @@ export default function PayrollPage() {
       {/* Generation Modal */}
       {showGenModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 400 }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 400 }}>
             <div className="modal-header">
-              <h2>Générer les fiches de paie</h2>
-              <button className="btn-close" onClick={() => setShowGenModal(false)}>&times;</button>
+              <div>
+                <h2>Générer les fiches de paie</h2>
+                <p>Pour tous les employés actifs de la période.</p>
+              </div>
+              <button className="btn-modal-close" onClick={() => setShowGenModal(false)}>✕</button>
             </div>
-            <form onSubmit={handleGenerate} className="modal-body">
-              <div className="form-group mb-lg">
-                <label>Période de paie *</label>
-                <select 
-                  className="input"
-                  value={genData.period} 
-                  onChange={(e) => setGenData({ period: e.target.value })}
-                  required
-                >
-                  <option value="">Sélectionner une période...</option>
-                  {Array.isArray(periods) && periods.map(p => (
-                    <option key={p.id} value={p.id} disabled={p.is_closed}>
-                      {p.name} {p.is_closed ? '(Clôturée)' : ''}
-                    </option>
-                  ))}
-                </select>
-                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: 8 }}>
-                  Cela générera des brouillons de fiches de paie pour tous les employés actifs de cette période.
-                </p>
+            <form onSubmit={handleGenerate} style={{ display: 'contents' }}>
+              <div className="modal-body">
+                <div className="input-group">
+                  <label>Période de paie *</label>
+                  <select
+                    className="input"
+                    value={genData.period}
+                    onChange={(e) => setGenData({ period: e.target.value })}
+                    required
+                  >
+                    <option value="">Sélectionner une période...</option>
+                    {Array.isArray(periods) && periods.map(p => (
+                      <option key={p.id} value={p.id} disabled={p.is_closed}>
+                        {p.name} {p.is_closed ? '(Clôturée)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowGenModal(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={submitting || !genData.period}>
-                  {submitting ? 'Génération...' : 'Lancer la génération'}
+                  {submitting ? 'Génération...' : 'Générer'}
                 </button>
               </div>
             </form>
