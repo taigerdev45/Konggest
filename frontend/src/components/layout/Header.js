@@ -19,7 +19,7 @@ export default function Header() {
   useEffect(() => {
     const fetchUnreadCount = async () => {
       try {
-        const data = await api.get('/notifications/unread_count/');
+        const data = await api.get('/notifications/items/unread-count/');
         setUnreadCount(data.unread_count);
       } catch (err) {
         console.error('Error fetching unread count:', err);

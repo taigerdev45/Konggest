@@ -57,7 +57,7 @@ export default function NotificationsPage() {
   const fetchNotifs = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await api.get('/accounts/notifications/');
+      const data = await api.get('/notifications/items/');
       setNotifications(Array.isArray(data) ? data : (data.results || []));
     } catch { /* silent */ } finally { setLoading(false); }
   }, []);
@@ -66,7 +66,7 @@ export default function NotificationsPage() {
 
   const markAsRead = useCallback(async (id) => {
     try {
-      await api.patch(`/accounts/notifications/${id}/`, { is_read: true });
+      await api.patch(`/notifications/items/${id}/`, { is_read: true });
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     } catch { /* silent */ }
   }, []);
@@ -74,14 +74,14 @@ export default function NotificationsPage() {
   const deleteNotif = useCallback(async (id) => {
     if (!confirm('Supprimer cette notification ?')) return;
     try {
-      await api.delete(`/accounts/notifications/${id}/`);
+      await api.delete(`/notifications/items/${id}/`);
       setNotifications(prev => prev.filter(n => n.id !== id));
     } catch { /* silent */ }
   }, []);
 
   const markAllRead = useCallback(async () => {
     try {
-      await api.post('/accounts/notifications/mark-all-read/');
+      await api.post('/notifications/items/mark-all-read/');
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch { /* silent */ }
   }, []);
