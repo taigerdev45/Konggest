@@ -17,7 +17,7 @@ import {
   HiOutlineSearch, HiOutlinePlus, HiOutlineFilter, HiOutlineRefresh,
   HiOutlineDownload, HiOutlinePencil, HiOutlineTrash, HiOutlineEye,
   HiOutlineExclamationCircle, HiOutlineCheckCircle, HiOutlineUpload,
-  HiOutlineChevronLeft, HiOutlineChevronRight, HiOutlineWifi,
+  HiOutlineChevronLeft, HiOutlineChevronRight,
 } from 'react-icons/hi';
 import api from '@/lib/api';
 import { supabase } from '@/lib/supabase';

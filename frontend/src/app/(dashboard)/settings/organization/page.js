@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  HiOutlineOfficeBuilding, 
-  HiOutlineMap, 
-  HiOutlineCalendar, 
-  HiOutlineCube, 
-  HiOutlinePlus, 
-  HiOutlineTrash, 
+import {
+  HiOutlineOfficeBuilding,
+  HiOutlineMap,
+  HiOutlineCalendar,
+  HiOutlineCube,
+  HiOutlinePlus,
+  HiOutlineTrash,
   HiOutlinePencil,
   HiOutlineCheckCircle,
   HiOutlineExclamation,
@@ -15,42 +15,48 @@ import {
 } from 'react-icons/hi';
 import api from '@/lib/api';
 
+const S = {
+  btn: 'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[13px] font-medium transition-colors cursor-pointer',
+  primary: 'bg-[#2D6A4F] text-white hover:bg-[#245c42] border-0',
+  secondary: 'bg-white text-[#0F1A10] border border-[rgba(20,34,24,0.15)] hover:bg-[#F5F7F4]',
+  th: 'px-4 py-2.5 text-left text-[11px] font-semibold text-[#6B7E6D] uppercase tracking-[0.08em] whitespace-nowrap',
+  input: 'w-full border border-[rgba(20,34,24,0.15)] bg-[#F5F7F4] rounded-lg px-3 py-2 text-sm text-[#0F1A10] focus:border-[#2D6A4F] focus:ring-2 focus:ring-[rgba(45,106,79,0.1)] outline-none transition-all',
+  label: 'block text-[11px] font-semibold text-[#6B7E6D] mb-1.5 uppercase tracking-[0.06em]',
+  iconBtn: 'w-8 h-8 rounded-lg bg-[#F5F7F4] flex items-center justify-center text-[#6B7E6D] transition-colors',
+};
+
+const TABS = [
+  { id: 'departments', label: 'Départements', singularLabel: 'Département', modalType: 'department', icon: <HiOutlineOfficeBuilding /> },
+  { id: 'locations',   label: 'Sites',         singularLabel: 'Site',         modalType: 'location',   icon: <HiOutlineMap /> },
+  { id: 'leaves',      label: 'Types Congés',  singularLabel: 'Type de Congé', modalType: 'leaveType', icon: <HiOutlineCalendar /> },
+  { id: 'payroll',     label: 'Périodes Paie', singularLabel: 'Période de Paie', modalType: 'payrollPeriod', icon: <HiOutlineCube /> },
+];
+
 export default function OrganizationSettingsPage() {
   const [activeTab, setActiveTab] = useState('departments');
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
-  
-  // Data states
+
   const [departments, setDepartments] = useState([]);
   const [locations, setLocations] = useState([]);
   const [leaveTypes, setLeaveTypes] = useState([]);
   const [payrollPeriods, setPayrollPeriods] = useState([]);
-  
-  // Modal states
+
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState(''); // 'department', 'location', 'leaveType', 'payrollPeriod'
+  const [modalType, setModalType] = useState('');
   const [editId, setEditId] = useState(null);
   const [formData, setFormData] = useState({});
 
   const fetchData = async (tab = activeTab) => {
     setLoading(true);
     try {
-      let endpoint = '';
-      switch (tab) {
-        case 'departments': endpoint = '/departments/'; break;
-        case 'locations': endpoint = '/employees/locations/'; break;
-        case 'leaves': endpoint = '/leaves/types/'; break;
-        case 'payroll': endpoint = '/payroll/periods/'; break;
-      }
-      
-      const data = await api.get(endpoint);
+      const map = { departments: '/departments/', locations: '/employees/locations/', leaves: '/leaves/types/', payroll: '/payroll/periods/' };
+      const data = await api.get(map[tab]);
       const results = data.results || data || [];
-      
       if (tab === 'departments') setDepartments(results);
       else if (tab === 'locations') setLocations(results);
       else if (tab === 'leaves') setLeaveTypes(results);
       else if (tab === 'payroll') setPayrollPeriods(results);
-      
     } catch (err) {
       console.error(`Error fetching ${tab}:`, err);
       setToast({ show: true, text: 'Erreur lors de la récupération des données.', type: 'error' });
@@ -59,9 +65,7 @@ export default function OrganizationSettingsPage() {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [activeTab]);
+  useEffect(() => { fetchData(); }, [activeTab]);
 
   const handleOpenModal = (type, item = null) => {
     setModalType(type);
@@ -70,11 +74,13 @@ export default function OrganizationSettingsPage() {
       setFormData(item);
     } else {
       setEditId(null);
-      // Default values
-      if (type === 'department') setFormData({ name: '', description: '' });
-      else if (type === 'location') setFormData({ name: '', address: '', city: '' });
-      else if (type === 'leaveType') setFormData({ name: '', code: '', days_per_year: 24, is_paid: true, color: '#059669' });
-      else if (type === 'payrollPeriod') setFormData({ name: '', start_date: '', end_date: '', is_closed: false });
+      const defaults = {
+        department: { name: '', description: '' },
+        location: { name: '', address: '', city: '' },
+        leaveType: { name: '', code: '', days_per_year: 24, is_paid: true, color: '#2D6A4F' },
+        payrollPeriod: { name: '', start_date: '', end_date: '', is_closed: false },
+      };
+      setFormData(defaults[type] || {});
     }
     setShowModal(true);
   };
@@ -83,30 +89,22 @@ export default function OrganizationSettingsPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      let endpoint = '';
-      if (activeTab === 'departments') endpoint = '/departments/';
-      else if (activeTab === 'locations') endpoint = '/employees/locations/';
-      else if (activeTab === 'leaves') endpoint = '/leaves/types/';
-      else if (activeTab === 'payroll') endpoint = '/payroll/periods/';
-
+      const map = { departments: '/departments/', locations: '/employees/locations/', leaves: '/leaves/types/', payroll: '/payroll/periods/' };
+      const endpoint = map[activeTab];
       if (editId) {
         await api.patch(`${endpoint}${editId}/`, formData);
         setToast({ show: true, text: 'Élément mis à jour avec succès.', type: 'success' });
       } else {
         await api.post(endpoint, formData);
-        setToast({ show: true, text: 'Nouvel élément créé avec succès.', type: 'success' });
+        setToast({ show: true, text: 'Élément créé avec succès.', type: 'success' });
       }
-      
       setShowModal(false);
       fetchData();
     } catch (err) {
       console.error('Save error:', err);
-      // Format DRF Error response
       let errorMsg = 'Une erreur est survenue.';
       if (err.details && typeof err.details === 'object') {
-        errorMsg = Object.entries(err.details)
-          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`)
-          .join('\n');
+        errorMsg = Object.entries(err.details).map(([f, msgs]) => `${f}: ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`).join('\n');
       } else if (err.error) {
         errorMsg = typeof err.error === 'string' ? err.error : JSON.stringify(err.error);
       }
@@ -117,254 +115,190 @@ export default function OrganizationSettingsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) return;
-    
+    if (!confirm('Supprimer cet élément ?')) return;
     setLoading(true);
     try {
-      let endpoint = '';
-      if (activeTab === 'departments') endpoint = '/departments/';
-      else if (activeTab === 'locations') endpoint = '/employees/locations/';
-      else if (activeTab === 'leaves') endpoint = '/leaves/types/';
-      else if (activeTab === 'payroll') endpoint = '/payroll/periods/';
-
-      await api.delete(`${endpoint}${id}/`);
+      const map = { departments: '/departments/', locations: '/employees/locations/', leaves: '/leaves/types/', payroll: '/payroll/periods/' };
+      await api.delete(`${map[activeTab]}${id}/`);
       setToast({ show: true, text: 'Élément supprimé.', type: 'success' });
       fetchData();
-    } catch (err) {
+    } catch {
       setToast({ show: true, text: 'Impossible de supprimer cet élément.', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const TABS = [
-    { id: 'departments', label: 'Départements', singularLabel: 'Département', modalType: 'department', icon: <HiOutlineOfficeBuilding />, color: 'blue' },
-    { id: 'locations', label: 'Lieux / Sites', singularLabel: 'Lieu / Site', modalType: 'location', icon: <HiOutlineMap />, color: 'purple' },
-    { id: 'leaves', label: 'Types de Congés', singularLabel: 'Type de Congé', modalType: 'leaveType', icon: <HiOutlineCalendar />, color: 'emerald' },
-    { id: 'payroll', label: 'Périodes de Paie', singularLabel: 'Période de Paie', modalType: 'payrollPeriod', icon: <HiOutlineCube />, color: 'indigo' },
-  ];
+  const activeTabData = TABS.find(t => t.id === activeTab);
 
-  const activeTabData = TABS.find(tab => tab.id === activeTab);
-  const COLORS = {
-    blue: { bg: 'bg-blue-50', text: 'text-blue-600', border: 'border-blue-100' },
-    purple: { bg: 'bg-purple-50', text: 'text-purple-600', border: 'border-purple-100' },
-    emerald: { bg: 'bg-emerald-50', text: 'text-emerald-600', border: 'border-emerald-100' },
-    indigo: { bg: 'bg-indigo-50', text: 'text-indigo-600', border: 'border-indigo-100' },
-  };
+  const currentData = { departments, locations, leaves: leaveTypes, payroll: payrollPeriods }[activeTab] || [];
+
+  const colSpanMap = { departments: 4, locations: 4, leaves: 5, payroll: 5 };
 
   return (
-    <div className="min-h-full flex flex-col bg-[#FDFDFF]">
+    <div className="min-h-full flex flex-col bg-[#F5F7F4]">
       {toast.show && (
-        <div className={`fixed bottom-8 right-8 z-[1000] px-6 py-4 rounded-[2rem] shadow-xl flex items-center gap-3 text-white animate-in slide-in-from-right-10 ${toast.type === 'error' ? 'bg-red-500/95' : 'bg-emerald-500/95'}`}>
-          {toast.type === 'success' ? <HiOutlineCheckCircle className="text-xl" /> : <HiOutlineExclamation className="text-xl" />}
-          <span className="font-bold">{toast.text}</span>
+        <div className={`fixed top-4 right-4 z-[1000] px-4 py-3 rounded-xl shadow-lg flex items-center gap-2 text-white text-[13px] font-medium ${toast.type === 'error' ? 'bg-red-500' : 'bg-[#2D6A4F]'}`}>
+          {toast.type === 'success' ? <HiOutlineCheckCircle /> : <HiOutlineExclamation />}
+          {toast.text}
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="px-6 md:px-12 pt-8 md:pt-12 pb-8 md:pb-10 flex flex-col lg:flex-row lg:justify-between lg:items-end gap-6">
-        <div className="animate-in slide-in-from-left-4 duration-700">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="w-8 h-1 bg-blue-500 rounded-full"></div>
-            <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">CONFIGURATION</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter leading-none mb-3">
-            Organisation
-          </h1>
-          <p className="text-gray-400 font-medium text-sm md:text-base max-w-lg">
-            Gérer les structures et les paramètres de votre entreprise.
-          </p>
+      {/* Header compact */}
+      <header className="flex items-center justify-between px-6 py-3.5 bg-white border-b border-[rgba(20,34,24,0.08)]">
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] font-semibold text-[#2D6A4F] uppercase tracking-[0.12em]">Paramètres</span>
+          <span className="text-[#0F1A10]/20 text-lg leading-none">·</span>
+          <h1 className="text-[15px] font-semibold text-[#0F1A10]">Organisation</h1>
         </div>
-        <div className="flex gap-3 animate-in slide-in-from-right-4 duration-700">
-          <button 
-            onClick={() => fetchData()} 
-            disabled={loading}
-            className="flex-1 md:flex-none bg-white text-gray-900 border border-gray-100 px-6 py-3.5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-gray-50 transition shadow-sm flex items-center gap-2"
-          >
+        <div className="flex items-center gap-2">
+          <button onClick={() => fetchData()} disabled={loading} className={`${S.btn} ${S.secondary}`}>
             <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
             Rafraîchir
           </button>
-          <button 
-            onClick={() => handleOpenModal(activeTabData.modalType)}
-            className="flex-1 md:flex-none bg-blue-600 text-white px-8 py-3.5 rounded-[1.5rem] font-black text-xs uppercase tracking-widest hover:bg-blue-700 transition shadow-xl shadow-blue-500/20 ring-1 ring-blue-400/50 flex items-center gap-2"
-          >
-            <HiOutlinePlus size={18} />
+          <button onClick={() => handleOpenModal(activeTabData.modalType)} className={`${S.btn} ${S.primary}`}>
+            <HiOutlinePlus />
             Ajouter {activeTabData.singularLabel}
           </button>
         </div>
-      </div>
+      </header>
 
       {/* Tabs */}
-      <div className="px-6 md:px-12 pb-8">
-        <div className="flex gap-2 overflow-x-auto custom-scrollbar">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-6 py-3 rounded-[1.5rem] font-black text-xs uppercase tracking-widest transition-all duration-300 whitespace-nowrap ${
-                activeTab === tab.id 
-                  ? `${COLORS[tab.color].bg} ${COLORS[tab.color].text} border-2 ${COLORS[tab.color].border} shadow-md shadow-${tab.color}-500/10` 
-                  : 'bg-white text-gray-400 border-2 border-transparent hover:bg-gray-50'
-              }`}
-            >
-              <span className="flex items-center gap-2">
-                {tab.icon}
-                {tab.label}
-              </span>
-            </button>
-          ))}
-        </div>
+      <div className="flex items-center gap-1 px-6 py-2.5 bg-white border-b border-[rgba(20,34,24,0.06)] overflow-x-auto">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-[13px] font-medium transition-all whitespace-nowrap ${
+              activeTab === tab.id
+                ? 'bg-[rgba(45,106,79,0.1)] text-[#2D6A4F]'
+                : 'text-[#6B7E6D] hover:bg-[#F5F7F4] hover:text-[#0F1A10]'
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      {/* Main Content */}
-      <div className="px-6 md:px-12 pb-12 flex-1">
-        <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 overflow-hidden">
+      {/* Table */}
+      <div className="flex-1 p-6">
+        <div className="bg-white rounded-xl border border-[rgba(20,34,24,0.08)] overflow-hidden">
           {loading && !showModal ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex items-center justify-center py-16">
+              <div className="w-8 h-8 border-[3px] border-[#2D6A4F] border-t-transparent rounded-full animate-spin" />
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50/30 sticky top-0 z-10">
-                  {activeTab === 'departments' && (
-                    <tr>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Nom</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Description</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Collaborateurs</th>
-                      <th className="px-8 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100" style={{ width: '120px' }}>Actions</th>
-                    </tr>
-                  )}
-                  {activeTab === 'locations' && (
-                    <tr>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Lieu / Site</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Adresse</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Ville</th>
-                      <th className="px-8 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100" style={{ width: '120px' }}>Actions</th>
-                    </tr>
-                  )}
-                  {activeTab === 'leaves' && (
-                    <tr>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Désignation</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Code</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Droit Annuel</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Statut</th>
-                      <th className="px-8 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100" style={{ width: '120px' }}>Actions</th>
-                    </tr>
-                  )}
-                  {activeTab === 'payroll' && (
-                    <tr>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Période</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Du</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Au</th>
-                      <th className="px-8 py-4 text-left text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100">Statut</th>
-                      <th className="px-8 py-4 text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] border-b border-gray-100" style={{ width: '120px' }}>Actions</th>
-                    </tr>
-                  )}
+                <thead>
+                  <tr className="bg-[#F5F7F4]">
+                    {activeTab === 'departments' && <>
+                      <th className={S.th}>Nom</th>
+                      <th className={S.th}>Description</th>
+                      <th className={S.th}>Effectif</th>
+                      <th className={`${S.th} text-center`} style={{ width: 100 }}>Actions</th>
+                    </>}
+                    {activeTab === 'locations' && <>
+                      <th className={S.th}>Site</th>
+                      <th className={S.th}>Adresse</th>
+                      <th className={S.th}>Ville</th>
+                      <th className={`${S.th} text-center`} style={{ width: 100 }}>Actions</th>
+                    </>}
+                    {activeTab === 'leaves' && <>
+                      <th className={S.th}>Désignation</th>
+                      <th className={S.th}>Code</th>
+                      <th className={S.th}>Droit annuel</th>
+                      <th className={S.th}>Statut</th>
+                      <th className={`${S.th} text-center`} style={{ width: 100 }}>Actions</th>
+                    </>}
+                    {activeTab === 'payroll' && <>
+                      <th className={S.th}>Période</th>
+                      <th className={S.th}>Du</th>
+                      <th className={S.th}>Au</th>
+                      <th className={S.th}>Statut</th>
+                      <th className={`${S.th} text-center`} style={{ width: 100 }}>Actions</th>
+                    </>}
+                  </tr>
                 </thead>
                 <tbody>
-                  {/* Departments List */}
                   {activeTab === 'departments' && departments.map(item => (
-                    <tr key={item.id} className="group hover:bg-blue-50/30 transition-all duration-300">
-                      <td className="px-8 py-6 border-b border-gray-50 font-black text-gray-900">{item.name}</td>
-                      <td className="px-8 py-6 border-b border-gray-50 text-gray-500 font-medium">{item.description || '—'}</td>
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-gray-100 text-gray-600">{item.employee_count || 0}</span>
+                    <tr key={item.id} className="border-b border-[rgba(20,34,24,0.05)] hover:bg-[rgba(45,106,79,0.03)] transition-colors">
+                      <td className="px-4 py-3 text-[13px] font-medium text-[#0F1A10]">{item.name}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7E6D]">{item.description || '—'}</td>
+                      <td className="px-4 py-3">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded bg-[rgba(20,34,24,0.06)] text-[#6B7E6D] text-xs font-semibold">{item.employee_count || 0}</span>
                       </td>
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <div className="flex items-center justify-center gap-2">
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-all flex items-center justify-center" onClick={() => handleOpenModal('department', item)}>
-                            <HiOutlinePencil />
-                          </button>
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center" onClick={() => handleDelete(item.id)}>
-                            <HiOutlineTrash />
-                          </button>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button className={`${S.iconBtn} hover:bg-[rgba(45,106,79,0.1)] hover:text-[#2D6A4F]`} onClick={() => handleOpenModal('department', item)}><HiOutlinePencil className="text-sm" /></button>
+                          <button className={`${S.iconBtn} hover:bg-red-50 hover:text-red-500`} onClick={() => handleDelete(item.id)}><HiOutlineTrash className="text-sm" /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
 
-                  {/* Locations List */}
                   {activeTab === 'locations' && locations.map(item => (
-                    <tr key={item.id} className="group hover:bg-purple-50/30 transition-all duration-300">
-                      <td className="px-8 py-6 border-b border-gray-50 font-black text-gray-900">{item.name}</td>
-                      <td className="px-8 py-6 border-b border-gray-50 text-gray-500 font-medium">{item.address || '—'}</td>
-                      <td className="px-8 py-6 border-b border-gray-50 text-gray-500 font-medium">{item.city || '—'}</td>
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <div className="flex items-center justify-center gap-2">
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-purple-50 hover:text-purple-600 transition-all flex items-center justify-center" onClick={() => handleOpenModal('location', item)}>
-                            <HiOutlinePencil />
-                          </button>
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center" onClick={() => handleDelete(item.id)}>
-                            <HiOutlineTrash />
-                          </button>
+                    <tr key={item.id} className="border-b border-[rgba(20,34,24,0.05)] hover:bg-[rgba(45,106,79,0.03)] transition-colors">
+                      <td className="px-4 py-3 text-[13px] font-medium text-[#0F1A10]">{item.name}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7E6D]">{item.address || '—'}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7E6D]">{item.city || '—'}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button className={`${S.iconBtn} hover:bg-[rgba(45,106,79,0.1)] hover:text-[#2D6A4F]`} onClick={() => handleOpenModal('location', item)}><HiOutlinePencil className="text-sm" /></button>
+                          <button className={`${S.iconBtn} hover:bg-red-50 hover:text-red-500`} onClick={() => handleDelete(item.id)}><HiOutlineTrash className="text-sm" /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
 
-                  {/* Leaves List */}
                   {activeTab === 'leaves' && leaveTypes.map(item => (
-                    <tr key={item.id} className="group hover:bg-emerald-50/30 transition-all duration-300">
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <div className="flex items-center gap-3">
-                          <div className="w-4 h-4 rounded-full" style={{ backgroundColor: item.color }}></div>
-                          <span className="font-black text-gray-900">{item.name}</span>
+                    <tr key={item.id} className="border-b border-[rgba(20,34,24,0.05)] hover:bg-[rgba(45,106,79,0.03)] transition-colors">
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }} />
+                          <span className="text-[13px] font-medium text-[#0F1A10]">{item.name}</span>
                         </div>
                       </td>
-                      <td className="px-8 py-6 border-b border-gray-50 font-mono text-gray-600 font-bold">{item.code}</td>
-                      <td className="px-8 py-6 border-b border-gray-50 text-gray-600 font-medium">{item.days_per_year} jours</td>
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.is_paid ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+                      <td className="px-4 py-3 font-mono text-[13px] text-[#6B7E6D]">{item.code}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7E6D]">{item.days_per_year} jours</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${item.is_paid ? 'bg-[rgba(45,106,79,0.1)] text-[#2D6A4F]' : 'bg-[rgba(201,168,76,0.1)] text-[#8B7035]'}`}>
                           {item.is_paid ? 'Payé' : 'Non payé'}
                         </span>
                       </td>
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <div className="flex items-center justify-center gap-2">
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-emerald-50 hover:text-emerald-600 transition-all flex items-center justify-center" onClick={() => handleOpenModal('leaveType', item)}>
-                            <HiOutlinePencil />
-                          </button>
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center" onClick={() => handleDelete(item.id)}>
-                            <HiOutlineTrash />
-                          </button>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button className={`${S.iconBtn} hover:bg-[rgba(45,106,79,0.1)] hover:text-[#2D6A4F]`} onClick={() => handleOpenModal('leaveType', item)}><HiOutlinePencil className="text-sm" /></button>
+                          <button className={`${S.iconBtn} hover:bg-red-50 hover:text-red-500`} onClick={() => handleDelete(item.id)}><HiOutlineTrash className="text-sm" /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
 
-                  {/* Payroll Periods List */}
                   {activeTab === 'payroll' && payrollPeriods.map(item => (
-                    <tr key={item.id} className="group hover:bg-indigo-50/30 transition-all duration-300">
-                      <td className="px-8 py-6 border-b border-gray-50 font-black text-gray-900">{item.name}</td>
-                      <td className="px-8 py-6 border-b border-gray-50 text-gray-500 font-medium">{new Date(item.start_date).toLocaleDateString('fr-FR')}</td>
-                      <td className="px-8 py-6 border-b border-gray-50 text-gray-500 font-medium">{new Date(item.end_date).toLocaleDateString('fr-FR')}</td>
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${item.is_closed ? 'bg-gray-100 text-gray-600' : 'bg-emerald-50 text-emerald-700'}`}>
+                    <tr key={item.id} className="border-b border-[rgba(20,34,24,0.05)] hover:bg-[rgba(45,106,79,0.03)] transition-colors">
+                      <td className="px-4 py-3 text-[13px] font-medium text-[#0F1A10]">{item.name}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7E6D]">{new Date(item.start_date).toLocaleDateString('fr-FR')}</td>
+                      <td className="px-4 py-3 text-[13px] text-[#6B7E6D]">{new Date(item.end_date).toLocaleDateString('fr-FR')}</td>
+                      <td className="px-4 py-3">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${item.is_closed ? 'bg-[rgba(20,34,24,0.06)] text-[#6B7E6D]' : 'bg-[rgba(45,106,79,0.1)] text-[#2D6A4F]'}`}>
                           {item.is_closed ? 'Clôturée' : 'Ouverte'}
                         </span>
                       </td>
-                      <td className="px-8 py-6 border-b border-gray-50">
-                        <div className="flex items-center justify-center gap-2">
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-all flex items-center justify-center" onClick={() => handleOpenModal('payrollPeriod', item)}>
-                            <HiOutlinePencil />
-                          </button>
-                          <button className="w-10 h-10 rounded-[1.25rem] bg-gray-50 text-gray-500 hover:bg-red-50 hover:text-red-600 transition-all flex items-center justify-center" onClick={() => handleDelete(item.id)}>
-                            <HiOutlineTrash />
-                          </button>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button className={`${S.iconBtn} hover:bg-[rgba(45,106,79,0.1)] hover:text-[#2D6A4F]`} onClick={() => handleOpenModal('payrollPeriod', item)}><HiOutlinePencil className="text-sm" /></button>
+                          <button className={`${S.iconBtn} hover:bg-red-50 hover:text-red-500`} onClick={() => handleDelete(item.id)}><HiOutlineTrash className="text-sm" /></button>
                         </div>
                       </td>
                     </tr>
                   ))}
 
-                  {!loading && (
-                    ((activeTab === 'departments' && departments.length === 0) ||
-                    (activeTab === 'locations' && locations.length === 0) ||
-                    (activeTab === 'leaves' && leaveTypes.length === 0) ||
-                    (activeTab === 'payroll' && payrollPeriods.length === 0))
-                  ) && (
+                  {!loading && currentData.length === 0 && (
                     <tr>
-                      <td colSpan={activeTab === 'departments' || activeTab === 'locations' || activeTab === 'payroll' ? 4 : 5} className="px-8 py-20 text-center">
-                        <div className="text-gray-400 font-medium">Aucun élément trouvé. Cliquez sur "Ajouter" pour commencer.</div>
+                      <td colSpan={colSpanMap[activeTab]} className="px-4 py-14 text-center text-[13px] text-[#6B7E6D]">
+                        Aucun élément. Cliquez sur &quot;Ajouter&quot; pour commencer.
                       </td>
                     </tr>
                   )}
@@ -375,115 +309,100 @@ export default function OrganizationSettingsPage() {
         </div>
       </div>
 
-      {/* Configuration Modal */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white rounded-[3rem] max-w-2xl w-full p-8 md:p-12 relative shadow-2xl animate-in zoom-in-95 duration-200 border border-white/20">
-            <div className="absolute top-8 right-8">
-              <button onClick={() => setShowModal(false)} className="w-10 h-10 rounded-2xl bg-gray-50 text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center font-black">✕</button>
-            </div>
-            
-            <div className="mb-10">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-8 h-1 bg-blue-500 rounded-full"></div>
-                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{editId ? 'MODIFICATION' : 'NOUVEAU'}</span>
+        <div className="fixed inset-0 bg-[#0F1A10]/50 backdrop-blur-sm flex items-center justify-center p-4 z-[200]">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl">
+            <div className="flex items-start justify-between mb-5">
+              <div>
+                <span className="text-[11px] font-semibold text-[#2D6A4F] uppercase tracking-[0.1em]">{editId ? 'Modification' : 'Nouveau'}</span>
+                <h2 className="text-[17px] font-semibold text-[#0F1A10] mt-0.5">{editId ? 'Modifier' : 'Ajouter'} {activeTabData.singularLabel}</h2>
               </div>
-              <h2 className="text-3xl font-black text-gray-900 tracking-tighter">{editId ? 'Modifier' : 'Ajouter'} {activeTabData.singularLabel}</h2>
-              <p className="text-gray-400 text-sm font-medium mt-1">Enregistrez les paramètres de votre organisation.</p>
+              <button onClick={() => setShowModal(false)} className="w-8 h-8 rounded-lg bg-[#F5F7F4] text-[#6B7E6D] hover:bg-red-50 hover:text-red-500 transition-all flex items-center justify-center text-base">✕</button>
             </div>
-            
-            <form onSubmit={handleSave} className="space-y-6">
-              {/* Department Form */}
-              {modalType === 'department' && (
-                <>
-                  <div>
-                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Nom du Département</label>
-                    <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Ressources Humaines" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Description (Optionnel)</label>
-                    <textarea className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold text-sm min-h-[100px]" value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Courte description..." ></textarea>
-                  </div>
-                </>
-              )}
 
-              {/* Location Form */}
-              {modalType === 'location' && (
-                <>
-                  <div>
-                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Nom du Site</label>
-                    <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/5 outline-none transition-all font-bold text-sm" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Siège Social / Site POG" />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Adresse</label>
-                    <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/5 outline-none transition-all font-bold text-sm" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Rue, Quartier..." />
-                  </div>
-                  <div>
-                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Ville</label>
-                    <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-purple-500 focus:bg-white focus:ring-4 focus:ring-purple-500/5 outline-none transition-all font-bold text-sm" value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value})} placeholder="Ex: Libreville" />
-                  </div>
-                </>
-              )}
+            <form onSubmit={handleSave} className="space-y-4">
+              {/* Department */}
+              {modalType === 'department' && <>
+                <div>
+                  <label className={S.label}>Nom du Département</label>
+                  <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Ressources Humaines" />
+                </div>
+                <div>
+                  <label className={S.label}>Description (optionnel)</label>
+                  <textarea className={`${S.input} min-h-[80px] resize-none`} value={formData.description || ''} onChange={e => setFormData({...formData, description: e.target.value})} placeholder="Courte description..." />
+                </div>
+              </>}
 
-              {/* Leave Type Form */}
-              {modalType === 'leaveType' && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Désignation</label>
-                      <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Congé Annuel" />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Code (Court)</label>
-                      <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm" value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} required placeholder="Ex: CA" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Jours par an</label>
-                      <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all font-bold text-sm" type="number" value={formData.days_per_year || ''} onChange={e => setFormData({...formData, days_per_year: e.target.value})} required />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Couleur</label>
-                      <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-2 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/5 outline-none transition-all" type="color" value={formData.color || '#059669'} onChange={e => setFormData({...formData, color: e.target.value})} style={{ height: '56px' }} />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 pt-2">
-                    <input type="checkbox" id="is_paid" className="w-5 h-5 rounded-lg text-emerald-600" checked={formData.is_paid || false} onChange={e => setFormData({...formData, is_paid: e.target.checked})} />
-                    <label htmlFor="is_paid" className="text-sm font-bold text-gray-700 cursor-pointer">Congé rémunéré (Payé)</label>
-                  </div>
-                </>
-              )}
+              {/* Location */}
+              {modalType === 'location' && <>
+                <div>
+                  <label className={S.label}>Nom du Site</label>
+                  <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Siège Social" />
+                </div>
+                <div>
+                  <label className={S.label}>Adresse</label>
+                  <input className={S.input} value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} placeholder="Rue, Quartier..." />
+                </div>
+                <div>
+                  <label className={S.label}>Ville</label>
+                  <input className={S.input} value={formData.city || ''} onChange={e => setFormData({...formData, city: e.target.value})} placeholder="Ex: Libreville" />
+                </div>
+              </>}
 
-              {/* Payroll Period Form */}
-              {modalType === 'payrollPeriod' && (
-                <>
+              {/* Leave Type */}
+              {modalType === 'leaveType' && <>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Nom de la Période</label>
-                    <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-bold text-sm" value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Mars 2026" />
+                    <label className={S.label}>Désignation</label>
+                    <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Congé Annuel" />
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Début</label>
-                      <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-bold text-sm" type="date" value={formData.start_date || ''} onChange={e => setFormData({...formData, start_date: e.target.value})} required />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Fin</label>
-                      <input className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-2xl p-4 focus:border-indigo-500 focus:bg-white focus:ring-4 focus:ring-indigo-500/5 outline-none transition-all font-bold text-sm" type="date" value={formData.end_date || ''} onChange={e => setFormData({...formData, end_date: e.target.value})} required />
-                    </div>
+                  <div>
+                    <label className={S.label}>Code</label>
+                    <input className={S.input} value={formData.code || ''} onChange={e => setFormData({...formData, code: e.target.value})} required placeholder="Ex: CA" />
                   </div>
-                  <div className="flex items-center gap-3 pt-2">
-                    <input type="checkbox" id="is_closed" className="w-5 h-5 rounded-lg text-indigo-600" checked={formData.is_closed || false} onChange={e => setFormData({...formData, is_closed: e.target.checked})} />
-                    <label htmlFor="is_closed" className="text-sm font-bold text-gray-700 cursor-pointer">Considérer comme clôturée</label>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={S.label}>Jours par an</label>
+                    <input className={S.input} type="number" value={formData.days_per_year || ''} onChange={e => setFormData({...formData, days_per_year: e.target.value})} required />
                   </div>
-                </>
-              )}
+                  <div>
+                    <label className={S.label}>Couleur</label>
+                    <input className={`${S.input} h-10 p-1`} type="color" value={formData.color || '#2D6A4F'} onChange={e => setFormData({...formData, color: e.target.value})} />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-4 h-4 rounded accent-[#2D6A4F]" checked={formData.is_paid || false} onChange={e => setFormData({...formData, is_paid: e.target.checked})} />
+                  <span className="text-[13px] text-[#0F1A10]">Congé rémunéré (payé)</span>
+                </label>
+              </>}
 
-              <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
-                <button type="button" onClick={() => setShowModal(false)} className="px-8 py-4 font-black text-[10px] uppercase tracking-widest text-gray-400 hover:text-gray-600 transition-colors">
-                  Annuler
-                </button>
-                <button type="submit" disabled={loading} className="bg-blue-600 text-white font-black px-10 py-4 rounded-[1.5rem] shadow-xl shadow-blue-500/20 hover:bg-blue-700 transition-all hover:-translate-y-1 text-[11px] uppercase tracking-widest ring-1 ring-blue-400">
+              {/* Payroll Period */}
+              {modalType === 'payrollPeriod' && <>
+                <div>
+                  <label className={S.label}>Nom de la Période</label>
+                  <input className={S.input} value={formData.name || ''} onChange={e => setFormData({...formData, name: e.target.value})} required placeholder="Ex: Mars 2026" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className={S.label}>Début</label>
+                    <input className={S.input} type="date" value={formData.start_date || ''} onChange={e => setFormData({...formData, start_date: e.target.value})} required />
+                  </div>
+                  <div>
+                    <label className={S.label}>Fin</label>
+                    <input className={S.input} type="date" value={formData.end_date || ''} onChange={e => setFormData({...formData, end_date: e.target.value})} required />
+                  </div>
+                </div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-4 h-4 rounded accent-[#2D6A4F]" checked={formData.is_closed || false} onChange={e => setFormData({...formData, is_closed: e.target.checked})} />
+                  <span className="text-[13px] text-[#0F1A10]">Considérer comme clôturée</span>
+                </label>
+              </>}
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-[rgba(20,34,24,0.06)]">
+                <button type="button" onClick={() => setShowModal(false)} className={`${S.btn} ${S.secondary}`}>Annuler</button>
+                <button type="submit" disabled={loading} className={`${S.btn} ${S.primary}`}>
                   {loading ? 'Enregistrement...' : editId ? 'Modifier' : 'Créer'}
                 </button>
               </div>
