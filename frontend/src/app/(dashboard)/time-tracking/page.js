@@ -4,9 +4,11 @@ import { useState, useEffect } from 'react';
 import { HiOutlineClock, HiOutlineLogin, HiOutlineLogout, HiOutlineRefresh, HiOutlineCheckCircle } from 'react-icons/hi';
 import api from '@/lib/api';
 import AttendanceQR from '@/components/attendance/AttendanceQR';
+import { useAuth } from '@/contexts/AuthContext';
 import styles from './page.module.css';
 
 export default function TimeTrackingPage() {
+  const { user } = useAuth();
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState(null);
@@ -80,7 +82,7 @@ export default function TimeTrackingPage() {
     }
   };
 
-  const userRole = me?.profile?.role || 'employee';
+  const userRole = user?.profile?.role || me?.profile?.role || 'employee';
   const canManageQR = ['admin', 'hr', 'manager'].includes(userRole);
 
   const stats = {
@@ -153,35 +155,37 @@ export default function TimeTrackingPage() {
           ))}
       </div>
 
-        {/* Tab System */}
-        {canManageQR && (
-          <div className="flex gap-2 p-1.5 bg-gray-100/50 rounded-[1.5rem] w-fit border border-gray-100 mb-2">
-            <button 
-                onClick={() => setActiveTab('history')}
-                className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                    activeTab === 'history' 
-                    ? 'bg-white text-gray-900 shadow-xl shadow-gray-200/50' 
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-            >
-                Historique
-            </button>
-            <button 
-                onClick={() => setActiveTab('qr')}
-                className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                    activeTab === 'qr' 
-                    ? 'bg-white text-gray-900 shadow-xl shadow-gray-200/50' 
-                    : 'text-gray-400 hover:text-gray-600'
-                }`}
-            >
-                Station QR Code
-            </button>
-          </div>
-        )}
+        {/* Tab System — visible à tous */}
+        <div className="flex gap-2 p-1.5 bg-gray-100/50 rounded-[1.5rem] w-fit border border-gray-100 mb-2">
+          <button
+            onClick={() => setActiveTab('history')}
+            className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+              activeTab === 'history'
+                ? 'bg-white text-gray-900 shadow-xl shadow-gray-200/50'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            Historique
+          </button>
+          <button
+            onClick={() => setActiveTab('qr')}
+            className={`px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
+              activeTab === 'qr'
+                ? 'bg-white text-gray-900 shadow-xl shadow-gray-200/50'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            {canManageQR ? 'Station QR Code' : 'Scanner QR'}
+          </button>
+        </div>
 
         <div className="flex-1">
-          {activeTab === 'qr' && canManageQR ? (
-            <AttendanceQR organizationName={me?.organization_name || 'Votre Organisation'} />
+          {activeTab === 'qr' ? (
+            canManageQR ? (
+              <AttendanceQR organizationName={me?.organization_name || user?.organization_name || 'Votre Organisation'} />
+            ) : (
+              <EmployeeScanInfo />
+            )
           ) : (
             <div className={styles.contentCard}>
               <div className={styles.cardHeader}>
@@ -250,6 +254,49 @@ export default function TimeTrackingPage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmployeeScanInfo() {
+  return (
+    <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl shadow-gray-200/40 overflow-hidden">
+      <div className="p-8 md:p-12 flex flex-col items-center justify-center text-center gap-6">
+        <div className="w-20 h-20 bg-blue-50 rounded-[1.5rem] flex items-center justify-center text-blue-500 text-4xl">
+          📱
+        </div>
+        <div>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tighter mb-2">
+            Pointage par QR Code
+          </h2>
+          <p className="text-gray-400 font-medium max-w-sm mx-auto text-sm">
+            Un QR Code unique est affiché à l'entrée de votre établissement.
+            Scannez-le avec votre appareil photo pour enregistrer votre présence.
+          </p>
+        </div>
+
+        <div className="w-full max-w-md grid grid-cols-1 gap-4 text-left">
+          {[
+            { step: '1', title: 'Ouvrez votre caméra', desc: 'Utilisez l\'appareil photo de votre smartphone ou l\'application de scan.' },
+            { step: '2', title: 'Scannez le QR Code affiché', desc: 'Le QR Code se trouve à l\'entrée de vos locaux. Pointez votre caméra dessus.' },
+            { step: '3', title: 'Confirme automatiquement', desc: 'Votre pointage est enregistré instantanément et de manière infalsifiable.' },
+          ].map(({ step, title, desc }) => (
+            <div key={step} className="flex gap-4 p-5 rounded-[1.5rem] bg-gray-50/60 border border-gray-100">
+              <div className="w-8 h-8 rounded-full bg-blue-600 text-white font-black text-sm flex items-center justify-center flex-shrink-0">
+                {step}
+              </div>
+              <div>
+                <div className="font-black text-gray-900 text-sm mb-1">{title}</div>
+                <div className="text-gray-400 text-xs font-medium">{desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 text-xs font-black uppercase tracking-widest border border-emerald-100">
+          🔒 Cryptographiquement sécurisé — Non falsifiable
         </div>
       </div>
     </div>

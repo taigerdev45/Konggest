@@ -585,7 +585,7 @@ export default function EmployeesPage() {
       {/* ── Modal Créer / Modifier ── */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 800, width: '95%' }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 800, width: '95%' }}>
             <div className="modal-header">
               <div>
                 <h2>{editId ? 'Modifier le collaborateur' : 'Ajouter un collaborateur'}</h2>
@@ -596,14 +596,14 @@ export default function EmployeesPage() {
               <button className="btn btn-ghost" onClick={() => setShowModal(false)}>✕</button>
             </div>
 
+            <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+            <div className="modal-body">
             {formError && (
-              <div style={{ margin: '0 24px 8px', padding: '12px 16px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid var(--danger)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ marginBottom: 12, padding: '12px 16px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid var(--danger)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <HiOutlineExclamationCircle size={18} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: 2 }} />
                 <pre style={{ margin: 0, fontSize: '0.82rem', color: 'var(--danger)', whiteSpace: 'pre-wrap' }}>{formError}</pre>
               </div>
             )}
-
-            <form onSubmit={handleSubmit} className="modal-body">
               {/* Section Identité */}
               <SectionTitle>Identité professionnelle</SectionTitle>
               <div className="grid grid-2 gap-md">
@@ -707,14 +707,15 @@ export default function EmployeesPage() {
                 </label>
               </div>
 
-              <div className="modal-footer mt-lg">
-                <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
-                <button type="submit" className="btn btn-primary" disabled={submitting}>
-                  {submitting
-                    ? (editId ? 'Mise à jour...' : 'Création...')
-                    : (editId ? 'Enregistrer les modifications' : 'Créer le profil')}
-                </button>
-              </div>
+            </div>{/* end modal-body */}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
+              <button type="submit" className="btn btn-primary" disabled={submitting}>
+                {submitting
+                  ? (editId ? 'Mise à jour...' : 'Création...')
+                  : (editId ? 'Enregistrer les modifications' : 'Créer le profil')}
+              </button>
+            </div>
             </form>
           </div>
         </div>
@@ -723,8 +724,8 @@ export default function EmployeesPage() {
       {/* ── Modal Suppression ── */}
       {deleteTarget && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 440 }}>
-            <div style={{ textAlign: 'center', padding: '8px 0 24px' }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 440 }}>
+            <div className="modal-body" style={{ textAlign: 'center' }}>
               <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'rgba(239,68,68,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
                 <HiOutlineTrash size={24} style={{ color: 'var(--danger)' }} />
               </div>
@@ -734,7 +735,7 @@ export default function EmployeesPage() {
                 L'employé sera archivé et son accès révoqué.
               </p>
             </div>
-            <div className="flex gap-sm" style={{ justifyContent: 'center' }}>
+            <div className="modal-footer" style={{ justifyContent: 'center' }}>
               <button className="btn btn-ghost" onClick={() => setDeleteTarget(null)}>Annuler</button>
               <button className="btn btn-danger" onClick={confirmDelete} disabled={deleting}
                 style={{ background: 'var(--danger)', color: '#fff' }}>
@@ -748,7 +749,7 @@ export default function EmployeesPage() {
       {/* ── Modal Import CSV ── */}
       {showImport && (
         <div className="modal-overlay">
-          <div className="modal-content card animate-in" style={{ maxWidth: 500 }}>
+          <div className="modal-content animate-in" style={{ maxWidth: 500 }}>
             <div className="modal-header">
               <div>
                 <h2>Importer des employés</h2>
@@ -758,24 +759,26 @@ export default function EmployeesPage() {
               </div>
               <button className="btn btn-ghost" onClick={() => setShowImport(false)}>✕</button>
             </div>
-            <form onSubmit={handleImportSubmit} style={{ padding: '0 8px 8px' }}>
-              <div className="input-group mt-md">
-                <label style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  Fichier CSV *
-                </label>
-                <input
-                  type="file"
-                  accept=".csv"
-                  className="input"
-                  onChange={e => setCsvFile(e.target.files?.[0] || null)}
-                  required
-                />
+            <form onSubmit={handleImportSubmit} style={{ display: 'contents' }}>
+              <div className="modal-body">
+                <div className="input-group">
+                  <label style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                    Fichier CSV *
+                  </label>
+                  <input
+                    type="file"
+                    accept=".csv"
+                    className="input"
+                    onChange={e => setCsvFile(e.target.files?.[0] || null)}
+                    required
+                  />
+                </div>
+                <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: 12, marginTop: 12, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <strong>Colonnes CSV supportées :</strong><br />
+                  employee_id, first_name, last_name, email, phone, hire_date, contract_type
+                </div>
               </div>
-              <div style={{ background: 'var(--bg-secondary)', borderRadius: 8, padding: 12, marginTop: 12, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                <strong>Colonnes CSV supportées :</strong><br />
-                employee_id, first_name, last_name, email, phone, hire_date, contract_type
-              </div>
-              <div className="modal-footer mt-lg">
+              <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowImport(false)}>Annuler</button>
                 <button type="submit" className="btn btn-primary" disabled={importing || !csvFile}>
                   {importing ? 'Importation...' : 'Lancer l\'import'}
