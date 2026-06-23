@@ -107,6 +107,11 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated, IsManager]
 
+    def get_serializer_class(self):
+        if getattr(self, 'action', None) == 'create':
+            return UserInviteSerializer
+        return UserProfileSerializer
+
     def get_queryset(self):
         return UserProfile.objects.filter(organization=self.request.user.profile.organization).select_related('user')
 

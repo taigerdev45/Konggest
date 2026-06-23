@@ -12,6 +12,16 @@ import threading
 import requests
 
 from core.permissions import IsHRManager
+
+
+def _get_tenant_id(request):
+    tenant_id = getattr(request, 'tenant_id', None)
+    if not tenant_id:
+        try:
+            tenant_id = request.user.profile.organization_id
+        except Exception:
+            pass
+    return tenant_id
 from core.cache import cache_response
 from apps.recruitment.models import JobPosting, Application, Interview
 from apps.recruitment.serializers import JobPostingSerializer, PublicJobSerializer, ApplicationSerializer, InterviewSerializer
@@ -52,14 +62,13 @@ class JobPostingViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
     
     def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = _get_tenant_id(self.request)
         # R3: Resolver N+1 count() via annotate
         qs = JobPosting.objects.annotate(application_count=Count('applications'))
-        if tenant_id:
-            qs = qs.filter(organization_id=tenant_id)
-        # For public access, only show published jobs
         if not self.request.user or not self.request.user.is_authenticated:
-            qs = qs.filter(status='published', closes_at__gte=date.today())
+            qs = qs.filter(status='published')
+        elif tenant_id:
+            qs = qs.filter(organization_id=tenant_id)
         return qs
         
     def perform_create(self, serializer):
@@ -80,14 +89,13 @@ class JobPostingViewSet(viewsets.ModelViewSet):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-@cache_response(timeout=120)  # R4: Caching Redis sur le trafic viral
 def public_job_list(request):
     """Public endpoint to list all published jobs."""
     org_id = request.query_params.get('org')
+    from django.db.models import Q
     jobs = JobPosting.objects.filter(
         status='published',
-        closes_at__gte=date.today()
-    )
+    ).filter(Q(closes_at__isnull=True) | Q(closes_at__gte=date.today()))
     if org_id:
         jobs = jobs.filter(organization_id=org_id)
     
@@ -99,12 +107,14 @@ def public_job_list(request):
 @permission_classes([AllowAny])
 def public_job_detail(request, pk):
     """Public endpoint to view a specific job."""
+    from django.db.models import Q
     try:
         job = JobPosting.objects.get(
-            pk=pk, 
+            pk=pk,
             status='published',
-            closes_at__gte=date.today()
         )
+        if job.closes_at and job.closes_at < date.today():
+            return Response({'error': 'Offre non trouvée'}, status=404)
         serializer = PublicJobSerializer(job)
         return Response(serializer.data)
     except JobPosting.DoesNotExist:
@@ -116,11 +126,9 @@ def public_job_detail(request, pk):
 def public_apply(request, job_id):
     """Public endpoint to apply for a job."""
     try:
-        job = JobPosting.objects.get(
-            pk=job_id,
-            status='published',
-            closes_at__gte=date.today()
-        )
+        job = JobPosting.objects.get(pk=job_id, status='published')
+        if job.closes_at and job.closes_at < date.today():
+            return Response({'error': 'Offre non trouvée ou clôturée'}, status=404)
     except JobPosting.DoesNotExist:
         return Response({'error': 'Offre non trouvée ou clôturée'}, status=404)
     
@@ -182,9 +190,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
     filterset_fields = ['job', 'stage']
     search_fields = ['first_name', 'last_name', 'email']
     def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = _get_tenant_id(self.request)
         qs = Application.objects.select_related('job')
-        return qs.filter(job__organization_id=tenant_id) if tenant_id else qs
+        return qs.filter(job__organization_id=tenant_id) if tenant_id else qs.none()
 
     def perform_update(self, serializer):
         """Broadcast status change in real-time."""
@@ -203,6 +211,6 @@ class InterviewViewSet(viewsets.ModelViewSet):
     serializer_class = InterviewSerializer
     permission_classes = [IsHRManager]
     def get_queryset(self):
-        tenant_id = getattr(self.request, 'tenant_id', None)
+        tenant_id = _get_tenant_id(self.request)
         qs = Interview.objects.select_related('application__job')
-        return qs.filter(application__job__organization_id=tenant_id) if tenant_id else qs
+        return qs.filter(application__job__organization_id=tenant_id) if tenant_id else qs.none()

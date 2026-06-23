@@ -16,12 +16,10 @@ class NotificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        """
-        Only return notifications for the authenticated user.
-        Select related is not needed as there are no FKs to other large tables here,
-        but we ensure ordering is preserved.
-        """
         return Notification.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
     @action(detail=False, methods=['post'])
     def mark_all_read(self, request):

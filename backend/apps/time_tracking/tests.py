@@ -18,6 +18,8 @@ from apps.time_tracking.views import _generate_qr_token
 
 class TimeTrackingTests(TestCase):
     def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
         self.client = APIClient()
         
         # Tenant 1
@@ -135,9 +137,9 @@ class TimeTrackingTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['status'], 'checked_out')
         
-        # Replay OUT scan
+        # Replay OUT scan (anti-replay → 409)
         response = self.client.post('/api/time-tracking/entries/scan/', {'token': token, 'scan_type': 'out'})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.status_code, status.HTTP_409_CONFLICT)
 
     def test_expired_qr_scan(self):
         """Test scan with expired QR"""

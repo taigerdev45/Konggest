@@ -5,9 +5,10 @@ from apps.accounts.models import Organization, UserProfile
 from apps.employees.models import Employee, Department
 from apps.payroll.models import PayrollPeriod, Payslip, PayrollItem
 from apps.payroll.views import PayslipViewSet
+from apps.payroll.tasks import generate_payslips_async
 from core import hr_settings
 from datetime import date
-import json
+from unittest.mock import patch
 
 class PayrollEngineTest(TestCase):
     def setUp(self):
@@ -25,9 +26,9 @@ class PayrollEngineTest(TestCase):
             email="marc@example.com",
             hire_date=date(2020, 1, 1),
             salary=500000, # 500k XAF
-            site_location='libreville',
             sector='commerce',
-            family_parts=1.0 # Single
+            family_parts=1.0, # Single
+            status='active',
         )
         
         self.period_nov = PayrollPeriod.objects.create(
@@ -46,20 +47,27 @@ class PayrollEngineTest(TestCase):
         
         self.factory = APIRequestFactory()
 
-    def test_payroll_calc_standard(self):
-        """Test calculation of CNSS, TCS, and IRPP in a normal month."""
+    def _run_generate(self, period):
+        """Helper: POST generate_for_period and run the Celery task synchronously."""
         view = PayslipViewSet.as_view({'post': 'generate_for_period'})
-        request = self.factory.post('/api/payroll/generate_for_period/', {'period_id': self.period_nov.id}, format='json')
+        request = self.factory.post('/api/payroll/generate_for_period/', {'period_id': period.id}, format='json')
         force_authenticate(request, user=self.admin)
         request.user = self.admin
         request.tenant_id = self.org.id
-        
-        response = view(request)
-        if response.status_code != 200:
-            print(f"DEBUG: Response 500 Data: {response.data}")
-            print(f"DEBUG: Response Content: {response.content}")
-        self.assertEqual(response.status_code, 200)
-        
+
+        def run_sync(period_id, tenant_id, user_id):
+            generate_payslips_async.apply(args=[period_id, tenant_id, user_id]).get()
+
+        with patch('apps.payroll.views.generate_payslips_async') as mock_task:
+            mock_task.delay.side_effect = run_sync
+            response = view(request)
+        return response
+
+    def test_payroll_calc_standard(self):
+        """Test calculation of CNSS, TCS, and IRPP in a normal month."""
+        response = self._run_generate(self.period_nov)
+        self.assertEqual(response.status_code, 202)
+
         payslip = Payslip.objects.get(employee=self.employee, period=self.period_nov)
         
         # Expected Results for 500k XAF:
@@ -78,16 +86,10 @@ class PayrollEngineTest(TestCase):
         """Test that petroleum sector gets 13th month in December."""
         self.employee.sector = 'petrole'
         self.employee.save()
-        
-        view = PayslipViewSet.as_view({'post': 'generate_for_period'})
-        request = self.factory.post('/api/payroll/generate_for_period/', {'period_id': self.period_dec.id}, format='json')
-        force_authenticate(request, user=self.admin)
-        request.user = self.admin
-        request.tenant_id = self.org.id
-        
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
-        
+
+        response = self._run_generate(self.period_dec)
+        self.assertEqual(response.status_code, 202)
+
         payslip = Payslip.objects.get(employee=self.employee, period=self.period_dec)
         item_13th = PayrollItem.objects.get(payslip=payslip, name='13ème Mois')
         

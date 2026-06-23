@@ -38,7 +38,7 @@ def generate_payslips_async(self, period_id: int, tenant_id: str, user_id: int):
     active_employees = Employee.objects.filter(
         organization_id=tenant_id,
         status='active'
-    ).select_related('profile')
+    )
 
     created_count = 0
     updated_count = 0

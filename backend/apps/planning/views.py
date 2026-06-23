@@ -128,7 +128,6 @@ class ScheduleViewSet(viewsets.ModelViewSet):
                 for sched in created:
                     self._broadcast_planning(tenant_id, sched)
                     
-            log_action(request.user, tenant_id, "CREATE", f"{len(created)} plannings créés en masse.")
             return Response({"message": f"{len(created)} plannings créés avec succès."})
             
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -115,8 +115,8 @@ class EmployeeModelTest(TestCase):
         self.assertEqual(emp.cnss_number, "123456-X")
         self.assertTrue(emp.is_expat)
         self.assertEqual(float(emp.family_parts), 2.5)
-        # T17 : site_location est None/blank par défaut (obsolète)
-        self.assertIn(emp.site_location, [None, ""])
+        # T17 : site_location supprimé (migration 0006) — vérifier location FK
+        self.assertIsNone(emp.location)
 
     def test_department_index(self):
         """Le département est accessible viea FK sans N+1."""
@@ -198,9 +198,8 @@ class EmployeeMultiTenantTest(APITestCase):
         client = APIClient()
         client.force_authenticate(user=self.user_a)
 
-        # Simuler que le middleware injecte tenant_id = org_a.id
-        with patch('core.middleware.TenantMiddleware.__call__', lambda s, r, n: None):
-            response = client.get(f'/api/employees/{self.emp_b.id}/')
+        # TenantMiddleware lit request.user.profile.organization_id automatiquement
+        response = client.get(f'/api/employees/{self.emp_b.id}/')
 
         # Soit 403 (permission refusée) soit 404 (non visible) — jamais 200
         self.assertIn(response.status_code, [status.HTTP_403_FORBIDDEN, status.HTTP_404_NOT_FOUND])
