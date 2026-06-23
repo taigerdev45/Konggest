@@ -122,10 +122,60 @@ def cleanup_old_qr_sessions_impl():
     return count
 
 
+# ─── Persist QR scan (AT-SCALE) ────────────────────────────────────────────────
+
+def persist_qr_scan_impl(employee_id, qr_session_id, scan_type, check_time_str, today_str):
+    """
+    AT-SCALE — Persiste le pointage QR en DB de manière asynchrone.
+    Appelé après que Redis ait validé l'anti-replay et accordé le slot.
+    Utilise get_or_create/update pour être idempotent (safe en cas de retry).
+    """
+    from datetime import date as date_type, time as time_type
+    from .models import TimeEntry, QRScan, QRSession
+    from apps.employees.models import Employee
+    from core.cache import invalidate_cache
+
+    today = date_type.fromisoformat(today_str)
+    check_time = time_type.fromisoformat(check_time_str)
+    employee = Employee.objects.select_related('organization').get(id=employee_id)
+    qr_session = QRSession.objects.get(id=qr_session_id)
+    tenant_id = str(employee.organization_id)
+
+    if scan_type == 'in':
+        TimeEntry.objects.get_or_create(
+            employee=employee,
+            date=today,
+            defaults={'check_in': check_time, 'break_minutes': 60, 'scanned_via_qr': True},
+        )
+    else:
+        TimeEntry.objects.filter(employee=employee, date=today, check_out__isnull=True).update(
+            check_out=check_time, scanned_via_qr=True
+        )
+
+    QRScan.objects.get_or_create(
+        qr_session=qr_session,
+        employee=employee,
+        scan_type=scan_type,
+    )
+
+    # Invalider le cache tenant après écriture
+    invalidate_cache(tenant_id, 'timentry_list')
+    invalidate_cache(tenant_id, 'timentry_stats')
+
+
 # ─── Wrappers Celery (si disponible) ───────────────────────────────────────────
 
 if _celery_available():
     from celery import shared_task
+
+    @shared_task(bind=True, max_retries=5, default_retry_delay=10, acks_late=True)
+    def persist_qr_scan(self, employee_id, qr_session_id, scan_type, check_time_str, today_str):
+        """AT-SCALE — Tâche Celery pour écriture async du pointage QR en DB."""
+        try:
+            persist_qr_scan_impl(employee_id, qr_session_id, scan_type, check_time_str, today_str)
+        except Exception as exc:
+            logger.error(f"persist_qr_scan error: {exc} (emp={employee_id}, type={scan_type})")
+            raise self.retry(exc=exc)
 
     @shared_task(bind=True, max_retries=3, default_retry_delay=300)
     def check_attendance_anomalies(self):
