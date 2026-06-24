@@ -43,10 +43,15 @@ const CONTRACT_COLORS = {
 
 const EMPTY_FORM = {
   employee_id: '', cnss_number: '', first_name: '', last_name: '',
-  email: '', phone: '', gender: '', department: '', position_text: '',
-  location: '', contract_type: 'cdi', is_expat: false,
-  salary: 0, family_parts: 1.0, status: 'active',
-  hire_date: new Date().toISOString().split('T')[0],
+  email: '', phone: '', gender: '',
+  date_of_birth: '', address: '', nationality: '',
+  department: '', position_text: '', location: '',
+  contract_type: 'cdi', status: 'active',
+  hire_date: new Date().toISOString().split('T')[0], end_date: '',
+  manager: '', sector: '',
+  salary: 0, family_parts: 1.0, is_expat: false,
+  emergency_contact_name: '', emergency_contact_phone: '',
+  notes: '',
 };
 
 // ─── Validation ───
@@ -277,22 +282,31 @@ export default function EmployeesPage() {
   const openEdit = (emp) => {
     setEditId(emp.id);
     setFormData({
-      employee_id:   emp.employee_id   || '',
-      cnss_number:   emp.cnss_number   || '',
-      first_name:    emp.first_name    || '',
-      last_name:     emp.last_name     || '',
-      email:         emp.email         || '',
-      phone:         emp.phone         || '',
-      gender:        emp.gender        || '',
-      department:    emp.department    || '',
-      position_text: emp.position_title || '',
-      location:      emp.location      || '',
-      contract_type: emp.contract_type || 'cdi',
-      is_expat:      emp.is_expat      || false,
-      salary:        emp.salary        || 0,
-      family_parts:  emp.family_parts  || 1.0,
-      status:        emp.status        || 'active',
-      hire_date:     emp.hire_date     || new Date().toISOString().split('T')[0],
+      employee_id:            emp.employee_id            || '',
+      cnss_number:            emp.cnss_number            || '',
+      first_name:             emp.first_name             || '',
+      last_name:              emp.last_name              || '',
+      email:                  emp.email                  || '',
+      phone:                  emp.phone                  || '',
+      gender:                 emp.gender                 || '',
+      date_of_birth:          emp.date_of_birth          || '',
+      address:                emp.address                || '',
+      nationality:            emp.nationality            || '',
+      department:             emp.department             || '',
+      position_text:          emp.position_title         || '',
+      location:               emp.location               || '',
+      contract_type:          emp.contract_type          || 'cdi',
+      status:                 emp.status                 || 'active',
+      hire_date:              emp.hire_date              || new Date().toISOString().split('T')[0],
+      end_date:               emp.end_date               || '',
+      manager:                emp.manager                || '',
+      sector:                 emp.sector                 || '',
+      is_expat:               emp.is_expat               || false,
+      salary:                 emp.salary                 || 0,
+      family_parts:           emp.family_parts           || 1.0,
+      emergency_contact_name: emp.emergency_contact_name || '',
+      emergency_contact_phone:emp.emergency_contact_phone|| '',
+      notes:                  emp.notes                  || '',
     });
     setFormError('');
     setFieldErrors({});
@@ -666,12 +680,6 @@ export default function EmployeesPage() {
                     <input className="input" name="last_name" value={formData.last_name}
                       onChange={handleInputChange} placeholder="Dupont" />
                   </Field>
-                </div>
-                <Field label="Email professionnel *" error={fieldErrors.email}>
-                  <input className="input" type="email" name="email" value={formData.email}
-                    onChange={handleInputChange} placeholder="jean.dupont@entreprise.com" />
-                </Field>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
                   <Field label="Téléphone" error={fieldErrors.phone}>
                     <input className="input" name="phone" value={formData.phone}
                       onChange={handleInputChange} placeholder="+241 01 23 45 67" />
@@ -684,7 +692,24 @@ export default function EmployeesPage() {
                       <option value="O">Autre</option>
                     </select>
                   </Field>
+                  <Field label="Date de naissance">
+                    <input className="input" type="date" name="date_of_birth" value={formData.date_of_birth}
+                      onChange={handleInputChange} />
+                  </Field>
+                  <Field label="Nationalité">
+                    <input className="input" name="nationality" value={formData.nationality}
+                      onChange={handleInputChange} placeholder="Gabonaise" />
+                  </Field>
                 </div>
+                <Field label="Email professionnel *" error={fieldErrors.email}>
+                  <input className="input" type="email" name="email" value={formData.email}
+                    onChange={handleInputChange} placeholder="jean.dupont@entreprise.com" />
+                </Field>
+                <Field label="Adresse">
+                  <textarea className="input" name="address" value={formData.address}
+                    onChange={handleInputChange} placeholder="Rue, Quartier, Ville..."
+                    style={{ minHeight: 70, resize: 'none' }} />
+                </Field>
               </>
             )}
 
@@ -702,11 +727,23 @@ export default function EmployeesPage() {
                     <input className="input" type="text" name="position_text" value={formData.position_text}
                       onChange={handleInputChange} placeholder="Ex: Comptable, Ingénieur RH..." />
                   </Field>
+                  <Field label="Responsable hiérarchique">
+                    <select className="input" name="manager" value={formData.manager} onChange={handleInputChange}>
+                      <option value="">Aucun</option>
+                      {employees.filter(e => e.id !== editId).map(e => (
+                        <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>
+                      ))}
+                    </select>
+                  </Field>
                   <Field label="Site / Lieu">
                     <select className="input" name="location" value={formData.location} onChange={handleInputChange}>
                       <option value="">Site...</option>
                       {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
                     </select>
+                  </Field>
+                  <Field label="Secteur d'activité">
+                    <input className="input" name="sector" value={formData.sector}
+                      onChange={handleInputChange} placeholder="Ex: Finance, IT, Commerce..." />
                   </Field>
                   <Field label="Type de contrat">
                     <select className="input" name="contract_type" value={formData.contract_type} onChange={handleInputChange}>
@@ -730,6 +767,12 @@ export default function EmployeesPage() {
                     <input className="input" type="date" name="hire_date" value={formData.hire_date}
                       onChange={handleInputChange} />
                   </Field>
+                  {(formData.contract_type === 'cdd' || formData.contract_type === 'interim' || formData.contract_type === 'stage') && (
+                    <Field label="Date de fin de contrat">
+                      <input className="input" type="date" name="end_date" value={formData.end_date}
+                        onChange={handleInputChange} />
+                    </Field>
+                  )}
                 </div>
               </>
             )}
@@ -754,6 +797,16 @@ export default function EmployeesPage() {
                     <input className="input" type="number" step="0.5" min="1" name="family_parts"
                       value={formData.family_parts} onChange={handleInputChange} />
                   </Field>
+                  <Field label="Contact urgence — Nom">
+                    <input className="input" name="emergency_contact_name"
+                      value={formData.emergency_contact_name} onChange={handleInputChange}
+                      placeholder="Marie Dupont" />
+                  </Field>
+                  <Field label="Contact urgence — Téléphone">
+                    <input className="input" name="emergency_contact_phone"
+                      value={formData.emergency_contact_phone} onChange={handleInputChange}
+                      placeholder="+241 06 78 90 12" />
+                  </Field>
                 </div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.88rem', color: '#475569', padding: '4px 0' }}>
                   <input type="checkbox" name="is_expat"
@@ -761,6 +814,11 @@ export default function EmployeesPage() {
                     style={{ width: 16, height: 16, accentColor: 'var(--primary)' }} />
                   Cet employé est un expatrié (taux IRPP différent)
                 </label>
+                <Field label="Notes internes">
+                  <textarea className="input" name="notes" value={formData.notes}
+                    onChange={handleInputChange} placeholder="Remarques, context particulier..."
+                    style={{ minHeight: 70, resize: 'none' }} />
+                </Field>
               </>
             )}
 

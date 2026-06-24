@@ -15,6 +15,8 @@ export default function TimeTrackingPage() {
   const [me, setMe] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('history'); // 'history' or 'qr'
+  const [isRemote, setIsRemote] = useState(false);
+  const [entryNotes, setEntryNotes] = useState('');
 
   const [toast, setToast] = useState({ show: false, type: '', text: '' });
   const [statsData, setStatsData] = useState(null);
@@ -71,8 +73,12 @@ export default function TimeTrackingPage() {
     }
     setSubmitting(true);
     try {
-      const res = await api.post('/time-tracking/entries/toggle/');
+      const res = await api.post('/time-tracking/entries/toggle/', {
+        is_remote: isRemote,
+        notes: entryNotes.trim(),
+      });
       showToast('success', res.message || 'Pointage enregistré avec succès');
+      setEntryNotes('');
       fetchData();
     } catch (err) {
       console.error('Pointer failed:', err);
@@ -105,23 +111,40 @@ export default function TimeTrackingPage() {
         </div>
         
         <div className={styles.actions}>
-          <button 
-            onClick={fetchData} 
+          {/* Quick options: télétravail + notes */}
+          {!todayEntry?.check_out && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: '0.8rem', color: '#475569', cursor: 'pointer', fontWeight: 500 }}>
+                <input type="checkbox" checked={isRemote} onChange={e => setIsRemote(e.target.checked)}
+                  style={{ width: 14, height: 14, accentColor: '#2D6A4F' }} />
+                Télétravail
+              </label>
+              <input
+                type="text"
+                value={entryNotes}
+                onChange={e => setEntryNotes(e.target.value)}
+                placeholder="Note (optionnel)..."
+                style={{ fontSize: '0.8rem', padding: '6px 10px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#F8FAFC', outline: 'none', width: 180, color: '#0F1A10' }}
+              />
+            </div>
+          )}
+          <button
+            onClick={fetchData}
             disabled={loading}
             className={styles.refreshBtn}
             title="Rafraîchir"
           >
             <HiOutlineRefresh className={loading ? 'animate-spin' : ''} />
           </button>
-          
-          <button 
+
+          <button
             onClick={handlePointer}
             disabled={submitting || (todayEntry && todayEntry.check_out)}
             className={`${styles.pointerBtn} ${
-                todayEntry?.check_out 
-                  ? styles.pointerDisabled 
-                  : todayEntry 
-                    ? styles.pointerOut 
+                todayEntry?.check_out
+                  ? styles.pointerDisabled
+                  : todayEntry
+                    ? styles.pointerOut
                     : styles.pointerIn
             }`}
           >
@@ -210,6 +233,7 @@ export default function TimeTrackingPage() {
                       <th>Départ</th>
                       <th>Pause</th>
                       <th>Total</th>
+                      <th>Mode</th>
                       <th>Statut</th>
                     </tr>
                   </thead>
@@ -217,7 +241,7 @@ export default function TimeTrackingPage() {
                     {loading ? (
                       [...Array(5)].map((_, i) => (
                         <tr key={i} className="animate-pulse">
-                          <td colSpan="6" className="p-8 border-b border-gray-50"><div className="h-4 bg-slate-50 rounded-full w-3/4"></div></td>
+                          <td colSpan="7" className="p-8 border-b border-gray-50"><div className="h-4 bg-slate-50 rounded-full w-3/4"></div></td>
                         </tr>
                       ))
                     ) : Array.isArray(entries) && entries.length > 0 ? (
@@ -233,6 +257,11 @@ export default function TimeTrackingPage() {
                              {e.worked_hours ? `${e.worked_hours}h` : '-'}
                           </td>
                           <td>
+                            <span title={e.notes || ''} style={{ fontSize: '0.75rem', fontWeight: 600, color: e.is_remote ? '#2D6A4F' : '#94A3B8' }}>
+                              {e.is_remote ? '🏠 Télétravail' : '🏢 Présentiel'}
+                            </span>
+                          </td>
+                          <td>
                             <span className={`${styles.statusBadge} ${e.check_out ? styles.complete : styles.active}`}>
                               {e.check_out ? 'Cycle Complet' : 'En session'}
                             </span>
@@ -241,7 +270,7 @@ export default function TimeTrackingPage() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan="6" className="p-20 text-center">
+                        <td colSpan="7" className="p-20 text-center">
                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300">
                                 <HiOutlineClock size={32} />
                            </div>

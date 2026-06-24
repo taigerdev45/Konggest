@@ -208,8 +208,14 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
                     'worked_hours': entry.worked_hours,
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # Clock out
+            # Clock out — optionally update notes/is_remote if provided
             entry.check_out = now
+            notes = request.data.get('notes')
+            is_remote = request.data.get('is_remote')
+            if notes is not None:
+                entry.notes = str(notes)[:500]
+            if is_remote is not None:
+                entry.is_remote = bool(is_remote)
             entry.save()
             if tenant_id:
                 invalidate_cache(tenant_id, 'timentry_list')
@@ -229,11 +235,15 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
 
         except TimeEntry.DoesNotExist:
             # Clock in
+            is_remote = bool(request.data.get('is_remote', False))
+            notes = str(request.data.get('notes', ''))[:500]
             entry = TimeEntry.objects.create(
                 employee=employee,
                 date=today,
                 check_in=now,
                 break_minutes=60,
+                is_remote=is_remote,
+                notes=notes,
             )
             if tenant_id:
                 invalidate_cache(tenant_id, 'timentry_list')

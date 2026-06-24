@@ -29,10 +29,12 @@ export default function PerformancePage() {
 
   const [formData, setFormData] = useState({
     employee: '',
+    reviewer: '',
     period: 'Q1 2026',
     overall_rating: 5,
     strengths: '',
     improvements: '',
+    comments: '',
     status: 'completed',
     review_date: new Date().toISOString().split('T')[0],
   });
@@ -82,7 +84,7 @@ export default function PerformancePage() {
     try {
       await api.post('/performance/reviews/', formData);
       setShowModal(false);
-      setFormData({ employee: '', period: 'Q1 2026', overall_rating: 5, strengths: '', improvements: '', status: 'completed', review_date: new Date().toISOString().split('T')[0] });
+      setFormData({ employee: '', reviewer: '', period: 'Q1 2026', overall_rating: 5, strengths: '', improvements: '', comments: '', status: 'completed', review_date: new Date().toISOString().split('T')[0] });
       setToast({ show: true, text: 'Évaluation enregistrée avec succès.', type: 'success' });
       setTimeout(() => setToast({ show: false, text: '' }), 4000);
     } catch (err) {
@@ -243,14 +245,23 @@ export default function PerformancePage() {
             </div>
             <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
               <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div className="input-group">
-                  <label htmlFor="perf-emp">Collaborateur *</label>
-                  <select id="perf-emp" className="input" name="employee" value={formData.employee} onChange={handleInputChange} required>
-                    <option value="">Sélectionner un employé...</option>
-                    {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
-                  </select>
-                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="input-group">
+                    <label htmlFor="perf-emp">Collaborateur évalué *</label>
+                    <select id="perf-emp" className="input" name="employee" value={formData.employee} onChange={handleInputChange} required>
+                      <option value="">Sélectionner...</option>
+                      {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+                    </select>
+                  </div>
+                  <div className="input-group">
+                    <label htmlFor="perf-reviewer">Évaluateur</label>
+                    <select id="perf-reviewer" className="input" name="reviewer" value={formData.reviewer} onChange={handleInputChange}>
+                      <option value="">Sélectionner...</option>
+                      {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
                   <div className="input-group">
                     <label htmlFor="perf-period">Période *</label>
                     <input id="perf-period" className="input" type="text" name="period" value={formData.period} onChange={handleInputChange} required placeholder="Ex: Q1 2026" />
@@ -259,14 +270,32 @@ export default function PerformancePage() {
                     <label htmlFor="perf-rating">Note (1–5) *</label>
                     <input id="perf-rating" className="input" type="number" name="overall_rating" min="1" max="5" value={formData.overall_rating} onChange={handleInputChange} required />
                   </div>
+                  <div className="input-group">
+                    <label htmlFor="perf-status">Statut</label>
+                    <select id="perf-status" className="input" name="status" value={formData.status} onChange={handleInputChange}>
+                      <option value="completed">Terminé</option>
+                      <option value="in_progress">En cours</option>
+                      <option value="draft">Brouillon</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div className="input-group">
+                    <label htmlFor="perf-date">Date d'évaluation</label>
+                    <input id="perf-date" className="input" type="date" name="review_date" value={formData.review_date} onChange={handleInputChange} />
+                  </div>
                 </div>
                 <div className="input-group">
                   <label htmlFor="perf-strengths">Points forts</label>
-                  <textarea id="perf-strengths" className="input" style={{ minHeight: 80, resize: 'none' }} name="strengths" value={formData.strengths} onChange={handleInputChange} placeholder="Qualités observées..." />
+                  <textarea id="perf-strengths" className="input" style={{ minHeight: 72, resize: 'none' }} name="strengths" value={formData.strengths} onChange={handleInputChange} placeholder="Qualités observées..." />
                 </div>
                 <div className="input-group">
                   <label htmlFor="perf-improvements">Axes d&apos;amélioration</label>
-                  <textarea id="perf-improvements" className="input" style={{ minHeight: 80, resize: 'none' }} name="improvements" value={formData.improvements} onChange={handleInputChange} placeholder="Compétences à développer..." />
+                  <textarea id="perf-improvements" className="input" style={{ minHeight: 72, resize: 'none' }} name="improvements" value={formData.improvements} onChange={handleInputChange} placeholder="Compétences à développer..." />
+                </div>
+                <div className="input-group">
+                  <label htmlFor="perf-comments">Commentaires généraux</label>
+                  <textarea id="perf-comments" className="input" style={{ minHeight: 72, resize: 'none' }} name="comments" value={formData.comments} onChange={handleInputChange} placeholder="Observations globales, contexte particulier..." />
                 </div>
               </div>
               <div className="modal-footer">
