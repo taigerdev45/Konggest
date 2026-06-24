@@ -18,11 +18,15 @@ const S = {
 
 export default function PerformancePage() {
   const { user } = useAuth();
+  const userRole = user?.profile?.role || 'employee';
+  const isManager = ['admin', 'hr', 'manager'].includes(userRole);
+
   const [reviews, setReviews] = useState([]);
   const [objectives, setObjectives] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [employees, setEmployees] = useState([]);
+  const [meEmployee, setMeEmployee] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
   useScrollLock(showModal);
@@ -42,14 +46,26 @@ export default function PerformancePage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [reviewsData, objectivesData, employeesData] = await Promise.all([
-        api.get('/performance/reviews/'),
-        api.get('/performance/objectives/'),
-        api.get('/employees/'),
-      ]);
-      setReviews(reviewsData.results || reviewsData || []);
+      const calls = [api.get('/performance/reviews/'), api.get('/performance/objectives/')];
+      if (isManager) calls.push(api.get('/employees/'));
+      else calls.push(api.get('/employees/me/').catch(() => null));
+
+      const [reviewsData, objectivesData, empData] = await Promise.all(calls);
+      const allReviews = reviewsData.results || reviewsData || [];
+
+      if (isManager) {
+        setReviews(allReviews);
+        setEmployees(empData?.results || empData || []);
+      } else {
+        // Employee: only own reviews
+        const me = empData;
+        setMeEmployee(me);
+        const myReviews = me
+          ? allReviews.filter(r => r.employee === me.id || r.employee_name === me.full_name)
+          : allReviews;
+        setReviews(myReviews);
+      }
       setObjectives(objectivesData.results || objectivesData || []);
-      setEmployees(employeesData.results || employeesData || []);
     } catch (err) {
       console.error('Error fetching performance data:', err);
       setToast({ show: true, text: 'Erreur lors du chargement des données.', type: 'error' });
@@ -107,7 +123,7 @@ export default function PerformancePage() {
   const objectivesCompletion = objectives.length > 0
     ? Math.round((objectives.filter(o => o.status === 'completed').length / objectives.length) * 100)
     : 0;
-  const isHR = user?.profile?.role === 'hr' || user?.profile?.role === 'admin';
+  const isHR = isManager;
 
   return (
     <div className="min-h-full flex flex-col bg-[#F5F7F4]">

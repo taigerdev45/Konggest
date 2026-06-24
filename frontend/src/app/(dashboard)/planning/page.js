@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useScrollLock } from '@/hooks/useScrollLock';
 import { supabase } from '@/lib/supabase';
 import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import { HiOutlineCalendar, HiOutlinePrinter, HiOutlinePlus, HiOutlineUserGroup } from 'react-icons/hi';
 import {
   DndContext,
@@ -25,6 +26,10 @@ const S = {
 };
 
 export default function PlanningPage() {
+  const { user } = useAuth();
+  const userRole = user?.profile?.role || 'employee';
+  const isManager = ['admin', 'hr', 'manager'].includes(userRole);
+
   const [schedules, setSchedules] = useState([]);
   const [employees, setEmployees] = useState([]);
   const [templates, setTemplates] = useState([]);
@@ -161,6 +166,11 @@ export default function PlanningPage() {
     setShowModal(true);
   };
 
+  // Employee sees only their own row
+  const displayedEmployees = isManager
+    ? employees
+    : employees.filter(emp => emp.email === user?.email);
+
   const days = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date(currentWeekStart);
     d.setDate(d.getDate() + i);
@@ -192,14 +202,16 @@ export default function PlanningPage() {
           <span className="text-[#0F1A10]/20 text-lg leading-none">·</span>
           <h1 className="text-[15px] font-semibold text-[#0F1A10]">Planning RH</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <button onClick={handleExport} className={`${S.btn} ${S.secondary}`}>
-            <HiOutlinePrinter className="text-sm" /> Export PDF
-          </button>
-          <button onClick={() => setShowModal(true)} className={`${S.btn} ${S.primary}`}>
-            <HiOutlinePlus className="text-sm" /> Assigner
-          </button>
-        </div>
+        {isManager && (
+          <div className="flex items-center gap-2">
+            <button onClick={handleExport} className={`${S.btn} ${S.secondary}`}>
+              <HiOutlinePrinter className="text-sm" /> Export PDF
+            </button>
+            <button onClick={() => setShowModal(true)} className={`${S.btn} ${S.primary}`}>
+              <HiOutlinePlus className="text-sm" /> Assigner
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Week nav strip */}
@@ -251,7 +263,7 @@ export default function PlanningPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {employees.map(emp => (
+                  {displayedEmployees.map(emp => (
                     <tr key={emp.id} className="group hover:bg-[rgba(45,106,79,0.03)] transition-colors">
                       <td className="px-4 py-3 border-r border-b border-[rgba(20,34,24,0.05)] bg-white group-hover:bg-[rgba(45,106,79,0.02)] transition-colors sticky left-0 z-10">
                         <div className="flex items-center gap-3">
@@ -271,7 +283,7 @@ export default function PlanningPage() {
                         const dayStr = d.toISOString().split('T')[0];
                         const s = schedules.find(sched => sched.employee === emp.id && sched.date === dayStr);
                         return (
-                          <PlanningCell key={i} day={dayStr} employeeId={emp.id} shift={s} onAdd={handleQuickAdd} />
+                          <PlanningCell key={i} day={dayStr} employeeId={emp.id} shift={s} onAdd={isManager ? handleQuickAdd : null} />
                         );
                       })}
                     </tr>
