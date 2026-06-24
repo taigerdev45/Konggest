@@ -343,12 +343,15 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Organisation non identifiée.'}, status=400)
 
         today = date.today()
+        LONG_TERM_DATE = date(2099, 12, 31)
 
         # ── 1. Vérification HMAC (CPU only, infalsifiable) ──
-        is_valid = _verify_qr_token(token, str(tenant_id), str(today))
-        if not is_valid:
-            is_valid = _verify_qr_token(token, str(tenant_id), str(date(2099, 12, 31)))
-        if not is_valid:
+        qr_date = today
+        if _verify_qr_token(token, str(tenant_id), str(today)):
+            qr_date = today
+        elif _verify_qr_token(token, str(tenant_id), str(LONG_TERM_DATE)):
+            qr_date = LONG_TERM_DATE
+        else:
             logger.warning(f"AT4: Token QR invalide pour tenant {tenant_id}")
             return Response({'error': 'QR Code invalide ou expiré.'}, status=status.HTTP_403_FORBIDDEN)
 
@@ -360,7 +363,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
         try:
             from django_redis import get_redis_connection
             redis_conn = get_redis_connection('default')
-            cache_key = f"konggest:qrs:{tenant_id}:{today}"
+            cache_key = f"konggest:qrs:{tenant_id}:{qr_date}"
             raw = redis_conn.get(cache_key)
             if raw:
                 # Données écrites par notre propre serveur — format JSON strict
@@ -382,7 +385,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
             # Cache miss — charger depuis DB et mettre en cache
             try:
                 qr_session = QRSession.objects.get(
-                    organization_id=tenant_id, date=today, token=token, is_active=True,
+                    organization_id=tenant_id, date=qr_date, token=token, is_active=True,
                 )
             except QRSession.DoesNotExist:
                 return Response({'error': 'Session QR non trouvée ou désactivée.'}, status=status.HTTP_404_NOT_FOUND)
@@ -394,7 +397,7 @@ class TimeEntryViewSet(viewsets.ModelViewSet):
                     expires_ts = qr_session.expires_at.timestamp()
                     ttl = max(int(expires_ts - _dt.datetime.now(_dt.timezone.utc).timestamp()), 60)
                     redis_conn.setex(
-                        f"konggest:qrs:{tenant_id}:{today}",
+                        f"konggest:qrs:{tenant_id}:{qr_date}",
                         ttl,
                         _json.dumps({'id': qr_session.id, 'exp': expires_ts, 'active': True}),
                     )

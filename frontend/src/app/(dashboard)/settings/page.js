@@ -8,6 +8,8 @@ import api from '@/lib/api';
 
 export default function SettingsPage() {
   const { user } = useAuth();
+  const userRole = user?.profile?.role || 'employee';
+  const isEmployee = userRole === 'employee';
   const [profileData, setProfileData] = useState({
     full_name: '',
     email: '',
@@ -110,7 +112,7 @@ export default function SettingsPage() {
 
       {/* Main Content */}
       <div className="px-6 md:px-12 pb-12 flex-1">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className={`grid gap-8 ${isEmployee ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2'}`}>
           {/* Profile Card */}
           <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 animate-in slide-in-from-left-4 duration-700">
             <div className="flex items-center gap-4 mb-8">
@@ -158,8 +160,8 @@ export default function SettingsPage() {
             </form>
           </div>
 
-          {/* Organization Card */}
-          <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 animate-in slide-in-from-right-4 duration-700">
+          {/* Organization Card — masqué pour les employés */}
+          {!isEmployee && <div className="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 animate-in slide-in-from-right-4 duration-700">
             <div className="flex items-center gap-4 mb-8">
               <div className="w-14 h-14 rounded-[1.5rem] bg-purple-100 text-purple-600 flex items-center justify-center">
                 <HiOutlineOfficeBuilding size={28} />
@@ -211,7 +213,7 @@ export default function SettingsPage() {
                 {submitting ? 'Mise à jour...' : 'Mettre à jour l&apos;organisation'}
               </button>
             </form>
-          </div>
+          </div>}
         </div>
 
         {/* Security Card */}
@@ -268,8 +270,8 @@ export default function SettingsPage() {
           </form>
         </div>
 
-        {/* Quick Links Section */}
-        <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5 animate-in slide-in-from-bottom-4 duration-700">
+        {/* Quick Links Section — masqué pour les employés */}
+        {!isEmployee && <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-5 animate-in slide-in-from-bottom-4 duration-700">
           <Link href="/settings/organization" className="group bg-white rounded-[2rem] border border-gray-100 shadow-lg shadow-gray-200/30 p-6 hover:shadow-xl hover:-translate-y-1 transition-all">
             <div className="w-12 h-12 rounded-[1.25rem] bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-all">
               <HiOutlineOfficeBuilding size={24} />
@@ -293,7 +295,7 @@ export default function SettingsPage() {
             <h4 className="font-black text-gray-900 mb-1">Audit Logs</h4>
             <p className="text-xs text-gray-400 font-medium">Traçabilité & sécurité</p>
           </Link>
-        </div>
+        </div>}
       </div>
     </div>
   );

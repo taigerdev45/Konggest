@@ -45,6 +45,8 @@ const formatRate = (val) =>
 
 export default function DashboardPage() {
   const { user } = useAuth();
+  const userRole = user?.profile?.role || 'employee';
+  const isEmployee = userRole === 'employee';
   const [kpis, setKpis] = useState(null);
   const [recentLeaves, setRecentLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -285,15 +287,17 @@ export default function DashboardPage() {
             <span className={styles.quickLabel}>Candidatures actives</span>
           </div>
         </div>
-        <div className={`card-glass ${styles.quickStat}`}>
-          <HiOutlineCurrencyDollar className={styles.quickIcon} style={{ color: 'var(--warning)' }} />
-          <div>
-            <span className={styles.quickValue}>
-              {loading ? '…' : (p.mass_salary > 0 ? formatCurrency(p.mass_salary) : '—')}
-            </span>
-            <span className={styles.quickLabel}>Masse salariale nette</span>
+        {!isEmployee && (
+          <div className={`card-glass ${styles.quickStat}`}>
+            <HiOutlineCurrencyDollar className={styles.quickIcon} style={{ color: 'var(--warning)' }} />
+            <div>
+              <span className={styles.quickValue}>
+                {loading ? '…' : (p.mass_salary > 0 ? formatCurrency(p.mass_salary) : '—')}
+              </span>
+              <span className={styles.quickLabel}>Masse salariale nette</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

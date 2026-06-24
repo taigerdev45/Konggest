@@ -62,7 +62,7 @@ class SupabaseJWTAuthentication(authentication.BaseAuthentication):
                     token,
                     secret,
                     algorithms=["HS256"],
-                    options={"verify_aud": False}
+                    options={"verify_aud": False, "verify_signature": True}
                 )
             except Exception as e:
                 logger.error(f"JWT decode failed even without audience: {str(e)}")

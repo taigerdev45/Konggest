@@ -32,7 +32,7 @@ from rest_framework import viewsets, status, serializers
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from core.permissions import IsHRManager, IsManager, IsSameTenant
+from core.permissions import IsHRManager, IsManager, IsSameTenant, IsEmployee
 from core.cache import cache_response, invalidate_cache
 from core.pagination import StandardPagination
 
@@ -448,7 +448,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             logger.warning(f"Audit log delete employee failed: {e}")
 
     # ── Profil de l'utilisateur connecté ──
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get'], permission_classes=[IsEmployee])
     def me(self, request):
         """Retourne le profil employé de l'utilisateur connecté."""
         try:

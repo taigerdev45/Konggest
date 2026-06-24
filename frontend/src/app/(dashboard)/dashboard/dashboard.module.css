@@ -90,19 +90,22 @@
 .activityList {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .activityItem {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--bg-secondary, #F8FAFC);
+  border: 1px solid var(--border);
+  transition: background 0.15s;
 }
 
-.activityItem:last-child {
-  border-bottom: none;
+.activityItem:hover {
+  background: var(--bg-card-hover, #F1F5F9);
 }
 
 .activityDot {
@@ -110,7 +113,7 @@
   height: 8px;
   background: var(--primary);
   border-radius: 50%;
-  margin-top: 6px;
+  margin-top: 5px;
   flex-shrink: 0;
 }
 
@@ -122,28 +125,37 @@
 }
 
 .activityAction {
-  font-size: 0.85rem;
-  font-weight: 500;
+  font-size: 0.875rem;
+  font-weight: 600;
   color: var(--text-primary);
+  line-height: 1.4;
 }
 
 .activityDetail {
   font-size: 0.78rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .activityTime {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
+  font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
   flex-shrink: 0;
+  background: white;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
 }
 
 /* Quick Stats */
 .quickStats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 16px;
 }
 
