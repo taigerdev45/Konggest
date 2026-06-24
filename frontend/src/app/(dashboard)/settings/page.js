@@ -16,7 +16,9 @@ export default function SettingsPage() {
     name: '',
     sector: 'Technologie',
   });
+  const [pwData, setPwData] = useState({ old_password: '', new_password: '', confirm_password: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [pwSubmitting, setPwSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, text: '', type: 'info' });
 
   useEffect(() => {
@@ -43,6 +45,27 @@ export default function SettingsPage() {
     } finally {
       setSubmitting(false);
       setTimeout(() => setToast({ show: false, text: '', type: 'info' }), 3000);
+    }
+  };
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    if (pwData.new_password !== pwData.confirm_password) {
+      setToast({ show: true, text: 'Les nouveaux mots de passe ne correspondent pas.', type: 'error' });
+      setTimeout(() => setToast({ show: false, text: '', type: 'info' }), 3000);
+      return;
+    }
+    setPwSubmitting(true);
+    try {
+      await api.post('/auth/change-password/', pwData);
+      setToast({ show: true, text: 'Mot de passe modifié avec succès.', type: 'success' });
+      setPwData({ old_password: '', new_password: '', confirm_password: '' });
+    } catch (err) {
+      const msg = err?.error || 'Erreur lors du changement de mot de passe.';
+      setToast({ show: true, text: msg, type: 'error' });
+    } finally {
+      setPwSubmitting(false);
+      setTimeout(() => setToast({ show: false, text: '', type: 'info' }), 4000);
     }
   };
 
@@ -107,7 +130,7 @@ export default function SettingsPage() {
                   className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 text-sm text-gray-800 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/5 outline-none transition-all font-bold" 
                   value={profileData.full_name} 
                   onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                  placeholder="Ex: Jean Dupont"
+                  placeholder="Ex: Régis Obame"
                   required
                 />
               </div>
@@ -189,6 +212,60 @@ export default function SettingsPage() {
               </button>
             </form>
           </div>
+        </div>
+
+        {/* Security Card */}
+        <div className="mt-8 bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 p-8 animate-in slide-in-from-bottom-4 duration-700">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-14 h-14 rounded-[1.5rem] bg-amber-100 text-amber-600 flex items-center justify-center">
+              <HiOutlineKey size={28} />
+            </div>
+            <div>
+              <h3 className="text-xl font-black text-gray-900 tracking-tight">Sécurité — Changer le mot de passe</h3>
+              <p className="text-xs text-gray-400 font-medium">Modifiez votre mot de passe de connexion.</p>
+            </div>
+          </div>
+          <form onSubmit={handlePasswordChange} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div>
+              <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Mot de passe actuel</label>
+              <input
+                type="password"
+                className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 text-sm text-gray-800 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold"
+                value={pwData.old_password}
+                onChange={(e) => setPwData({ ...pwData, old_password: e.target.value })}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Nouveau mot de passe</label>
+              <input
+                type="password"
+                className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 text-sm text-gray-800 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold"
+                value={pwData.new_password}
+                onChange={(e) => setPwData({ ...pwData, new_password: e.target.value })}
+                placeholder="Min. 8 caractères"
+                minLength={8}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] uppercase font-black text-gray-400 mb-3 tracking-[0.2em] ml-1">Confirmer le nouveau</label>
+              <input
+                type="password"
+                className="w-full border-2 border-gray-100 bg-gray-50/50 rounded-[1.5rem] px-5 py-4 text-sm text-gray-800 focus:border-amber-500 focus:bg-white focus:ring-4 focus:ring-amber-500/5 outline-none transition-all font-bold"
+                value={pwData.confirm_password}
+                onChange={(e) => setPwData({ ...pwData, confirm_password: e.target.value })}
+                placeholder="••••••••"
+                required
+              />
+            </div>
+            <div className="md:col-span-3">
+              <button type="submit" className="bg-amber-500 text-white font-black px-6 py-4 rounded-[1.5rem] shadow-xl shadow-amber-500/20 hover:bg-amber-600 transition-all hover:-translate-y-1 text-xs uppercase tracking-widest ring-1 ring-amber-400 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0" disabled={pwSubmitting}>
+                {pwSubmitting ? 'Mise à jour...' : 'Changer le mot de passe'}
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* Quick Links Section */}

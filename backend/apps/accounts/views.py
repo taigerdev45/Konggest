@@ -236,6 +236,33 @@ class PlatformStaffViewSet(viewsets.ModelViewSet):
             return Response({"error": str(e)}, status=400)
 
 
+class ChangePasswordView(APIView):
+    """Employee (or any user) self-service password change."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        old_password = request.data.get('old_password', '')
+        new_password = request.data.get('new_password', '')
+        confirm_password = request.data.get('confirm_password', '')
+
+        if not old_password or not new_password or not confirm_password:
+            return Response({'error': 'Tous les champs sont obligatoires.'}, status=400)
+
+        if new_password != confirm_password:
+            return Response({'error': 'Les nouveaux mots de passe ne correspondent pas.'}, status=400)
+
+        if len(new_password) < 8:
+            return Response({'error': 'Le mot de passe doit contenir au moins 8 caractères.'}, status=400)
+
+        user = request.user
+        if not user.check_password(old_password):
+            return Response({'error': 'Mot de passe actuel incorrect.'}, status=400)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({'message': 'Mot de passe modifié avec succès.'})
+
+
 class PublicPartnerView(APIView):
     """Public list of organizations marked as trusted partners."""
     permission_classes = [AllowAny]

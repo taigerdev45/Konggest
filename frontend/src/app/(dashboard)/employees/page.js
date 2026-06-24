@@ -119,7 +119,12 @@ export default function EmployeesPage() {
 
   // Modal import CSV
   const [showImport, setShowImport] = useState(false);
-  useScrollLock(showModal || !!deleteTarget || showImport);
+
+  // Modal mot de passe généré (affiché une seule fois après création)
+  const [generatedPassword, setGeneratedPassword] = useState(null);
+  const [pwCopied, setPwCopied] = useState(false);
+
+  useScrollLock(showModal || !!deleteTarget || showImport || !!generatedPassword);
   const [csvFile, setCsvFile]       = useState(null);
   const [importing, setImporting]   = useState(false);
 
@@ -327,11 +332,17 @@ export default function EmployeesPage() {
       if (editId) {
         await api.patch(`/employees/${editId}/`, formData);
         showToast('success', 'Collaborateur mis à jour avec succès.');
+        setShowModal(false);
       } else {
-        await api.post('/employees/', formData);
-        showToast('success', 'Collaborateur créé avec succès.');
+        const result = await api.post('/employees/', formData);
+        setShowModal(false);
+        if (result?._generated_password) {
+          setGeneratedPassword({ password: result._generated_password, email: formData.email });
+          setPwCopied(false);
+        } else {
+          showToast('success', 'Collaborateur créé avec succès.');
+        }
       }
-      setShowModal(false);
       fetchEmployees(pagination.page);
     } catch (err) {
       let msg = 'Une erreur est survenue.';
@@ -674,11 +685,11 @@ export default function EmployeesPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
                   <Field label="Prénom *" error={fieldErrors.first_name}>
                     <input className="input" name="first_name" value={formData.first_name}
-                      onChange={handleInputChange} autoFocus placeholder="Jean" />
+                      onChange={handleInputChange} autoFocus placeholder="Koumba" />
                   </Field>
                   <Field label="Nom de famille *" error={fieldErrors.last_name}>
                     <input className="input" name="last_name" value={formData.last_name}
-                      onChange={handleInputChange} placeholder="Dupont" />
+                      onChange={handleInputChange} placeholder="Assoumou" />
                   </Field>
                   <Field label="Téléphone" error={fieldErrors.phone}>
                     <input className="input" name="phone" value={formData.phone}
@@ -703,11 +714,11 @@ export default function EmployeesPage() {
                 </div>
                 <Field label="Email professionnel *" error={fieldErrors.email}>
                   <input className="input" type="email" name="email" value={formData.email}
-                    onChange={handleInputChange} placeholder="jean.dupont@entreprise.com" />
+                    onChange={handleInputChange} placeholder="k.assoumou@entreprise.ga" />
                 </Field>
                 <Field label="Adresse">
                   <textarea className="input" name="address" value={formData.address}
-                    onChange={handleInputChange} placeholder="Rue, Quartier, Ville..."
+                    onChange={handleInputChange} placeholder="Quartier Batterie IV, Libreville, Gabon"
                     style={{ minHeight: 70, resize: 'none' }} />
                 </Field>
               </>
@@ -800,7 +811,7 @@ export default function EmployeesPage() {
                   <Field label="Contact urgence — Nom">
                     <input className="input" name="emergency_contact_name"
                       value={formData.emergency_contact_name} onChange={handleInputChange}
-                      placeholder="Marie Dupont" />
+                      placeholder="Rosette Obame" />
                   </Field>
                   <Field label="Contact urgence — Téléphone">
                     <input className="input" name="emergency_contact_phone"
@@ -911,6 +922,57 @@ export default function EmployeesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal Mot de passe généré (affiché une seule fois) ── */}
+      {generatedPassword && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-in" style={{ maxWidth: 460 }}>
+            <div className="modal-header">
+              <div>
+                <h2>Compte employé créé</h2>
+                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                  Communiquez ces identifiants à l'employé. Ce mot de passe ne sera plus affiché.
+                </p>
+              </div>
+              <button className="btn-modal-close" onClick={() => setGeneratedPassword(null)}>✕</button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ background: 'rgba(45,106,79,0.06)', border: '1px solid rgba(45,106,79,0.2)', borderRadius: 10, padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Email (identifiant)</p>
+                  <p style={{ fontWeight: 600, fontSize: '0.92rem', color: '#1e293b' }}>{generatedPassword.email}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Mot de passe temporaire</p>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <code style={{ flex: 1, background: '#fff', border: '1.5px solid var(--border)', borderRadius: 8, padding: '8px 12px', fontSize: '1.05rem', fontWeight: 700, letterSpacing: '0.1em', color: '#0f172a' }}>
+                      {generatedPassword.password}
+                    </code>
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedPassword.password);
+                        setPwCopied(true);
+                        setTimeout(() => setPwCopied(false), 2500);
+                      }}
+                    >
+                      {pwCopied ? <HiOutlineCheckCircle size={16} /> : <HiOutlineEye size={16} />}
+                      {pwCopied ? 'Copié !' : 'Copier'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                <HiOutlineExclamationCircle size={15} style={{ flexShrink: 0, marginTop: 1, color: 'var(--warning)' }} />
+                L'employé peut changer son mot de passe depuis son espace dans Paramètres → Sécurité.
+              </p>
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-primary" onClick={() => setGeneratedPassword(null)}>Compris, fermer</button>
+            </div>
           </div>
         </div>
       )}

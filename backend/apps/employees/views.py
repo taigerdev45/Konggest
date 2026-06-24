@@ -255,6 +255,33 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         invalidate_cache(tenant_id, 'employees')
         invalidate_cache(tenant_id, 'employees_list')
 
+        # Auto-création du compte Django User pour l'employé
+        self._generated_password = None
+        if emp.email:
+            import secrets
+            import string
+            from django.contrib.auth.models import User as DjangoUser
+            from apps.accounts.models import UserProfile
+            if not DjangoUser.objects.filter(username=emp.email).exists():
+                alphabet = string.ascii_letters + string.digits
+                pw = ''.join(secrets.choice(alphabet) for _ in range(10))
+                user = DjangoUser.objects.create_user(
+                    username=emp.email,
+                    email=emp.email,
+                    password=pw,
+                    first_name=emp.first_name,
+                    last_name=emp.last_name,
+                )
+                UserProfile.objects.create(
+                    user=user,
+                    organization_id=tenant_id,
+                    role='employee',
+                )
+                emp.user = user
+                emp.save(update_fields=['user'])
+                self._generated_password = pw
+                logger.info(f"Compte utilisateur créé pour l'employé {emp.email}")
+
         # T16 : Notifier le frontend via Supabase Realtime
         _broadcast_realtime_async(
             str(tenant_id), 'employee.created',
@@ -268,6 +295,16 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             )
         except Exception as e:
             logger.warning(f"Audit log create employee failed: {e}")
+
+    def create(self, request, *args, **kwargs):
+        self._generated_password = None
+        response = super().create(request, *args, **kwargs)
+        pw = getattr(self, '_generated_password', None)
+        if pw:
+            data = dict(response.data)
+            data['_generated_password'] = pw
+            response.data = data
+        return response
 
     def perform_update(self, serializer):
         """
