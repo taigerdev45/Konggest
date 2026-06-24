@@ -108,6 +108,10 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
     )
     manager_name = serializers.SerializerMethodField()
     seniority_years = serializers.IntegerField(read_only=True)
+    position_text = serializers.CharField(
+        write_only=True, required=False, allow_blank=True,
+        help_text="Intitulé libre du poste — crée ou réutilise une Position existante."
+    )
 
     class Meta:
         model = Employee
@@ -116,6 +120,35 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
 
     def get_manager_name(self, obj):
         return obj.manager.full_name if obj.manager else None
+
+    def _resolve_position(self, validated_data):
+        """Convertit position_text → Position FK (get_or_create par titre + org)."""
+        position_text = validated_data.pop('position_text', None)
+        if not position_text:
+            return
+        request = self.context.get('request')
+        org_id = getattr(request, 'tenant_id', None) if request else None
+        if not org_id and request:
+            try:
+                org_id = request.user.profile.organization_id
+            except Exception:
+                pass
+        if not org_id:
+            return
+        position, _ = Position.objects.get_or_create(
+            title__iexact=position_text,
+            organization_id=org_id,
+            defaults={'title': position_text, 'is_active': True},
+        )
+        validated_data['position'] = position
+
+    def create(self, validated_data):
+        self._resolve_position(validated_data)
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        self._resolve_position(validated_data)
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         """

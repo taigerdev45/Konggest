@@ -43,7 +43,7 @@ const CONTRACT_COLORS = {
 
 const EMPTY_FORM = {
   employee_id: '', cnss_number: '', first_name: '', last_name: '',
-  email: '', phone: '', gender: '', department: '', position: '',
+  email: '', phone: '', gender: '', department: '', position_text: '',
   location: '', contract_type: 'cdi', is_expat: false,
   salary: 0, family_parts: 1.0, status: 'active',
   hire_date: new Date().toISOString().split('T')[0],
@@ -254,7 +254,7 @@ export default function EmployeesPage() {
       phone:         emp.phone         || '',
       gender:        emp.gender        || '',
       department:    emp.department    || '',
-      position:      emp.position      || '',
+      position_text: emp.position_title || '',
       location:      emp.location      || '',
       contract_type: emp.contract_type || 'cdi',
       is_expat:      emp.is_expat      || false,
@@ -653,10 +653,7 @@ export default function EmployeesPage() {
                   </select>
                 </Field>
                 <Field label="Poste">
-                  <select className="input" name="position" value={formData.position} onChange={handleInputChange}>
-                    <option value="">Poste...</option>
-                    {filteredPositions.map(p => <option key={p.id} value={p.id}>{p.title}</option>)}
-                  </select>
+                  <input className="input" type="text" name="position_text" value={formData.position_text} onChange={handleInputChange} placeholder="Ex: Comptable, Ingénieur RH..." />
                 </Field>
                 <Field label="Site / Lieu">
                   <select className="input" name="location" value={formData.location} onChange={handleInputChange}>
