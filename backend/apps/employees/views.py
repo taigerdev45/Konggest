@@ -258,29 +258,32 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         # Auto-création du compte Django User pour l'employé
         self._generated_password = None
         if emp.email:
-            import secrets
-            import string
-            from django.contrib.auth.models import User as DjangoUser
-            from apps.accounts.models import UserProfile
-            if not DjangoUser.objects.filter(username=emp.email).exists():
-                alphabet = string.ascii_letters + string.digits
-                pw = ''.join(secrets.choice(alphabet) for _ in range(10))
-                user = DjangoUser.objects.create_user(
-                    username=emp.email,
-                    email=emp.email,
-                    password=pw,
-                    first_name=emp.first_name,
-                    last_name=emp.last_name,
-                )
-                UserProfile.objects.create(
-                    user=user,
-                    organization_id=tenant_id,
-                    role='employee',
-                )
-                emp.user = user
-                emp.save(update_fields=['user'])
-                self._generated_password = pw
-                logger.info(f"Compte utilisateur créé pour l'employé {emp.email}")
+            try:
+                import secrets
+                import string
+                from django.contrib.auth.models import User as DjangoUser
+                from apps.accounts.models import UserProfile
+                if not DjangoUser.objects.filter(username=emp.email).exists():
+                    alphabet = string.ascii_letters + string.digits
+                    pw = ''.join(secrets.choice(alphabet) for _ in range(10))
+                    user = DjangoUser.objects.create_user(
+                        username=emp.email,
+                        email=emp.email,
+                        password=pw,
+                        first_name=emp.first_name,
+                        last_name=emp.last_name,
+                    )
+                    UserProfile.objects.create(
+                        user=user,
+                        organization_id=tenant_id,
+                        role='employee',
+                    )
+                    emp.user = user
+                    emp.save(update_fields=['user'])
+                    self._generated_password = pw
+                    logger.info(f"Compte utilisateur créé pour l'employé {emp.email}")
+            except Exception as e:
+                logger.warning(f"Création compte employé échouée ({emp.email}): {e}")
 
         # T16 : Notifier le frontend via Supabase Realtime
         _broadcast_realtime_async(
@@ -297,14 +300,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
             logger.warning(f"Audit log create employee failed: {e}")
 
     def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         self._generated_password = None
-        response = super().create(request, *args, **kwargs)
-        pw = getattr(self, '_generated_password', None)
-        if pw:
-            data = dict(response.data)
-            data['_generated_password'] = pw
-            response.data = data
-        return response
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        response_data = dict(serializer.data)
+        if self._generated_password:
+            response_data['_generated_password'] = self._generated_password
+        return Response(response_data, status=status.HTTP_201_CREATED, headers=headers)
 
     def perform_update(self, serializer):
         """
