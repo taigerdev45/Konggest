@@ -124,14 +124,14 @@ export default function LandingPage() {
               <HiOutlineShieldCheck /> RH &amp; Paie · PME Afrique francophone
             </span>
             <h1 className={styles.h1}>
-              Arrêtez de gérer<br />
-              vos RH sur<br />
-              <span className={styles.h1Gold}>WhatsApp.</span>
+              Centralisez vos RH.<br />
+              Restez conformes.<br />
+              <span className={styles.h1Gold}>Avancez vite.</span>
             </h1>
             <p className={styles.heroDesc}>
-              Konggest remplace Excel, WhatsApp et les cahiers par une plateforme RH complète —
-              pointage QR en 100&nbsp;ms, paie conforme CNSS/Gabon, congés automatisés,
-              analytics temps réel.
+              Pointage QR en 100&nbsp;ms, paie conforme CNSS/Gabon, gestion des congés automatisée,
+              analytics temps réel — tout centralisé dans une seule plateforme conçue pour
+              les PME d'Afrique francophone.
             </p>
             <div className={styles.heroCtas}>
               <Link href="/register" className={styles.btnGold}>Essai gratuit · 14 jours</Link>

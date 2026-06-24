@@ -41,8 +41,6 @@
   justify-content: center;
   flex-shrink: 0;
   overflow: hidden;
-  border: 1px solid rgba(201,168,76,0.25);
-  background: rgba(201,168,76,0.08);
 }
 
 .logoIcon img {

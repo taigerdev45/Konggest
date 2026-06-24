@@ -106,6 +106,7 @@ export default function EmployeesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError]   = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
+  const [formStep, setFormStep]     = useState(1);
 
   // Modal suppression
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -235,11 +236,41 @@ export default function EmployeesPage() {
     if (fieldErrors[name]) setFieldErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  const validateStep = (s) => {
+    const errors = {};
+    if (s === 1) {
+      if (!formData.first_name.trim()) errors.first_name = 'Prénom requis.';
+      if (!formData.last_name.trim())  errors.last_name  = 'Nom requis.';
+      if (!formData.email.trim())      errors.email = 'Email requis.';
+      else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errors.email = 'Format email invalide.';
+      if (formData.phone && !/^\+?[\d\s\-().]{7,20}$/.test(formData.phone)) errors.phone = 'Téléphone invalide (ex: +241 01 23 45 67).';
+    } else if (s === 2) {
+      if (!formData.hire_date) errors.hire_date = "Date d'embauche requise.";
+    } else if (s === 3) {
+      if (!formData.employee_id.trim()) errors.employee_id = 'Matricule requis.';
+      else if (!/^[A-Z0-9\-_.]{2,20}$/i.test(formData.employee_id)) errors.employee_id = 'Format invalide (ex: EMP-2026-001).';
+      if (formData.cnss_number && !/^[\d\-A-Z]{4,20}$/i.test(formData.cnss_number)) errors.cnss_number = 'Format CNSS invalide (ex: 123456-A).';
+      if (formData.salary < 0) errors.salary = 'Le salaire ne peut pas être négatif.';
+    }
+    return errors;
+  };
+
+  const goNext = () => {
+    const errors = validateStep(formStep);
+    if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
+    setFieldErrors({});
+    setFormError('');
+    setFormStep(s => s + 1);
+  };
+
+  const goPrev = () => { setFormStep(s => s - 1); };
+
   const openCreate = () => {
     setEditId(null);
     setFormData(EMPTY_FORM);
     setFormError('');
     setFieldErrors({});
+    setFormStep(1);
     setShowModal(true);
   };
 
@@ -265,13 +296,13 @@ export default function EmployeesPage() {
     });
     setFormError('');
     setFieldErrors({});
+    setFormStep(1);
     setShowModal(true);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // FIX T15 : validation locale avant envoi API
-    const errors = validate(formData);
+    const errors = validateStep(3);
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
@@ -587,131 +618,171 @@ export default function EmployeesPage() {
       {/* ── Modal Créer / Modifier ── */}
       {showModal && (
         <div className="modal-overlay">
-          <div className="modal-content animate-in" style={{ maxWidth: 800, width: '95%' }}>
-            <div className="modal-header">
-              <div>
-                <h2>{editId ? 'Modifier le collaborateur' : 'Ajouter un collaborateur'}</h2>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                  {editId ? 'Mettez à jour les informations du profil.' : 'Réglementation Gabon 2026 — Tous les champs * sont requis.'}
-                </p>
+          <div className="modal-content animate-in" style={{ maxWidth: 600 }}>
+            <div className="modal-header" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <h2>{editId ? 'Modifier le collaborateur' : 'Ajouter un collaborateur'}</h2>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                    Étape {formStep} sur 3
+                  </p>
+                </div>
+                <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
               </div>
-              <button className="btn-modal-close" onClick={() => setShowModal(false)}>✕</button>
+              {/* Step indicator */}
+              <div className="modal-steps" style={{ marginTop: 16 }}>
+                {[{ n: 1, label: 'Identité' }, { n: 2, label: 'Organisation' }, { n: 3, label: 'Administratif' }].map((s, i, arr) => (
+                  <>
+                    <div key={s.n} className={`modal-step ${formStep === s.n ? 'active' : formStep > s.n ? 'done' : ''}`}>
+                      <div className="modal-step-dot">
+                        {formStep > s.n ? '✓' : s.n}
+                      </div>
+                      <span className="modal-step-label">{s.label}</span>
+                    </div>
+                    {i < arr.length - 1 && <div className="modal-step-line" />}
+                  </>
+                ))}
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
-            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {formError && (
               <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(239,68,68,0.08)', border: '1px solid var(--danger)', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                 <HiOutlineExclamationCircle size={16} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: 1 }} />
                 <pre style={{ margin: 0, fontSize: '0.8rem', color: 'var(--danger)', whiteSpace: 'pre-wrap' }}>{formError}</pre>
               </div>
             )}
-              {/* Identité */}
-              <SectionTitle>Identité</SectionTitle>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px 14px' }}>
-                <Field label="Matricule *" error={fieldErrors.employee_id}>
-                  <input className="input" name="employee_id" value={formData.employee_id}
-                    onChange={handleInputChange} required placeholder="EMP-2026-001" />
-                </Field>
-                <Field label="Numéro CNSS" error={fieldErrors.cnss_number}>
-                  <input className="input" name="cnss_number" value={formData.cnss_number}
-                    onChange={handleInputChange} placeholder="123456-A" />
-                </Field>
-                <Field label="Genre">
-                  <select className="input" name="gender" value={formData.gender} onChange={handleInputChange}>
-                    <option value="">Non spécifié</option>
-                    <option value="M">Masculin</option>
-                    <option value="F">Féminin</option>
-                    <option value="O">Autre</option>
-                  </select>
-                </Field>
-                <Field label="Prénom *" error={fieldErrors.first_name}>
-                  <input className="input" name="first_name" value={formData.first_name}
-                    onChange={handleInputChange} required />
-                </Field>
-                <Field label="Nom de famille *" error={fieldErrors.last_name}>
-                  <input className="input" name="last_name" value={formData.last_name}
-                    onChange={handleInputChange} required />
-                </Field>
-                <Field label="Téléphone" error={fieldErrors.phone}>
-                  <input className="input" name="phone" value={formData.phone}
-                    onChange={handleInputChange} placeholder="+241 01 23 45 67" />
-                </Field>
-              </div>
-              <Field label="Email professionnel *" error={fieldErrors.email}>
-                <input className="input" type="email" name="email" value={formData.email}
-                  onChange={handleInputChange} required />
-              </Field>
 
-              {/* Organisation */}
-              <SectionTitle>Organisation</SectionTitle>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px 14px' }}>
-                <Field label="Département">
-                  <select className="input" name="department" value={formData.department} onChange={handleInputChange}>
-                    <option value="">Département...</option>
-                    {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
-                  </select>
+            {/* ── Étape 1 : Identité ── */}
+            {formStep === 1 && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+                  <Field label="Prénom *" error={fieldErrors.first_name}>
+                    <input className="input" name="first_name" value={formData.first_name}
+                      onChange={handleInputChange} autoFocus placeholder="Jean" />
+                  </Field>
+                  <Field label="Nom de famille *" error={fieldErrors.last_name}>
+                    <input className="input" name="last_name" value={formData.last_name}
+                      onChange={handleInputChange} placeholder="Dupont" />
+                  </Field>
+                </div>
+                <Field label="Email professionnel *" error={fieldErrors.email}>
+                  <input className="input" type="email" name="email" value={formData.email}
+                    onChange={handleInputChange} placeholder="jean.dupont@entreprise.com" />
                 </Field>
-                <Field label="Poste">
-                  <input className="input" type="text" name="position_text" value={formData.position_text} onChange={handleInputChange} placeholder="Ex: Comptable, Ingénieur RH..." />
-                </Field>
-                <Field label="Site / Lieu">
-                  <select className="input" name="location" value={formData.location} onChange={handleInputChange}>
-                    <option value="">Site...</option>
-                    {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
-                </Field>
-                <Field label="Contrat">
-                  <select className="input" name="contract_type" value={formData.contract_type} onChange={handleInputChange}>
-                    <option value="cdi">CDI</option>
-                    <option value="cdd">CDD</option>
-                    <option value="interim">Intérim</option>
-                    <option value="stage">Stage</option>
-                    <option value="apprentissage">Apprentissage</option>
-                    <option value="freelance">Freelance</option>
-                  </select>
-                </Field>
-                <Field label="Statut">
-                  <select className="input" name="status" value={formData.status} onChange={handleInputChange}>
-                    <option value="active">Actif</option>
-                    <option value="on_leave">En congé</option>
-                    <option value="suspended">Suspendu</option>
-                    <option value="terminated">Terminé</option>
-                  </select>
-                </Field>
-                <Field label="Date d'embauche *" error={fieldErrors.hire_date}>
-                  <input className="input" type="date" name="hire_date" value={formData.hire_date}
-                    onChange={handleInputChange} required />
-                </Field>
-              </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+                  <Field label="Téléphone" error={fieldErrors.phone}>
+                    <input className="input" name="phone" value={formData.phone}
+                      onChange={handleInputChange} placeholder="+241 01 23 45 67" />
+                  </Field>
+                  <Field label="Genre">
+                    <select className="input" name="gender" value={formData.gender} onChange={handleInputChange}>
+                      <option value="">Non spécifié</option>
+                      <option value="M">Masculin</option>
+                      <option value="F">Féminin</option>
+                      <option value="O">Autre</option>
+                    </select>
+                  </Field>
+                </div>
+              </>
+            )}
 
-              {/* Fiscal */}
-              <SectionTitle>Fiscal (Gabon)</SectionTitle>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
-                <Field label="Salaire brut mensuel (XAF)" error={fieldErrors.salary}>
-                  <input className="input" type="number" name="salary" value={formData.salary}
-                    onChange={handleInputChange} min={0} step={1000} />
-                </Field>
-                <Field label="Parts IRPP">
-                  <input className="input" type="number" step="0.5" min="1" name="family_parts"
-                    value={formData.family_parts} onChange={handleInputChange} />
-                </Field>
-              </div>
-              <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.88rem', color: '#475569' }}>
-                <input type="checkbox" id="is_expat" name="is_expat"
-                  checked={formData.is_expat} onChange={handleInputChange}
-                  style={{ width: 16, height: 16, accentColor: 'var(--primary)' }} />
-                Cet employé est un expatrié
-              </label>
+            {/* ── Étape 2 : Organisation ── */}
+            {formStep === 2 && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+                  <Field label="Département">
+                    <select className="input" name="department" value={formData.department} onChange={handleInputChange}>
+                      <option value="">Département...</option>
+                      {departments.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Poste">
+                    <input className="input" type="text" name="position_text" value={formData.position_text}
+                      onChange={handleInputChange} placeholder="Ex: Comptable, Ingénieur RH..." />
+                  </Field>
+                  <Field label="Site / Lieu">
+                    <select className="input" name="location" value={formData.location} onChange={handleInputChange}>
+                      <option value="">Site...</option>
+                      {locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Type de contrat">
+                    <select className="input" name="contract_type" value={formData.contract_type} onChange={handleInputChange}>
+                      <option value="cdi">CDI</option>
+                      <option value="cdd">CDD</option>
+                      <option value="interim">Intérim</option>
+                      <option value="stage">Stage</option>
+                      <option value="apprentissage">Apprentissage</option>
+                      <option value="freelance">Freelance</option>
+                    </select>
+                  </Field>
+                  <Field label="Statut">
+                    <select className="input" name="status" value={formData.status} onChange={handleInputChange}>
+                      <option value="active">Actif</option>
+                      <option value="on_leave">En congé</option>
+                      <option value="suspended">Suspendu</option>
+                      <option value="terminated">Terminé</option>
+                    </select>
+                  </Field>
+                  <Field label="Date d'embauche *" error={fieldErrors.hire_date}>
+                    <input className="input" type="date" name="hire_date" value={formData.hire_date}
+                      onChange={handleInputChange} />
+                  </Field>
+                </div>
+              </>
+            )}
+
+            {/* ── Étape 3 : Administratif ── */}
+            {formStep === 3 && (
+              <>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 14px' }}>
+                  <Field label="Matricule *" error={fieldErrors.employee_id}>
+                    <input className="input" name="employee_id" value={formData.employee_id}
+                      onChange={handleInputChange} placeholder="EMP-2026-001" />
+                  </Field>
+                  <Field label="Numéro CNSS" error={fieldErrors.cnss_number}>
+                    <input className="input" name="cnss_number" value={formData.cnss_number}
+                      onChange={handleInputChange} placeholder="123456-A" />
+                  </Field>
+                  <Field label="Salaire brut mensuel (XAF)" error={fieldErrors.salary}>
+                    <input className="input" type="number" name="salary" value={formData.salary}
+                      onChange={handleInputChange} min={0} step={1000} />
+                  </Field>
+                  <Field label="Parts IRPP (quotient familial)">
+                    <input className="input" type="number" step="0.5" min="1" name="family_parts"
+                      value={formData.family_parts} onChange={handleInputChange} />
+                  </Field>
+                </div>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: '0.88rem', color: '#475569', padding: '4px 0' }}>
+                  <input type="checkbox" name="is_expat"
+                    checked={formData.is_expat} onChange={handleInputChange}
+                    style={{ width: 16, height: 16, accentColor: 'var(--primary)' }} />
+                  Cet employé est un expatrié (taux IRPP différent)
+                </label>
+              </>
+            )}
 
             </div>{/* end modal-body */}
-            <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={() => setShowModal(false)}>Annuler</button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
-                {submitting
-                  ? (editId ? 'Mise à jour...' : 'Création...')
-                  : (editId ? 'Enregistrer les modifications' : 'Créer le profil')}
+            <div className="modal-footer" style={{ justifyContent: 'space-between' }}>
+              <button type="button" className="btn btn-ghost" onClick={() => {
+                if (formStep === 1) setShowModal(false);
+                else goPrev();
+              }}>
+                {formStep === 1 ? 'Annuler' : '← Précédent'}
               </button>
+              {formStep < 3 ? (
+                <button type="button" className="btn btn-primary" onClick={goNext}>
+                  Suivant →
+                </button>
+              ) : (
+                <button type="submit" className="btn btn-primary" disabled={submitting}>
+                  {submitting
+                    ? (editId ? 'Mise à jour...' : 'Création...')
+                    : (editId ? 'Enregistrer' : 'Créer le profil')}
+                </button>
+              )}
             </div>
             </form>
           </div>

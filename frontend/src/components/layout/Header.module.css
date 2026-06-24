@@ -140,6 +140,8 @@
     left: 0 !important;
     padding: 0 12px 0 58px;
     background: #FFFFFF;
+    border-bottom: 1.5px solid rgba(20,34,24,0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
   }
   .searchBar { max-width: 160px; }
   .searchInput { font-size: 0.8rem; padding: 8px 10px 8px 36px; }
