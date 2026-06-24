@@ -55,6 +55,51 @@ logger = logging.getLogger('konggest.employees')
 # FIX T3 : opération réseau non bloquante via threading.Thread
 # ─────────────────────────────────────────────────────────
 
+def _create_supabase_user(email: str, password: str, full_name: str) -> bool:
+    """
+    Crée un utilisateur dans Supabase Auth via l'Admin API.
+    email_confirm: true → pas d'email de confirmation requis.
+    Retourne True si succès, False sinon (non fatal).
+    """
+    import urllib.request
+    import json
+    from django.conf import settings as s
+
+    supabase_url = getattr(s, 'SUPABASE_URL', '')
+    service_key = getattr(s, 'SUPABASE_SERVICE_ROLE_KEY', '')
+
+    if not (supabase_url and service_key):
+        logger.warning("SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY manquant — user Supabase non créé.")
+        return False
+
+    body = json.dumps({
+        "email": email,
+        "password": password,
+        "email_confirm": True,
+        "user_metadata": {"full_name": full_name, "role": "employee"},
+    }).encode('utf-8')
+
+    req = urllib.request.Request(
+        f"{supabase_url}/auth/v1/admin/users",
+        data=body,
+        headers={
+            "Authorization": f"Bearer {service_key}",
+            "apikey": service_key,
+            "Content-Type": "application/json",
+        },
+        method='POST',
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            ok = resp.status in (200, 201)
+            if ok:
+                logger.info(f"User Supabase créé pour {email}")
+            return ok
+    except Exception as e:
+        logger.warning(f"Création Supabase Auth échouée ({email}): {e}")
+        return False
+
+
 def _delete_supabase_user_async(email: str, settings) -> None:
     """
     Supprime un utilisateur de Supabase Auth en arrière-plan.
@@ -255,7 +300,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         invalidate_cache(tenant_id, 'employees')
         invalidate_cache(tenant_id, 'employees_list')
 
-        # Auto-création du compte Django User pour l'employé
+        # Auto-création du compte Django User + Supabase Auth pour l'employé
         self._generated_password = None
         if emp.email:
             try:
@@ -266,6 +311,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 if not DjangoUser.objects.filter(username=emp.email).exists():
                     alphabet = string.ascii_letters + string.digits
                     pw = ''.join(secrets.choice(alphabet) for _ in range(10))
+                    # 1. Django User (pour auth Django + JWT)
                     user = DjangoUser.objects.create_user(
                         username=emp.email,
                         email=emp.email,
@@ -280,6 +326,12 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                     )
                     emp.user = user
                     emp.save(update_fields=['user'])
+                    # 2. Supabase Auth (pour signInWithPassword côté frontend)
+                    _create_supabase_user(
+                        email=emp.email,
+                        password=pw,
+                        full_name=emp.full_name,
+                    )
                     self._generated_password = pw
                     logger.info(f"Compte utilisateur créé pour l'employé {emp.email}")
             except Exception as e:
