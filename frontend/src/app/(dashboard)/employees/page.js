@@ -328,13 +328,19 @@ export default function EmployeesPage() {
     }
     setSubmitting(true);
     setFormError('');
+    // Convertit les champs FK et date vides en null (le backend rejette les chaînes vides)
+    const FK_FIELDS = ['department', 'location', 'manager', 'position'];
+    const DATE_FIELDS = ['end_date', 'date_of_birth'];
+    const payload = { ...formData };
+    FK_FIELDS.forEach(k => { if (payload[k] === '' || payload[k] === 0) payload[k] = null; });
+    DATE_FIELDS.forEach(k => { if (payload[k] === '') payload[k] = null; });
     try {
       if (editId) {
-        await api.patch(`/employees/${editId}/`, formData);
+        await api.patch(`/employees/${editId}/`, payload);
         showToast('success', 'Collaborateur mis à jour avec succès.');
         setShowModal(false);
       } else {
-        const result = await api.post('/employees/', formData);
+        const result = await api.post('/employees/', payload);
         setShowModal(false);
         if (result?._generated_password) {
           setGeneratedPassword({ password: result._generated_password, email: formData.email });
@@ -700,7 +706,6 @@ export default function EmployeesPage() {
                       <option value="">Non spécifié</option>
                       <option value="M">Masculin</option>
                       <option value="F">Féminin</option>
-                      <option value="O">Autre</option>
                     </select>
                   </Field>
                   <Field label="Date de naissance">

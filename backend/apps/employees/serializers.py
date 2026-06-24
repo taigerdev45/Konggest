@@ -112,6 +112,8 @@ class EmployeeDetailSerializer(serializers.ModelSerializer):
         write_only=True, required=False, allow_blank=True,
         help_text="Intitulé libre du poste — crée ou réutilise une Position existante."
     )
+    # Accepte n'importe quel texte libre (pas limité aux SECTOR_CHOICES du modèle)
+    sector = serializers.CharField(required=False, allow_blank=True, default='')
 
     class Meta:
         model = Employee
